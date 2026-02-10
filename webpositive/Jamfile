@@ -92,3 +92,5 @@ for architectureObject in [ MultiArchSubDirSetup ] {
 		break ;
 	}
 }
+
+SubInclude HAIKU_TOP src apps webpositive support tests ;
