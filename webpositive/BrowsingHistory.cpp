@@ -159,7 +159,7 @@ BrowsingHistory::BrowsingHistory()
 	fMaxHistoryItemAge(7),
 	fSettingsLoaded(false),
 	fQuitting(false),
-	fPendingSaveItems(NULL),
+	fPendingSaveItems(nullptr),
 	fSaveLock("browsing history save lock"),
 	fFileLock("browsing history file lock")
 {
@@ -331,10 +331,10 @@ BrowsingHistory::_SaveSettings()
 
 	// Create deep copy of items to save
 	// BObjectList(..., true) owns the items and will delete them on destruction
-	BObjectList<BrowsingHistoryItem, true>* newItems
-		= new(std::nothrow) BObjectList<BrowsingHistoryItem, true>(
-			fHistoryItems.CountItems());
-	if (newItems == NULL)
+	std::unique_ptr<BObjectList<BrowsingHistoryItem, true>> newItems(
+		new(std::nothrow) BObjectList<BrowsingHistoryItem, true>(
+			fHistoryItems.CountItems()));
+	if (!newItems)
 		return;
 
 	int32 count = fHistoryItems.CountItems();
@@ -345,8 +345,7 @@ BrowsingHistory::_SaveSettings()
 	}
 
 	fSaveLock.Lock();
-	delete fPendingSaveItems;
-	fPendingSaveItems = newItems;
+	fPendingSaveItems = std::move(newItems);
 	fSaveLock.Unlock();
 
 	release_sem(fSaveSem);
@@ -361,17 +360,16 @@ BrowsingHistory::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		BObjectList<BrowsingHistoryItem, true>* itemsToSave = NULL;
+		std::unique_ptr<BObjectList<BrowsingHistoryItem, true>> itemsToSave;
 
 		self->fSaveLock.Lock();
-		itemsToSave = self->fPendingSaveItems;
-		self->fPendingSaveItems = NULL;
+		itemsToSave = std::move(self->fPendingSaveItems);
 		self->fSaveLock.Unlock();
 
-		if (self->fQuitting && itemsToSave == NULL)
+		if (self->fQuitting && !itemsToSave)
 			break;
 
-		if (itemsToSave != NULL) {
+		if (itemsToSave) {
 			self->fFileLock.Lock();
 			BFile settingsFile;
 			if (self->_OpenSettingsFile(settingsFile,
@@ -396,8 +394,6 @@ BrowsingHistory::_SaveThread(void* data)
 				settingsArchive.Flatten(&settingsFile);
 			}
 			self->fFileLock.Unlock();
-
-			delete itemsToSave;
 		}
 
 		if (self->fQuitting)

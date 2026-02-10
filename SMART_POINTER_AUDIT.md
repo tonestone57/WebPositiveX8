@@ -21,25 +21,7 @@ This document summarizes the findings of a code audit to identify opportunities 
     *   **Reason:** This pointer owns a heap-allocated `BMessage` used to pass data to the save thread. `BMessage` is a value-semantic class often allocated on the heap, and does not inherit from `BArchivable` (it has archiving methods but is not part of the archiving hierarchy). It is manually deleted.
     *   **Recommendation:** Change to `std::unique_ptr<BMessage> fPendingSaveMessage;`.
 
-### 3. `webpositive/autocompletion/AutoCompleter.h`
-
-**Class:** `BAutoCompleter::CompletionStyle` (Pure C++ Class)
-
-*   **Members:**
-    *   `EditView* fEditView;`
-    *   `PatternSelector* fPatternSelector;`
-    *   `ChoiceModel* fChoiceModel;`
-    *   `ChoiceView* fChoiceView;`
-    *   **Reason:** These members are pointers to abstract base classes (interfaces) that are owned by `CompletionStyle`. The destructor manually deletes them.
-    *   **Recommendation:** Change to `std::unique_ptr<EditView>`, `std::unique_ptr<PatternSelector>`, `std::unique_ptr<ChoiceModel>`, and `std::unique_ptr<ChoiceView>`. Update setters to take `std::unique_ptr` to enforce ownership transfer.
-
-**Class:** `BAutoCompleter` (Pure C++ Class)
-
-*   **Member:** `CompletionStyle* fCompletionStyle;`
-    *   **Reason:** This member owns the `CompletionStyle` strategy object. The destructor manually deletes it.
-    *   **Recommendation:** Change to `std::unique_ptr<CompletionStyle> fCompletionStyle;`.
-
-### 4. `webpositive/tabview/TabManager.h`
+### 3. `webpositive/tabview/TabManager.h`
 
 **Class:** `TabManager` (Pure C++ Class)
 
@@ -47,10 +29,16 @@ This document summarizes the findings of a code audit to identify opportunities 
     *   **Reason:** `TabManager` owns the `TabManagerController` instance (allocated in constructor, deleted in destructor). `TabManagerController` is a helper class implementing a pure virtual interface (`TabContainerView::Controller`).
     *   **Recommendation:** Change to `std::unique_ptr<TabManagerController> fController;`. Note: Ensure `TabManagerController` definition is available to `unique_ptr` destructor (in `.cpp` file).
 
+## Excluded Candidates
+
+### `webpositive/autocompletion/AutoCompleter.h`
+
+*   **Class:** `BAutoCompleter::CompletionStyle`
+*   **Member:** `ChoiceView* fChoiceView;` (and other strategy objects)
+*   **Reason:** While `ChoiceView` is a pure C++ interface, its concrete implementation `BDefaultChoiceView` creates and manages a `BWindow`. The interaction between `BWindow` ownership (which deletes its children and itself on `Quit()`) and `std::unique_ptr` ownership of the `ChoiceView` (which owns the window via a raw pointer) is complex and potentially prone to double-free or dangling pointer issues if not handled with extreme care regarding Haiku's window lifecycle. It was decided to exclude this from the initial smart pointer refactoring to avoid regressions.
+
 ## Task List
 
-- [ ] Refactor `BrowsingHistory::fPendingSaveItems` to use `std::unique_ptr`.
-- [ ] Refactor `CredentialsStorage::fPendingSaveMessage` to use `std::unique_ptr`.
-- [ ] Refactor `BAutoCompleter::CompletionStyle` members to use `std::unique_ptr` and update setter signatures.
-- [ ] Refactor `BAutoCompleter::fCompletionStyle` to use `std::unique_ptr`.
-- [ ] Refactor `TabManager::fController` to use `std::unique_ptr`.
+- [x] Refactor `BrowsingHistory::fPendingSaveItems` to use `std::unique_ptr`.
+- [x] Refactor `CredentialsStorage::fPendingSaveMessage` to use `std::unique_ptr`.
+- [x] Refactor `TabManager::fController` to use `std::unique_ptr`.

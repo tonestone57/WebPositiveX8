@@ -11,6 +11,8 @@
 #include <ObjectList.h>
 #include <OS.h>
 
+#include <memory>
+
 class BFile;
 class BString;
 
@@ -97,7 +99,8 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			BObjectList<BrowsingHistoryItem, true>* fPendingSaveItems;
+			std::unique_ptr<BObjectList<BrowsingHistoryItem, true>>
+								fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 };

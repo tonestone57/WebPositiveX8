@@ -10,6 +10,8 @@
 #include <Locker.h>
 #include <String.h>
 
+#include <memory>
+
 #include "HashMap.h"
 #include "HashString.h"
 
@@ -77,7 +79,8 @@ private:
 			thread_id			fSaveThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			BMessage*			fPendingSaveMessage;
+			std::unique_ptr<BMessage>
+								fPendingSaveMessage;
 			BLocker				fSaveLock;
 };
 
