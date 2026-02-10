@@ -52,26 +52,26 @@ The primary performance bottleneck identified is synchronous file I/O on the mai
 1.  **Refactor `BrowsingHistory` to use Asynchronous Saving**:
     *   **Goal**: Move file writing to a background thread to prevent UI blocking.
     *   **Task**: Implement a worker thread in `BrowsingHistory` that consumes save requests. Copy history items before passing them to the worker thread to ensure thread safety without blocking the main thread for I/O.
-    *   **Status**: In Progress.
+    *   **Status**: Completed.
 
 ### Medium Priority
 
 2.  **Refactor `DownloadWindow` Settings Saving**:
     *   **Goal**: Prevent UI freezes during download management.
     *   **Task**: Implement a similar background saving mechanism or throttle the saving frequency (e.g., using `BMessageRunner`).
-    *   **Status**: In Progress.
+    *   **Status**: Completed.
 
 3.  **Optimize Application Startup**:
     *   **Goal**: Improve launch time.
     *   **Task**: Load history and cookies asynchronously. Display the UI immediately and populate history/cookies when loaded.
-    *   **Status**: In Progress (History Loading).
+    *   **Status**: Completed.
 
 ### Low Priority
 
 4.  **Refactor `CredentialsStorage`**:
     *   **Goal**: Ensure non-blocking access.
     *   **Task**: Use async I/O for saving credentials.
-    *   **Status**: In Progress.
+    *   **Status**: Completed.
 
 5.  **Code Cleanup**:
     *   **Goal**: Modernize C++ usage.
