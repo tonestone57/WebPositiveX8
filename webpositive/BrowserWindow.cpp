@@ -2355,15 +2355,15 @@ BrowserWindow::_UpdateHistoryMenu()
 
 		if (historyItem->DateTime() < fiveDaysAgoStart)
 			addItemToMenuOrSubmenu(earlierMenu, menuItem);
-		else if (historyItem.DateTime() < fourDaysAgoStart)
+		else if (historyItem->DateTime() < fourDaysAgoStart)
 			addItemToMenuOrSubmenu(fiveDaysAgoMenu, menuItem);
-		else if (historyItem.DateTime() < threeDaysAgoStart)
+		else if (historyItem->DateTime() < threeDaysAgoStart)
 			addItemToMenuOrSubmenu(fourDaysAgoMenu, menuItem);
-		else if (historyItem.DateTime() < twoDaysAgoStart)
+		else if (historyItem->DateTime() < twoDaysAgoStart)
 			addItemToMenuOrSubmenu(threeDaysAgoMenu, menuItem);
-		else if (historyItem.DateTime() < oneDayAgoStart)
+		else if (historyItem->DateTime() < oneDayAgoStart)
 			addItemToMenuOrSubmenu(twoDaysAgoMenu, menuItem);
-		else if (historyItem.DateTime() < todayStart)
+		else if (historyItem->DateTime() < todayStart)
 			addItemToMenuOrSubmenu(yesterdayMenu, menuItem);
 		else
 			addItemToMenuOrSubmenu(todayMenu, menuItem);
