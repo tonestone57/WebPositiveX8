@@ -86,8 +86,10 @@ class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
 
 		count = history->CountItems();
 		for (int32 i = 0; i < count; i++) {
-			BrowsingHistoryItem item = history->HistoryItemAt(i);
-			const BString& choiceText = item.URL();
+			const BrowsingHistoryItem* item = history->ItemAt(i);
+			if (item == NULL)
+				continue;
+			const BString& choiceText = item->URL();
 			int32 matchPos = choiceText.IFindFirst(pattern);
 			if (matchPos < 0)
 				continue;

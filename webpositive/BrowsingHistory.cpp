@@ -203,12 +203,19 @@ BrowsingHistory::HistoryItemAt(int32 index) const
 {
 	BAutolock _(const_cast<BrowsingHistory*>(this));
 
-	BrowsingHistoryItem* existingItem = reinterpret_cast<BrowsingHistoryItem*>(
-		fHistoryItems.ItemAt(index));
+	const BrowsingHistoryItem* existingItem = ItemAt(index);
 	if (!existingItem)
 		return BrowsingHistoryItem(BString());
 
 	return BrowsingHistoryItem(*existingItem);
+}
+
+
+const BrowsingHistoryItem*
+BrowsingHistory::ItemAt(int32 index) const
+{
+	return reinterpret_cast<const BrowsingHistoryItem*>(
+		fHistoryItems.ItemAt(index));
 }
 
 
@@ -324,16 +331,17 @@ BrowsingHistory::_LoadSettings()
 void
 BrowsingHistory::_SaveSettings()
 {
+	BAutolock _(this);
 	BFile settingsFile;
 	if (_OpenSettingsFile(settingsFile,
 			B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
 		BMessage settingsArchive;
 		settingsArchive.AddInt32("max history item age", fMaxHistoryItemAge);
 		BMessage historyItemArchive;
-		int32 count = CountItems();
+		int32 count = fHistoryItems.CountItems();
 		for (int32 i = 0; i < count; i++) {
-			BrowsingHistoryItem item = HistoryItemAt(i);
-			if (item.Archive(&historyItemArchive) != B_OK)
+			const BrowsingHistoryItem* item = ItemAt(i);
+			if (item == NULL || item->Archive(&historyItemArchive) != B_OK)
 				break;
 			if (settingsArchive.AddMessage("history item",
 					&historyItemArchive) != B_OK) {

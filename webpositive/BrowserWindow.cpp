@@ -2344,15 +2344,17 @@ BrowserWindow::_UpdateHistoryMenu()
 	BMenu* earlierMenu = new BMenu(B_TRANSLATE("Earlier"));
 
 	for (int32 i = 0; i < count; i++) {
-		BrowsingHistoryItem historyItem = history->HistoryItemAt(i);
+		const BrowsingHistoryItem* historyItem = history->ItemAt(i);
+		if (historyItem == NULL)
+			continue;
 		BMessage* message = new BMessage(GOTO_URL);
-		message->AddString("url", historyItem.URL().String());
+		message->AddString("url", historyItem->URL().String());
 
-		BString truncatedUrl(historyItem.URL());
+		BString truncatedUrl(historyItem->URL());
 		be_plain_font->TruncateString(&truncatedUrl, B_TRUNCATE_END, 480);
 		menuItem = new BMenuItem(truncatedUrl, message);
 
-		if (historyItem.DateTime() < fiveDaysAgoStart)
+		if (historyItem->DateTime() < fiveDaysAgoStart)
 			addItemToMenuOrSubmenu(earlierMenu, menuItem);
 		else if (historyItem.DateTime() < fourDaysAgoStart)
 			addItemToMenuOrSubmenu(fiveDaysAgoMenu, menuItem);
