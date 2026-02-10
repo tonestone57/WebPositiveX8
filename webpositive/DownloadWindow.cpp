@@ -124,8 +124,16 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 	: BWindow(frame, B_TRANSLATE("Downloads"),
 		B_TITLED_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL,
 		B_AUTO_UPDATE_SIZE_LIMITS | B_ASYNCHRONOUS_CONTROLS | B_NOT_ZOOMABLE),
-	fMinimizeOnClose(false)
+	fMinimizeOnClose(false),
+	fQuitting(false),
+	fPendingSaveMessage(NULL),
+	fSaveLock("download window save lock")
 {
+	fSaveSem = create_sem(0, "download window save sem");
+	fSaveThread = spawn_thread(_SaveThread, "download window saver",
+		B_LOW_PRIORITY, this);
+	resume_thread(fSaveThread);
+
 	SetPulseRate(1000000);
 
 	settings->AddListener(BMessenger(this));
@@ -191,8 +199,16 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 
 DownloadWindow::~DownloadWindow()
 {
-	// Only necessary to save the current progress of unfinished downloads:
+	// Queue a final save
 	_SaveSettings();
+
+	fQuitting = true;
+	release_sem(fSaveSem);
+
+	status_t exitValue;
+	wait_for_thread(fSaveThread, &exitValue);
+
+	delete_sem(fSaveSem);
 }
 
 
@@ -516,10 +532,11 @@ DownloadWindow::_ValidateButtonStatus()
 void
 DownloadWindow::_SaveSettings()
 {
-	BFile file;
-	if (!_OpenSettingsFile(file, B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY))
+	BMessage* newMessage = new(std::nothrow) BMessage();
+	if (newMessage == NULL)
 		return;
-	BMessage message;
+
+	// Create snapshot of settings on window thread
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1;
 			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i--) {
 		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
@@ -527,11 +544,50 @@ DownloadWindow::_SaveSettings()
 		if (!view)
 			continue;
 
-	BMessage downloadArchive;
+		BMessage downloadArchive;
 		if (view->SaveSettings(&downloadArchive) == B_OK)
-			message.AddMessage("download", &downloadArchive);
+			newMessage->AddMessage("download", &downloadArchive);
 	}
-	message.Flatten(&file);
+
+	fSaveLock.Lock();
+	delete fPendingSaveMessage;
+	fPendingSaveMessage = newMessage;
+	fSaveLock.Unlock();
+
+	release_sem(fSaveSem);
+}
+
+
+status_t
+DownloadWindow::_SaveThread(void* data)
+{
+	DownloadWindow* self = (DownloadWindow*)data;
+
+	while (true) {
+		acquire_sem(self->fSaveSem);
+
+		BMessage* messageToSave = NULL;
+
+		self->fSaveLock.Lock();
+		messageToSave = self->fPendingSaveMessage;
+		self->fPendingSaveMessage = NULL;
+		self->fSaveLock.Unlock();
+
+		if (self->fQuitting && messageToSave == NULL)
+			break;
+
+		if (messageToSave != NULL) {
+			BFile file;
+			if (self->_OpenSettingsFile(file, B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY)) {
+				messageToSave->Flatten(&file);
+			}
+			delete messageToSave;
+		}
+
+		if (self->fQuitting)
+			break;
+	}
+	return B_OK;
 }
 
 

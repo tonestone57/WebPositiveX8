@@ -74,6 +74,7 @@ private:
 									const BString& url, bool select);
 			void				_ShowWindow(const BMessage* message,
 									BWindow* window);
+	static	status_t			_CookieLoaderThread(void* data);
 
 private:
 			int					fWindowCount;
@@ -83,6 +84,7 @@ private:
 
 			SettingsMessage*	fSettings;
 			SettingsMessage*	fCookies;
+			thread_id			fCookieLoaderThread;
 			SettingsMessage*	fSession;
 			BReference<BPrivate::Network::BUrlContext>	fContext;
 

@@ -7,6 +7,8 @@
 #define DOWNLOAD_WINDOW_H
 
 
+#include <Locker.h>
+#include <OS.h>
 #include <String.h>
 #include <Window.h>
 
@@ -43,6 +45,8 @@ private:
 			void				_LoadSettings();
 			bool				_OpenSettingsFile(BFile& file, uint32 mode);
 
+	static	status_t			_SaveThread(void* data);
+
 private:
 			BScrollView*		fDownloadsScrollView;
 			BGroupLayout*		fDownloadViewsLayout;
@@ -50,6 +54,12 @@ private:
 			BButton*			fRemoveMissingButton;
 			BString				fDownloadPath;
 			bool				fMinimizeOnClose;
+
+			thread_id			fSaveThread;
+			sem_id				fSaveSem;
+			bool				fQuitting;
+			BMessage*			fPendingSaveMessage;
+			BLocker				fSaveLock;
 };
 
 #endif // DOWNLOAD_WINDOW_H

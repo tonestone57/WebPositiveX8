@@ -157,14 +157,37 @@ BrowsingHistory::BrowsingHistory()
 	BLocker("browsing history"),
 	fHistoryItems(64),
 	fMaxHistoryItemAge(7),
-	fSettingsLoaded(false)
+	fSettingsLoaded(false),
+	fQuitting(false),
+	fPendingSaveItems(NULL),
+	fSaveLock("browsing history save lock"),
+	fFileLock("browsing history file lock")
 {
+	fSaveSem = create_sem(0, "browsing history save sem");
+	fSaveThread = spawn_thread(_SaveThread, "browsing history saver",
+		B_LOW_PRIORITY, this);
+	fLoadThread = -1;
+	resume_thread(fSaveThread);
 }
 
 
 BrowsingHistory::~BrowsingHistory()
 {
+	if (fLoadThread >= 0) {
+		status_t exitValue;
+		wait_for_thread(fLoadThread, &exitValue);
+	}
+
+	// Queue a final save
 	_SaveSettings();
+
+	fQuitting = true;
+	release_sem(fSaveSem);
+
+	status_t exitValue;
+	wait_for_thread(fSaveThread, &exitValue);
+
+	delete_sem(fSaveSem);
 	_Clear();
 }
 
@@ -299,32 +322,14 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 void
 BrowsingHistory::_LoadSettings()
 {
-	if (fSettingsLoaded)
+	// Only called with lock held
+	if (fSettingsLoaded || fLoadThread >= 0)
 		return;
 
-	fSettingsLoaded = true;
-
-	BFile settingsFile;
-	if (_OpenSettingsFile(settingsFile, B_READ_ONLY)) {
-		BMessage settingsArchive;
-		settingsArchive.Unflatten(&settingsFile);
-		if (settingsArchive.FindInt32("max history item age",
-				&fMaxHistoryItemAge) != B_OK) {
-			fMaxHistoryItemAge = 7;
-		}
-		BDateTime oldestAllowedDateTime
-			= BDateTime::CurrentDateTime(B_LOCAL_TIME);
-		oldestAllowedDateTime.Date().AddDays(-fMaxHistoryItemAge);
-
-		BMessage historyItemArchive;
-		for (int32 i = 0; settingsArchive.FindMessage("history item", i,
-				&historyItemArchive) == B_OK; i++) {
-			BrowsingHistoryItem item(&historyItemArchive);
-			if (oldestAllowedDateTime < item.DateTime())
-				_AddItem(item, true);
-			historyItemArchive.MakeEmpty();
-		}
-	}
+	fLoadThread = spawn_thread(_LoadThread, "browsing history loader",
+		B_LOW_PRIORITY, this);
+	if (fLoadThread >= 0)
+		resume_thread(fLoadThread);
 }
 
 
@@ -332,25 +337,141 @@ void
 BrowsingHistory::_SaveSettings()
 {
 	BAutolock _(this);
-	BFile settingsFile;
-	if (_OpenSettingsFile(settingsFile,
-			B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
-		BMessage settingsArchive;
-		settingsArchive.AddInt32("max history item age", fMaxHistoryItemAge);
-		BMessage historyItemArchive;
-		int32 count = fHistoryItems.CountItems();
-		for (int32 i = 0; i < count; i++) {
-			const BrowsingHistoryItem* item = ItemAt(i);
-			if (item == NULL || item->Archive(&historyItemArchive) != B_OK)
-				break;
-			if (settingsArchive.AddMessage("history item",
-					&historyItemArchive) != B_OK) {
-				break;
-			}
-			historyItemArchive.MakeEmpty();
-		}
-		settingsArchive.Flatten(&settingsFile);
+
+	// Create deep copy of items to save
+	BList* newItems = new(std::nothrow) BList(fHistoryItems.CountItems());
+	if (newItems == NULL)
+		return;
+
+	int32 count = fHistoryItems.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		const BrowsingHistoryItem* item = ItemAt(i);
+		if (item)
+			newItems->AddItem(new(std::nothrow) BrowsingHistoryItem(*item));
 	}
+
+	fSaveLock.Lock();
+	if (fPendingSaveItems != NULL) {
+		// Delete replaced items
+		int32 count = fPendingSaveItems->CountItems();
+		for (int32 i = 0; i < count; i++) {
+			delete (BrowsingHistoryItem*)fPendingSaveItems->ItemAt(i);
+		}
+		delete fPendingSaveItems;
+	}
+	fPendingSaveItems = newItems;
+	fSaveLock.Unlock();
+
+	release_sem(fSaveSem);
+}
+
+
+status_t
+BrowsingHistory::_SaveThread(void* data)
+{
+	BrowsingHistory* self = (BrowsingHistory*)data;
+
+	while (true) {
+		acquire_sem(self->fSaveSem);
+
+		BList* itemsToSave = NULL;
+
+		self->fSaveLock.Lock();
+		itemsToSave = self->fPendingSaveItems;
+		self->fPendingSaveItems = NULL;
+		self->fSaveLock.Unlock();
+
+		if (self->fQuitting && itemsToSave == NULL)
+			break;
+
+		if (itemsToSave != NULL) {
+			self->fFileLock.Lock();
+			BFile settingsFile;
+			if (self->_OpenSettingsFile(settingsFile,
+					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
+				BMessage settingsArchive;
+
+				self->Lock();
+				int32 maxAge = self->fMaxHistoryItemAge;
+				self->Unlock();
+
+				settingsArchive.AddInt32("max history item age", maxAge);
+
+				BMessage historyItemArchive;
+				int32 count = itemsToSave->CountItems();
+				for (int32 i = 0; i < count; i++) {
+					BrowsingHistoryItem* item = (BrowsingHistoryItem*)itemsToSave->ItemAt(i);
+					if (item && item->Archive(&historyItemArchive) == B_OK) {
+						settingsArchive.AddMessage("history item", &historyItemArchive);
+					}
+					historyItemArchive.MakeEmpty();
+				}
+				settingsArchive.Flatten(&settingsFile);
+			}
+			self->fFileLock.Unlock();
+
+			// Clean up
+			int32 count = itemsToSave->CountItems();
+			for (int32 i = 0; i < count; i++) {
+				delete (BrowsingHistoryItem*)itemsToSave->ItemAt(i);
+			}
+			delete itemsToSave;
+		}
+
+		if (self->fQuitting)
+			break;
+	}
+	return B_OK;
+}
+
+
+status_t
+BrowsingHistory::_LoadThread(void* data)
+{
+	BrowsingHistory* self = (BrowsingHistory*)data;
+
+	self->fFileLock.Lock();
+	BFile settingsFile;
+	// We read into a BMessage first, then lock the main object to add items.
+	// This keeps the critical section (reading/parsing) out of the main lock.
+	BMessage settingsArchive;
+	bool fileOpened = self->_OpenSettingsFile(settingsFile, B_READ_ONLY);
+	if (fileOpened)
+		settingsArchive.Unflatten(&settingsFile);
+	self->fFileLock.Unlock();
+
+	if (!fileOpened) {
+		BAutolock _(self);
+		self->fSettingsLoaded = true;
+		return B_OK;
+	}
+
+	BAutolock _(self);
+	// Double check if we were cleared or something while loading
+	if (self->fSettingsLoaded)
+		return B_OK;
+
+	int32 maxAge = 7;
+	if (settingsArchive.FindInt32("max history item age", &maxAge) == B_OK) {
+		self->fMaxHistoryItemAge = maxAge;
+	}
+
+	BDateTime oldestAllowedDateTime
+		= BDateTime::CurrentDateTime(B_LOCAL_TIME);
+	oldestAllowedDateTime.Date().AddDays(-self->fMaxHistoryItemAge);
+
+	BMessage historyItemArchive;
+	for (int32 i = 0; settingsArchive.FindMessage("history item", i,
+			&historyItemArchive) == B_OK; i++) {
+		BrowsingHistoryItem item(&historyItemArchive);
+		if (oldestAllowedDateTime < item.DateTime())
+			self->_AddItem(item, true);
+		historyItemArchive.MakeEmpty();
+	}
+
+	self->fSettingsLoaded = true;
+	self->fLoadThread = -1;
+	return B_OK;
 }
 
 

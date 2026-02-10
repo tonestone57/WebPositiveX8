@@ -60,9 +60,10 @@ private:
 	virtual						~CredentialsStorage();
 
 			void				_LoadSettings();
-			void				_SaveSettings() const;
+			void				_SaveSettings();
 			bool				_OpenSettingsFile(BFile& file,
 									uint32 mode) const;
+	static	status_t			_SaveThread(void* data);
 
 private:
 			typedef HashMap<HashString, Credentials> CredentialMap;
@@ -72,6 +73,12 @@ private:
 	static	CredentialsStorage	sSessionInstance;
 			bool				fSettingsLoaded;
 			bool				fPersistent;
+
+			thread_id			fSaveThread;
+			sem_id				fSaveSem;
+			bool				fQuitting;
+			BMessage*			fPendingSaveMessage;
+			BLocker				fSaveLock;
 };
 
 

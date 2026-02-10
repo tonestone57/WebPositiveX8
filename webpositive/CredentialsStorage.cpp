@@ -128,14 +128,29 @@ CredentialsStorage::CredentialsStorage(bool persistent)
 		: "credential storage"),
 	fCredentialMap(),
 	fSettingsLoaded(false),
-	fPersistent(persistent)
+	fPersistent(persistent),
+	fQuitting(false),
+	fPendingSaveMessage(NULL),
+	fSaveLock("credentials save lock")
 {
+	fSaveSem = create_sem(0, "credentials save sem");
+	fSaveThread = spawn_thread(_SaveThread, "credentials saver",
+		B_LOW_PRIORITY, this);
+	resume_thread(fSaveThread);
 }
 
 
 CredentialsStorage::~CredentialsStorage()
 {
 	_SaveSettings();
+
+	fQuitting = true;
+	release_sem(fSaveSem);
+
+	status_t exitValue;
+	wait_for_thread(fSaveThread, &exitValue);
+
+	delete_sem(fSaveSem);
 }
 
 
@@ -214,29 +229,72 @@ CredentialsStorage::_LoadSettings()
 
 
 void
-CredentialsStorage::_SaveSettings() const
+CredentialsStorage::_SaveSettings()
 {
-	BFile settingsFile;
-	if (_OpenSettingsFile(settingsFile,
-			B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
-		BMessage settingsArchive;
-		BMessage credentialsArchive;
-		CredentialMap::Iterator iterator = fCredentialMap.GetIterator();
-		while (iterator.HasNext()) {
-			const CredentialMap::Entry& entry = iterator.Next();
-			if (entry.value.Archive(&credentialsArchive) != B_OK
-				|| credentialsArchive.AddString("key",
-					entry.key.GetString()) != B_OK) {
-				break;
-			}
-			if (settingsArchive.AddMessage("credentials",
-					&credentialsArchive) != B_OK) {
-				break;
-			}
-			credentialsArchive.MakeEmpty();
+	// Called with lock held (this)
+	if (!fPersistent)
+		return;
+
+	BMessage* newMessage = new(std::nothrow) BMessage();
+	if (newMessage == NULL)
+		return;
+
+	BMessage credentialsArchive;
+	CredentialMap::Iterator iterator = fCredentialMap.GetIterator();
+	while (iterator.HasNext()) {
+		const CredentialMap::Entry& entry = iterator.Next();
+		if (entry.value.Archive(&credentialsArchive) != B_OK
+			|| credentialsArchive.AddString("key",
+				entry.key.GetString()) != B_OK) {
+			break;
 		}
-		settingsArchive.Flatten(&settingsFile);
+		if (newMessage->AddMessage("credentials",
+				&credentialsArchive) != B_OK) {
+			break;
+		}
+		credentialsArchive.MakeEmpty();
 	}
+
+	fSaveLock.Lock();
+	delete fPendingSaveMessage;
+	fPendingSaveMessage = newMessage;
+	fSaveLock.Unlock();
+
+	release_sem(fSaveSem);
+}
+
+
+status_t
+CredentialsStorage::_SaveThread(void* data)
+{
+	CredentialsStorage* self = (CredentialsStorage*)data;
+
+	while (true) {
+		acquire_sem(self->fSaveSem);
+
+		BMessage* messageToSave = NULL;
+
+		self->fSaveLock.Lock();
+		messageToSave = self->fPendingSaveMessage;
+		self->fPendingSaveMessage = NULL;
+		self->fSaveLock.Unlock();
+
+		if (self->fQuitting && messageToSave == NULL)
+			break;
+
+		if (messageToSave != NULL) {
+			BFile settingsFile;
+			if (self->_OpenSettingsFile(settingsFile,
+					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
+				messageToSave->Flatten(&settingsFile);
+			}
+			delete messageToSave;
+		}
+
+		if (self->fQuitting)
+			break;
+	}
+	return B_OK;
 }
 
 
