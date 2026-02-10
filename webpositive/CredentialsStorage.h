@@ -7,10 +7,10 @@
 #define CREDENTIAL_STORAGE_H
 
 
+#include <memory>
+
 #include <Locker.h>
 #include <String.h>
-
-#include <memory>
 
 #include "HashMap.h"
 #include "HashString.h"

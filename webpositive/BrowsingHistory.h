@@ -6,12 +6,12 @@
 #ifndef BROWSING_HISTORY_H
 #define BROWSING_HISTORY_H
 
+#include <memory>
+
 #include "DateTime.h"
 #include <Locker.h>
 #include <ObjectList.h>
 #include <OS.h>
-
-#include <memory>
 
 class BFile;
 class BString;

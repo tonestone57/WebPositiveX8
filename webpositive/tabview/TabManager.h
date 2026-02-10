@@ -6,10 +6,10 @@
 #ifndef TAB_MANAGER_H
 #define TAB_MANAGER_H
 
+#include <memory>
+
 #include <Messenger.h>
 #include <TabView.h>
-
-#include <memory>
 
 enum {
 	TAB_CHANGED = 'tcha',
