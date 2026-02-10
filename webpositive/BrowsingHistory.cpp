@@ -155,7 +155,7 @@ BrowsingHistory::sDefaultInstance;
 BrowsingHistory::BrowsingHistory()
 	:
 	BLocker("browsing history"),
-	fHistoryItems(64, true),
+	fHistoryItems(64),
 	fMaxHistoryItemAge(7),
 	fSettingsLoaded(false),
 	fQuitting(false),
@@ -331,9 +331,9 @@ BrowsingHistory::_SaveSettings()
 
 	// Create deep copy of items to save
 	// BObjectList(..., true) owns the items and will delete them on destruction
-	BObjectList<BrowsingHistoryItem>* newItems
-		= new(std::nothrow) BObjectList<BrowsingHistoryItem>(
-			fHistoryItems.CountItems(), true);
+	BObjectList<BrowsingHistoryItem, true>* newItems
+		= new(std::nothrow) BObjectList<BrowsingHistoryItem, true>(
+			fHistoryItems.CountItems());
 	if (newItems == NULL)
 		return;
 
@@ -361,7 +361,7 @@ BrowsingHistory::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		BObjectList<BrowsingHistoryItem>* itemsToSave = NULL;
+		BObjectList<BrowsingHistoryItem, true>* itemsToSave = NULL;
 
 		self->fSaveLock.Lock();
 		itemsToSave = self->fPendingSaveItems;

@@ -87,7 +87,7 @@ private:
 	static	status_t			_LoadThread(void* data);
 
 private:
-			BObjectList<BrowsingHistoryItem> fHistoryItems;
+			BObjectList<BrowsingHistoryItem, true> fHistoryItems;
 			int32				fMaxHistoryItemAge;
 
 	static	BrowsingHistory		sDefaultInstance;
@@ -97,7 +97,7 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			BObjectList<BrowsingHistoryItem>* fPendingSaveItems;
+			BObjectList<BrowsingHistoryItem, true>* fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 };

@@ -493,7 +493,6 @@ BrowserApp::QuitRequested()
 	// it and to ensure we can save.
 	if (fCookies == NULL) {
 		// Check the message queue for the cookie message
-		BMessage* message = NULL;
 		// We can't easily peek specific messages from the queue without removing them
 		// or iterating. But since we are quitting, we can try to find it.
 		// Alternatively, just don't save if we didn't load.
