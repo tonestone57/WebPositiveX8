@@ -59,7 +59,7 @@ The primary performance bottleneck identified is synchronous file I/O on the mai
 2.  **Refactor `DownloadWindow` Settings Saving**:
     *   **Goal**: Prevent UI freezes during download management.
     *   **Task**: Implement a similar background saving mechanism or throttle the saving frequency (e.g., using `BMessageRunner`).
-    *   **Status**: Pending.
+    *   **Status**: In Progress.
 
 3.  **Optimize Application Startup**:
     *   **Goal**: Improve launch time.
