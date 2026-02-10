@@ -84,6 +84,7 @@ private:
 			bool				_OpenSettingsFile(BFile& file, uint32 mode);
 
 	static	status_t			_SaveThread(void* data);
+	static	status_t			_LoadThread(void* data);
 
 private:
 			BList				fHistoryItems;
@@ -93,10 +94,12 @@ private:
 			bool				fSettingsLoaded;
 
 			thread_id			fSaveThread;
+			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
 			BList*				fPendingSaveItems;
 			BLocker				fSaveLock;
+			BLocker				fFileLock;
 };
 
 

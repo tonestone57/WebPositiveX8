@@ -64,14 +64,14 @@ The primary performance bottleneck identified is synchronous file I/O on the mai
 3.  **Optimize Application Startup**:
     *   **Goal**: Improve launch time.
     *   **Task**: Load history and cookies asynchronously. Display the UI immediately and populate history/cookies when loaded.
-    *   **Status**: Pending.
+    *   **Status**: In Progress (History Loading).
 
 ### Low Priority
 
 4.  **Refactor `CredentialsStorage`**:
     *   **Goal**: Ensure non-blocking access.
     *   **Task**: Use async I/O for saving credentials.
-    *   **Status**: Pending.
+    *   **Status**: In Progress.
 
 5.  **Code Cleanup**:
     *   **Goal**: Modernize C++ usage.
