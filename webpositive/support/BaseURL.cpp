@@ -7,7 +7,7 @@
 
 
 BString
-baseURL(const BString string)
+baseURL(const BString& string)
 {
 	int32 baseURLStart = string.FindFirst("://");
 	if (baseURLStart < 0)
