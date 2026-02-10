@@ -71,7 +71,7 @@ class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
 public:
 	BrowsingHistoryChoiceModel()
 		:
-		fChoices(20, true)
+		fChoices(20)
 	{
 	}
 
@@ -135,7 +135,7 @@ public:
 	}
 
 private:
-	BObjectList<BAutoCompleter::Choice> fChoices;
+	BObjectList<BAutoCompleter::Choice, true> fChoices;
 };
 
 
