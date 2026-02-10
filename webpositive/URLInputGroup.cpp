@@ -121,11 +121,12 @@ public:
 		return fChoices.ItemAt(index);
 	}
 
-	static int _CompareChoices(const BAutoCompleter::Choice* a,
-		const BAutoCompleter::Choice* b)
+	static int _CompareChoices(const void* a, const void* b)
 	{
-		const URLChoice* aChoice = static_cast<const URLChoice*>(a);
-		const URLChoice* bChoice = static_cast<const URLChoice*>(b);
+		const URLChoice* aChoice
+			= *reinterpret_cast<const URLChoice* const *>(a);
+		const URLChoice* bChoice
+			= *reinterpret_cast<const URLChoice* const *>(b);
 
 		if (*aChoice < *bChoice)
 			return -1;

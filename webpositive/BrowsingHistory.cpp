@@ -434,13 +434,11 @@ BrowsingHistory::_LoadThread(void* data)
 		return B_OK;
 
 	int32 maxAge = 7;
-	if (settingsArchive.FindInt32("max history item age", &maxAge) == B_OK) {
-		self->fMaxHistoryItemAge = maxAge;
-	}
+	settingsArchive.FindInt32("max history item age", &maxAge);
 
 	BDateTime oldestAllowedDateTime
 		= BDateTime::CurrentDateTime(B_LOCAL_TIME);
-	oldestAllowedDateTime.Date().AddDays(-self->fMaxHistoryItemAge);
+	oldestAllowedDateTime.Date().AddDays(-maxAge);
 
 	BMessage historyItemArchive;
 	for (int32 i = 0; settingsArchive.FindMessage("history item", i,
@@ -451,6 +449,7 @@ BrowsingHistory::_LoadThread(void* data)
 		historyItemArchive.MakeEmpty();
 	}
 
+	self->fMaxHistoryItemAge = maxAge;
 	self->fSettingsLoaded = true;
 	return B_OK;
 }
