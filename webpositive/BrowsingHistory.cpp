@@ -155,7 +155,7 @@ BrowsingHistory::sDefaultInstance;
 BrowsingHistory::BrowsingHistory()
 	:
 	BLocker("browsing history"),
-	fHistoryItems(64),
+	fHistoryItems(64, true),
 	fMaxHistoryItemAge(7),
 	fSettingsLoaded(false),
 	fQuitting(false),
@@ -237,8 +237,7 @@ BrowsingHistory::HistoryItemAt(int32 index) const
 const BrowsingHistoryItem*
 BrowsingHistory::ItemAt(int32 index) const
 {
-	return reinterpret_cast<const BrowsingHistoryItem*>(
-		fHistoryItems.ItemAt(index));
+	return fHistoryItems.ItemAt(index);
 }
 
 
@@ -275,12 +274,6 @@ BrowsingHistory::MaxHistoryItemAge() const
 void
 BrowsingHistory::_Clear()
 {
-	int32 count = CountItems();
-	for (int32 i = 0; i < count; i++) {
-		BrowsingHistoryItem* item = reinterpret_cast<BrowsingHistoryItem*>(
-			fHistoryItems.ItemAtFast(i));
-		delete item;
-	}
 	fHistoryItems.MakeEmpty();
 }
 
@@ -291,9 +284,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 	int32 count = CountItems();
 	int32 insertionIndex = count;
 	for (int32 i = 0; i < count; i++) {
-		BrowsingHistoryItem* existingItem
-			= reinterpret_cast<BrowsingHistoryItem*>(
-			fHistoryItems.ItemAtFast(i));
+		BrowsingHistoryItem* existingItem = fHistoryItems.ItemAt(i);
 		if (item.URL() == existingItem->URL()) {
 			if (!internal) {
 				existingItem->Invoked();
@@ -339,7 +330,10 @@ BrowsingHistory::_SaveSettings()
 	BAutolock _(this);
 
 	// Create deep copy of items to save
-	BList* newItems = new(std::nothrow) BList(fHistoryItems.CountItems());
+	// BObjectList(..., true) owns the items and will delete them on destruction
+	BObjectList<BrowsingHistoryItem>* newItems
+		= new(std::nothrow) BObjectList<BrowsingHistoryItem>(
+			fHistoryItems.CountItems(), true);
 	if (newItems == NULL)
 		return;
 
@@ -351,14 +345,7 @@ BrowsingHistory::_SaveSettings()
 	}
 
 	fSaveLock.Lock();
-	if (fPendingSaveItems != NULL) {
-		// Delete replaced items
-		int32 count = fPendingSaveItems->CountItems();
-		for (int32 i = 0; i < count; i++) {
-			delete (BrowsingHistoryItem*)fPendingSaveItems->ItemAt(i);
-		}
-		delete fPendingSaveItems;
-	}
+	delete fPendingSaveItems;
 	fPendingSaveItems = newItems;
 	fSaveLock.Unlock();
 
@@ -374,7 +361,7 @@ BrowsingHistory::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		BList* itemsToSave = NULL;
+		BObjectList<BrowsingHistoryItem>* itemsToSave = NULL;
 
 		self->fSaveLock.Lock();
 		itemsToSave = self->fPendingSaveItems;
@@ -400,7 +387,7 @@ BrowsingHistory::_SaveThread(void* data)
 				BMessage historyItemArchive;
 				int32 count = itemsToSave->CountItems();
 				for (int32 i = 0; i < count; i++) {
-					BrowsingHistoryItem* item = (BrowsingHistoryItem*)itemsToSave->ItemAt(i);
+					BrowsingHistoryItem* item = itemsToSave->ItemAt(i);
 					if (item && item->Archive(&historyItemArchive) == B_OK) {
 						settingsArchive.AddMessage("history item", &historyItemArchive);
 					}
@@ -410,11 +397,6 @@ BrowsingHistory::_SaveThread(void* data)
 			}
 			self->fFileLock.Unlock();
 
-			// Clean up
-			int32 count = itemsToSave->CountItems();
-			for (int32 i = 0; i < count; i++) {
-				delete (BrowsingHistoryItem*)itemsToSave->ItemAt(i);
-			}
 			delete itemsToSave;
 		}
 
@@ -470,7 +452,6 @@ BrowsingHistory::_LoadThread(void* data)
 	}
 
 	self->fSettingsLoaded = true;
-	self->fLoadThread = -1;
 	return B_OK;
 }
 

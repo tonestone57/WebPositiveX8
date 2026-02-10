@@ -15,6 +15,7 @@
 #include <Locale.h>
 #include <LayoutUtils.h>
 #include <MenuItem.h>
+#include <ObjectList.h>
 #include <PopUpMenu.h>
 #include <SeparatorView.h>
 #include <TextView.h>
@@ -67,13 +68,15 @@ private:
 
 
 class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
+public:
+	BrowsingHistoryChoiceModel()
+		:
+		fChoices(20, true)
+	{
+	}
+
 	virtual void FetchChoicesFor(const BString& pattern)
 	{
-		int32 count = CountChoices();
-		for (int32 i = 0; i < count; i++) {
-			delete reinterpret_cast<BAutoCompleter::Choice*>(
-				fChoices.ItemAtFast(i));
-		}
 		fChoices.MakeEmpty();
 
 		// Search through BrowsingHistory for any matches.
@@ -84,7 +87,7 @@ class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
 		BString lastBaseURL;
 		int32 priority = INT_MAX;
 
-		count = history->CountItems();
+		int32 count = history->CountItems();
 		for (int32 i = 0; i < count; i++) {
 			const BrowsingHistoryItem* item = history->ItemAt(i);
 			if (item == NULL)
@@ -115,16 +118,15 @@ class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
 
 	virtual const BAutoCompleter::Choice* ChoiceAt(int32 index) const
 	{
-		return reinterpret_cast<BAutoCompleter::Choice*>(
-			fChoices.ItemAt(index));
+		return fChoices.ItemAt(index);
 	}
 
-	static int _CompareChoices(const void* a, const void* b)
+	static int _CompareChoices(const BAutoCompleter::Choice* a,
+		const BAutoCompleter::Choice* b)
 	{
-		const URLChoice* aChoice
-			= *reinterpret_cast<const URLChoice* const *>(a);
-		const URLChoice* bChoice
-			= *reinterpret_cast<const URLChoice* const *>(b);
+		const URLChoice* aChoice = static_cast<const URLChoice*>(a);
+		const URLChoice* bChoice = static_cast<const URLChoice*>(b);
+
 		if (*aChoice < *bChoice)
 			return -1;
 		else if (*aChoice == *bChoice)
@@ -133,7 +135,7 @@ class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
 	}
 
 private:
-	BList fChoices;
+	BObjectList<BAutoCompleter::Choice> fChoices;
 };
 
 

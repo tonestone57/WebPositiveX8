@@ -7,8 +7,8 @@
 #define BROWSING_HISTORY_H
 
 #include "DateTime.h"
-#include <List.h>
 #include <Locker.h>
+#include <ObjectList.h>
 #include <OS.h>
 
 class BFile;
@@ -87,7 +87,7 @@ private:
 	static	status_t			_LoadThread(void* data);
 
 private:
-			BList				fHistoryItems;
+			BObjectList<BrowsingHistoryItem> fHistoryItems;
 			int32				fMaxHistoryItemAge;
 
 	static	BrowsingHistory		sDefaultInstance;
@@ -97,7 +97,7 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			BList*				fPendingSaveItems;
+			BObjectList<BrowsingHistoryItem>* fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 };
