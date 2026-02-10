@@ -452,7 +452,6 @@ BrowsingHistory::_LoadThread(void* data)
 	}
 
 	self->fSettingsLoaded = true;
-	self->fLoadThread = -1;
 	return B_OK;
 }
 
