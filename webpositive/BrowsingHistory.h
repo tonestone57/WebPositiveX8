@@ -9,6 +9,7 @@
 #include "DateTime.h"
 #include <List.h>
 #include <Locker.h>
+#include <OS.h>
 
 class BFile;
 class BString;
@@ -82,12 +83,20 @@ private:
 			void				_SaveSettings();
 			bool				_OpenSettingsFile(BFile& file, uint32 mode);
 
+	static	status_t			_SaveThread(void* data);
+
 private:
 			BList				fHistoryItems;
 			int32				fMaxHistoryItemAge;
 
 	static	BrowsingHistory		sDefaultInstance;
 			bool				fSettingsLoaded;
+
+			thread_id			fSaveThread;
+			sem_id				fSaveSem;
+			bool				fQuitting;
+			BList*				fPendingSaveItems;
+			BLocker				fSaveLock;
 };
 
 

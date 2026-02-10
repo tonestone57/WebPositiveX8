@@ -157,14 +157,30 @@ BrowsingHistory::BrowsingHistory()
 	BLocker("browsing history"),
 	fHistoryItems(64),
 	fMaxHistoryItemAge(7),
-	fSettingsLoaded(false)
+	fSettingsLoaded(false),
+	fQuitting(false),
+	fPendingSaveItems(NULL),
+	fSaveLock("browsing history save lock")
 {
+	fSaveSem = create_sem(0, "browsing history save sem");
+	fSaveThread = spawn_thread(_SaveThread, "browsing history saver",
+		B_LOW_PRIORITY, this);
+	resume_thread(fSaveThread);
 }
 
 
 BrowsingHistory::~BrowsingHistory()
 {
+	// Queue a final save
 	_SaveSettings();
+
+	fQuitting = true;
+	release_sem(fSaveSem);
+
+	status_t exitValue;
+	wait_for_thread(fSaveThread, &exitValue);
+
+	delete_sem(fSaveSem);
 	_Clear();
 }
 
@@ -332,25 +348,89 @@ void
 BrowsingHistory::_SaveSettings()
 {
 	BAutolock _(this);
-	BFile settingsFile;
-	if (_OpenSettingsFile(settingsFile,
-			B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
-		BMessage settingsArchive;
-		settingsArchive.AddInt32("max history item age", fMaxHistoryItemAge);
-		BMessage historyItemArchive;
-		int32 count = fHistoryItems.CountItems();
-		for (int32 i = 0; i < count; i++) {
-			const BrowsingHistoryItem* item = ItemAt(i);
-			if (item == NULL || item->Archive(&historyItemArchive) != B_OK)
-				break;
-			if (settingsArchive.AddMessage("history item",
-					&historyItemArchive) != B_OK) {
-				break;
-			}
-			historyItemArchive.MakeEmpty();
-		}
-		settingsArchive.Flatten(&settingsFile);
+
+	// Create deep copy of items to save
+	BList* newItems = new(std::nothrow) BList(fHistoryItems.CountItems());
+	if (newItems == NULL)
+		return;
+
+	int32 count = fHistoryItems.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		const BrowsingHistoryItem* item = ItemAt(i);
+		if (item)
+			newItems->AddItem(new(std::nothrow) BrowsingHistoryItem(*item));
 	}
+
+	fSaveLock.Lock();
+	if (fPendingSaveItems != NULL) {
+		// Delete replaced items
+		int32 count = fPendingSaveItems->CountItems();
+		for (int32 i = 0; i < count; i++) {
+			delete (BrowsingHistoryItem*)fPendingSaveItems->ItemAt(i);
+		}
+		delete fPendingSaveItems;
+	}
+	fPendingSaveItems = newItems;
+	fSaveLock.Unlock();
+
+	release_sem(fSaveSem);
+}
+
+
+status_t
+BrowsingHistory::_SaveThread(void* data)
+{
+	BrowsingHistory* self = (BrowsingHistory*)data;
+
+	while (true) {
+		acquire_sem(self->fSaveSem);
+
+		BList* itemsToSave = NULL;
+
+		self->fSaveLock.Lock();
+		itemsToSave = self->fPendingSaveItems;
+		self->fPendingSaveItems = NULL;
+		self->fSaveLock.Unlock();
+
+		if (self->fQuitting && itemsToSave == NULL)
+			break;
+
+		if (itemsToSave != NULL) {
+			BFile settingsFile;
+			if (self->_OpenSettingsFile(settingsFile,
+					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
+				BMessage settingsArchive;
+
+				self->Lock();
+				int32 maxAge = self->fMaxHistoryItemAge;
+				self->Unlock();
+
+				settingsArchive.AddInt32("max history item age", maxAge);
+
+				BMessage historyItemArchive;
+				int32 count = itemsToSave->CountItems();
+				for (int32 i = 0; i < count; i++) {
+					BrowsingHistoryItem* item = (BrowsingHistoryItem*)itemsToSave->ItemAt(i);
+					if (item && item->Archive(&historyItemArchive) == B_OK) {
+						settingsArchive.AddMessage("history item", &historyItemArchive);
+					}
+					historyItemArchive.MakeEmpty();
+				}
+				settingsArchive.Flatten(&settingsFile);
+			}
+
+			// Clean up
+			int32 count = itemsToSave->CountItems();
+			for (int32 i = 0; i < count; i++) {
+				delete (BrowsingHistoryItem*)itemsToSave->ItemAt(i);
+			}
+			delete itemsToSave;
+		}
+
+		if (self->fQuitting)
+			break;
+	}
+	return B_OK;
 }
 
 
