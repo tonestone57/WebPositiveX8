@@ -741,7 +741,7 @@ TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
 	fCardLayout = new BCardLayout();
 	fContainerView->SetLayout(fCardLayout);
 
-	fTabContainerView = new TabContainerView(fController);
+	fTabContainerView = new TabContainerView(fController.get());
 	fTabContainerGroup = new TabContainerGroup(fTabContainerView);
 	fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
 
@@ -768,7 +768,6 @@ TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
 
 TabManager::~TabManager()
 {
-	delete fController;
 }
 
 

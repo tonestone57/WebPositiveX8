@@ -6,6 +6,8 @@
 #ifndef TAB_MANAGER_H
 #define TAB_MANAGER_H
 
+#include <memory>
+
 #include <Messenger.h>
 #include <TabView.h>
 
@@ -71,7 +73,8 @@ private:
 			TabContainerView*	fTabContainerView;
 			BView*				fContainerView;
 			BCardLayout*		fCardLayout;
-			TabManagerController* fController;
+			std::unique_ptr<TabManagerController>
+								fController;
 
 			BMessenger			fTarget;
 };

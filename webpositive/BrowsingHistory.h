@@ -6,6 +6,8 @@
 #ifndef BROWSING_HISTORY_H
 #define BROWSING_HISTORY_H
 
+#include <memory>
+
 #include "DateTime.h"
 #include <Locker.h>
 #include <ObjectList.h>
@@ -97,7 +99,8 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			BObjectList<BrowsingHistoryItem, true>* fPendingSaveItems;
+			std::unique_ptr<BObjectList<BrowsingHistoryItem, true>>
+								fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 };
