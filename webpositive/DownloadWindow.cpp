@@ -7,6 +7,7 @@
 #include "DownloadWindow.h"
 
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include <Alert.h>
 #include <Button.h>
@@ -622,7 +623,11 @@ DownloadWindow::_OpenSettingsFile(BFile& file, uint32 mode)
 		|| path.Append("Downloads") != B_OK) {
 		return false;
 	}
-	return file.SetTo(path.Path(), mode) == B_OK;
+	if (file.SetTo(path.Path(), mode) != B_OK)
+		return false;
+	if ((mode & B_CREATE_FILE) != 0)
+		file.SetPermissions(S_IRUSR | S_IWUSR);
+	return true;
 }
 
 

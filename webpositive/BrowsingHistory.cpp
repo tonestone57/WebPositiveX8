@@ -8,6 +8,7 @@
 
 #include <new>
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include <Autolock.h>
 #include <Entry.h>
@@ -461,6 +462,10 @@ BrowsingHistory::_OpenSettingsFile(BFile& file, uint32 mode)
 		|| path.Append("BrowsingHistory") != B_OK) {
 		return false;
 	}
-	return file.SetTo(path.Path(), mode) == B_OK;
+	if (file.SetTo(path.Path(), mode) != B_OK)
+		return false;
+	if ((mode & B_CREATE_FILE) != 0)
+		file.SetPermissions(S_IRUSR | S_IWUSR);
+	return true;
 }
 
