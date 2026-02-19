@@ -72,6 +72,7 @@
 
 #include <map>
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "AuthenticationPanel.h"
 #include "BaseURL.h"
@@ -2772,6 +2773,8 @@ BrowserWindow::_HandlePageSourceResult(const BMessage* message)
 			B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY);
 		if (ret == B_OK)
 			ret = pageSourceFile.InitCheck();
+		if (ret == B_OK)
+			pageSourceFile.SetPermissions(S_IRUSR | S_IWUSR);
 
 		if (ret == B_OK) {
 			ssize_t written = pageSourceFile.Write(source.String(),
