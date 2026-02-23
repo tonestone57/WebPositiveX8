@@ -1,10 +1,18 @@
 SubDir HAIKU_TOP src apps webpositive support tests ;
 
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive support ] ;
+SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
 
 SimpleTest BaseURLTest :
 	BaseURLTest.cpp
 	BaseURL.cpp
+	:
+	be
+;
+
+SimpleTest SettingsKeysTest :
+	SettingsKeysTest.cpp
+	SettingsKeys.cpp
 	:
 	be
 ;
