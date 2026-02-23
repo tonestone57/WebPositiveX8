@@ -213,8 +213,29 @@ BrowsingHistory::AddItem(const BrowsingHistoryItem& item)
 }
 
 
+bool
+BrowsingHistory::RemoveItem(const BString& url)
+{
+	BAutolock _(this);
+	bool removed = false;
+	for (int32 i = fHistoryItems.CountItems() - 1; i >= 0; i--) {
+		BrowsingHistoryItem* item = fHistoryItems.ItemAt(i);
+		if (item->URL() == url) {
+			fHistoryItems.RemoveItem(i);
+			delete item;
+			removed = true;
+		}
+	}
+
+	if (removed)
+		_SaveSettings();
+
+	return removed;
+}
+
+
 int32
-BrowsingHistory::BrowsingHistory::CountItems() const
+BrowsingHistory::CountItems() const
 {
 	BAutolock _(const_cast<BrowsingHistory*>(this));
 
