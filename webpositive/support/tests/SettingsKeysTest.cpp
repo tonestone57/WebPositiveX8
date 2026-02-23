@@ -2,6 +2,7 @@
 #include <string.h>
 #include <set>
 #include <string>
+#include <vector>
 #include "SettingsKeys.h"
 
 int gTestFailures = 0;
@@ -17,9 +18,9 @@ void assert_true(bool condition, const char* message) {
 
 bool is_valid_url(const char* url) {
     if (url == NULL) return false;
-    if (strncmp(url, "http://", 7) == 0) return true;
-    if (strncmp(url, "https://", 8) == 0) return true;
-    if (strncmp(url, "file://", 7) == 0) return true;
+    if (strncmp(url, "http://", 7) == 0 && url[7] != '\0') return true;
+    if (strncmp(url, "https://", 8) == 0 && url[8] != '\0') return true;
+    if (strncmp(url, "file://", 7) == 0 && url[7] != '\0') return true;
     return false;
 }
 
@@ -95,6 +96,43 @@ int main() {
     if (kDefaultSearchPageURL != NULL) {
         assert_true(strstr(kDefaultSearchPageURL, "%s") != NULL,
             "kDefaultSearchPageURL contains %%s");
+    }
+
+    printf("\nValidating settings keys...\n");
+    struct KeyInfo {
+        const char* name;
+        const char* value;
+    };
+    std::vector<KeyInfo> keys = {
+        {"kSettingsKeyDownloadPath", kSettingsKeyDownloadPath},
+        {"kSettingsKeyShowTabsIfSinglePageOpen", kSettingsKeyShowTabsIfSinglePageOpen},
+        {"kSettingsKeyAutoHideInterfaceInFullscreenMode", kSettingsKeyAutoHideInterfaceInFullscreenMode},
+        {"kSettingsKeyAutoHidePointer", kSettingsKeyAutoHidePointer},
+        {"kSettingsKeyShowHomeButton", kSettingsKeyShowHomeButton},
+        {"kSettingsKeyStartUpPolicy", kSettingsKeyStartUpPolicy},
+        {"kSettingsKeyNewWindowPolicy", kSettingsKeyNewWindowPolicy},
+        {"kSettingsKeyNewTabPolicy", kSettingsKeyNewTabPolicy},
+        {"kSettingsKeyStartPageURL", kSettingsKeyStartPageURL},
+        {"kSettingsKeySearchPageURL", kSettingsKeySearchPageURL},
+        {"kSettingsKeyUseProxy", kSettingsKeyUseProxy},
+        {"kSettingsKeyProxyAddress", kSettingsKeyProxyAddress},
+        {"kSettingsKeyProxyPort", kSettingsKeyProxyPort},
+        {"kSettingsKeyUseProxyAuth", kSettingsKeyUseProxyAuth},
+        {"kSettingsKeyProxyUsername", kSettingsKeyProxyUsername},
+        {"kSettingsKeyProxyPassword", kSettingsKeyProxyPassword},
+        {"kSettingsShowBookmarkBar", kSettingsShowBookmarkBar}
+    };
+
+    std::set<std::string> keyValues;
+    for (const auto& key : keys) {
+        char msg[512];
+        snprintf(msg, sizeof(msg), "%s is not NULL", key.name);
+        assert_true(key.value != NULL, msg);
+        if (key.value != NULL) {
+            snprintf(msg, sizeof(msg), "%s value '%s' is unique", key.name, key.value);
+            assert_true(keyValues.find(key.value) == keyValues.end(), msg);
+            keyValues.insert(key.value);
+        }
     }
 
     if (gTestFailures > 0) {
