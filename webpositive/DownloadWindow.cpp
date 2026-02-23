@@ -127,7 +127,7 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 		B_AUTO_UPDATE_SIZE_LIMITS | B_ASYNCHRONOUS_CONTROLS | B_NOT_ZOOMABLE),
 	fMinimizeOnClose(false),
 	fQuitting(false),
-	fPendingSaveMessage(NULL),
+	fPendingSaveMessage(nullptr),
 	fSaveLock("download window save lock")
 {
 	fSaveSem = create_sem(0, "download window save sem");
@@ -533,8 +533,8 @@ DownloadWindow::_ValidateButtonStatus()
 void
 DownloadWindow::_SaveSettings()
 {
-	BMessage* newMessage = new(std::nothrow) BMessage();
-	if (newMessage == NULL)
+	std::unique_ptr<BMessage> newMessage(new(std::nothrow) BMessage());
+	if (!newMessage)
 		return;
 
 	// Create snapshot of settings on window thread
@@ -551,8 +551,7 @@ DownloadWindow::_SaveSettings()
 	}
 
 	fSaveLock.Lock();
-	delete fPendingSaveMessage;
-	fPendingSaveMessage = newMessage;
+	fPendingSaveMessage = std::move(newMessage);
 	fSaveLock.Unlock();
 
 	release_sem(fSaveSem);
@@ -567,22 +566,20 @@ DownloadWindow::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		BMessage* messageToSave = NULL;
+		std::unique_ptr<BMessage> messageToSave;
 
 		self->fSaveLock.Lock();
-		messageToSave = self->fPendingSaveMessage;
-		self->fPendingSaveMessage = NULL;
+		messageToSave = std::move(self->fPendingSaveMessage);
 		self->fSaveLock.Unlock();
 
-		if (self->fQuitting && messageToSave == NULL)
+		if (self->fQuitting && !messageToSave)
 			break;
 
-		if (messageToSave != NULL) {
+		if (messageToSave) {
 			BFile file;
 			if (self->_OpenSettingsFile(file, B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY)) {
 				messageToSave->Flatten(&file);
 			}
-			delete messageToSave;
 		}
 
 		if (self->fQuitting)
