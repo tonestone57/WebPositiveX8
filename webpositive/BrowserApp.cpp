@@ -40,8 +40,8 @@
 #include <Screen.h>
 #include <UrlContext.h>
 #include <debugger.h>
-
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "BrowserWindow.h"
 #include "BrowsingHistory.h"
@@ -204,7 +204,7 @@ BrowserApp::ReadyToRun()
 	BPath path;
 	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path) == B_OK
 		&& path.Append(kApplicationName) == B_OK
-		&& create_directory(path.Path(), 0777) == B_OK) {
+		&& create_directory(path.Path(), S_IRWXU) == B_OK) {
 
 		BWebSettings::SetPersistentStoragePath(path.Path());
 	}

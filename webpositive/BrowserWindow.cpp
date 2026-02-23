@@ -69,7 +69,6 @@
 #include <TextControl.h>
 #include <UnicodeChar.h>
 #include <Url.h>
-
 #include <map>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -1934,7 +1933,7 @@ BrowserWindow::_BookmarkPath(BPath& path) const
 	if (ret != B_OK)
 		return ret;
 
-	return create_directory(path.Path(), 0777);
+	return create_directory(path.Path(), S_IRWXU);
 }
 
 /*! If fileName is an empty BString, a valid file name will be derived from title.
