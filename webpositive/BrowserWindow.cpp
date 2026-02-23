@@ -1733,6 +1733,10 @@ BrowserWindow::ResizeRequested(float width, float height, BWebView* view)
 void
 BrowserWindow::SetToolBarsVisible(bool flag, BWebView* view)
 {
+	if (view != CurrentWebView())
+		return;
+
+	// Ignore request when there is more than one BWebView embedded!
 	if (fTabManager->CountTabs() > 1)
 		return;
 
@@ -1749,6 +1753,10 @@ BrowserWindow::SetToolBarsVisible(bool flag, BWebView* view)
 void
 BrowserWindow::SetStatusBarVisible(bool flag, BWebView* view)
 {
+	if (view != CurrentWebView())
+		return;
+
+	// Ignore request when there is more than one BWebView embedded!
 	if (fTabManager->CountTabs() > 1)
 		return;
 
@@ -1765,6 +1773,10 @@ BrowserWindow::SetStatusBarVisible(bool flag, BWebView* view)
 void
 BrowserWindow::SetMenuBarVisible(bool flag, BWebView* view)
 {
+	if (view != CurrentWebView())
+		return;
+
+	// Ignore request when there is more than one BWebView embedded!
 	if (fTabManager->CountTabs() > 1)
 		return;
 
@@ -1784,7 +1796,12 @@ BrowserWindow::SetMenuBarVisible(bool flag, BWebView* view)
 void
 BrowserWindow::SetResizable(bool flag, BWebView* view)
 {
-	// TODO: Ignore request when there is more than one BWebView embedded!
+	if (view != CurrentWebView())
+		return;
+
+	// Ignore request when there is more than one BWebView embedded!
+	if (fTabManager->CountTabs() > 1)
+		return;
 
 	if (flag)
 		SetFlags(Flags() & ~B_NOT_RESIZABLE);
