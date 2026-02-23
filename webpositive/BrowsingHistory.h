@@ -7,6 +7,8 @@
 #define BROWSING_HISTORY_H
 
 #include <memory>
+#include <string>
+#include <unordered_map>
 
 #include "DateTime.h"
 #include <Locker.h>
@@ -91,6 +93,8 @@ private:
 
 private:
 			BObjectList<BrowsingHistoryItem, true> fHistoryItems;
+			std::unordered_map<std::string, BrowsingHistoryItem*>
+								fHistoryMap;
 			int32				fMaxHistoryItemAge;
 
 	static	BrowsingHistory		sDefaultInstance;
