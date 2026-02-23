@@ -7,6 +7,7 @@
 #include "DownloadProgressView.h"
 
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include <Alert.h>
 #include <Application.h>
@@ -22,6 +23,7 @@
 #include <GroupLayoutBuilder.h>
 #include <Locale.h>
 #include <MenuItem.h>
+#include <Node.h>
 #include <NodeInfo.h>
 #include <NodeMonitor.h>
 #include <Notification.h>
@@ -409,11 +411,44 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			break;
 		case OPEN_DOWNLOAD:
 		{
-			// TODO: In case of executable files, ask the user first!
 			entry_ref ref;
 			status_t status = get_ref_for_path(fPath.Path(), &ref);
-			if (status == B_OK)
+			if (status == B_OK) {
+				BNode node(&ref);
+				BNodeInfo info(&node);
+				char mimeType[B_MIME_TYPE_LENGTH];
+				bool isExecutable = false;
+				if (info.GetType(mimeType) == B_OK) {
+					if (strcmp(mimeType, "application/x-vnd.be-executable") == 0
+						|| strcmp(mimeType, "application/x-executable") == 0
+						|| strcmp(mimeType, "text/x-shellscript") == 0
+						|| strcmp(mimeType, "application/x-vnd.be-shellscript") == 0) {
+						isExecutable = true;
+					}
+				}
+
+				if (!isExecutable) {
+					struct stat st;
+					if (node.GetStat(&st) == B_OK && S_ISREG(st.st_mode)
+						&& (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0) {
+						isExecutable = true;
+					}
+				}
+
+				if (isExecutable) {
+					BString text(B_TRANSLATE("The file \"%name%\" is an executable program. "
+						"Are you sure you want to run it?"));
+					text.ReplaceFirst("%name%", fPath.Leaf());
+					BAlert* alert = new BAlert(B_TRANSLATE("Open executable"), text,
+						B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), NULL,
+						B_WIDTH_AS_USUAL, B_WARNING_ALERT);
+					alert->SetShortcut(0, B_ESCAPE);
+					if (alert->Go() != 1)
+						break;
+				}
+
 				status = be_roster->Launch(&ref);
+			}
 			if (status != B_OK && status != B_ALREADY_RUNNING) {
 				BAlert* alert = new BAlert(B_TRANSLATE("Open download error"),
 					B_TRANSLATE("The download could not be opened."),
