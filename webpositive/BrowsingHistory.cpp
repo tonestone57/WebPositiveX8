@@ -221,6 +221,7 @@ BrowsingHistory::RemoveItem(const BString& url)
 	for (int32 i = fHistoryItems.CountItems() - 1; i >= 0; i--) {
 		BrowsingHistoryItem* item = fHistoryItems.ItemAt(i);
 		if (item->URL() == url) {
+			fHistoryMap.erase(item->URL().String());
 			fHistoryItems.RemoveItem(i);
 			delete item;
 			removed = true;
@@ -297,23 +298,26 @@ void
 BrowsingHistory::_Clear()
 {
 	fHistoryItems.MakeEmpty();
+	fHistoryMap.clear();
 }
 
 
 bool
 BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 {
+	auto it = fHistoryMap.find(item.URL().String());
+	if (it != fHistoryMap.end()) {
+		if (!internal) {
+			it->second->Invoked();
+			_SaveSettings();
+		}
+		return true;
+	}
+
 	int32 count = CountItems();
 	int32 insertionIndex = count;
 	for (int32 i = 0; i < count; i++) {
 		BrowsingHistoryItem* existingItem = fHistoryItems.ItemAt(i);
-		if (item.URL() == existingItem->URL()) {
-			if (!internal) {
-				existingItem->Invoked();
-				_SaveSettings();
-			}
-			return true;
-		}
 		if (item < *existingItem)
 			insertionIndex = i;
 	}
@@ -322,6 +326,8 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 		delete newItem;
 		return false;
 	}
+
+	fHistoryMap[newItem->URL().String()] = newItem;
 
 	if (!internal) {
 		newItem->Invoked();
