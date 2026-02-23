@@ -162,7 +162,8 @@ BrowsingHistory::BrowsingHistory()
 	fQuitting(false),
 	fPendingSaveItems(nullptr),
 	fSaveLock("browsing history save lock"),
-	fFileLock("browsing history file lock")
+	fFileLock("browsing history file lock"),
+	fLastSaveTime(0)
 {
 	fSaveSem = create_sem(0, "browsing history save sem");
 	fSaveThread = spawn_thread(_SaveThread, "browsing history saver",
@@ -180,7 +181,7 @@ BrowsingHistory::~BrowsingHistory()
 	}
 
 	// Queue a final save
-	_SaveSettings();
+	_SaveSettings(true);
 
 	fQuitting = true;
 	release_sem(fSaveSem);
@@ -247,7 +248,7 @@ BrowsingHistory::Clear()
 {
 	BAutolock _(this);
 	_Clear();
-	_SaveSettings();
+	_SaveSettings(true);
 }	
 
 
@@ -257,7 +258,7 @@ BrowsingHistory::SetMaxHistoryItemAge(int32 days)
 	BAutolock _(this);
 	if (fMaxHistoryItemAge != days) {
 		fMaxHistoryItemAge = days;
-		_SaveSettings();
+		_SaveSettings(true);
 	}
 }	
 
@@ -326,9 +327,16 @@ BrowsingHistory::_LoadSettings()
 
 
 void
-BrowsingHistory::_SaveSettings()
+BrowsingHistory::_SaveSettings(bool force)
 {
 	BAutolock _(this);
+
+	if (!force && fLastSaveTime != 0
+		&& system_time() - fLastSaveTime < 30000000) {
+		return;
+	}
+
+	fLastSaveTime = system_time();
 
 	// Create deep copy of items to save
 	// BObjectList(..., true) owns the items and will delete them on destruction
