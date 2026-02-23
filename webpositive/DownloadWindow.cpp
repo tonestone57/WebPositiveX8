@@ -29,6 +29,7 @@
 #include <UrlContext.h>
 
 #include "BrowserApp.h"
+#include "SettingsFile.h"
 #include "BrowserWindow.h"
 #include "DownloadProgressView.h"
 #include "SettingsKeys.h"
@@ -577,7 +578,8 @@ DownloadWindow::_SaveThread(void* data)
 
 		if (messageToSave) {
 			BFile file;
-			if (self->_OpenSettingsFile(file, B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY)) {
+			if (OpenSettingsFile(file, "Downloads",
+					B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY) == B_OK) {
 				messageToSave->Flatten(&file);
 			}
 		}
@@ -593,7 +595,7 @@ void
 DownloadWindow::_LoadSettings()
 {
 	BFile file;
-	if (!_OpenSettingsFile(file, B_READ_ONLY))
+	if (OpenSettingsFile(file, "Downloads", B_READ_ONLY) != B_OK)
 		return;
 	BMessage message;
 	if (message.Unflatten(&file) != B_OK)
@@ -611,20 +613,5 @@ DownloadWindow::_LoadSettings()
 }
 
 
-bool
-DownloadWindow::_OpenSettingsFile(BFile& file, uint32 mode)
-{
-	BPath path;
-	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path) != B_OK
-		|| path.Append(kApplicationName) != B_OK
-		|| path.Append("Downloads") != B_OK) {
-		return false;
-	}
-	if (file.SetTo(path.Path(), mode) != B_OK)
-		return false;
-	if ((mode & B_CREATE_FILE) != 0)
-		file.SetPermissions(S_IRUSR | S_IWUSR);
-	return true;
-}
 
 

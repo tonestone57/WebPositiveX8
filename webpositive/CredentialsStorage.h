@@ -63,8 +63,6 @@ private:
 
 			void				_LoadSettings();
 			void				_SaveSettings();
-			bool				_OpenSettingsFile(BFile& file,
-									uint32 mode) const;
 	static	status_t			_SaveThread(void* data);
 
 private:
