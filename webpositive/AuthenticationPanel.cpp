@@ -13,6 +13,7 @@
 #include <GroupLayoutBuilder.h>
 #include <Locale.h>
 #include <Message.h>
+#include <MessageRunner.h>
 #include <Screen.h>
 #include <SeparatorView.h>
 #include <SpaceLayoutItem.h>
@@ -48,7 +49,9 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 	m_cancelButton(new BButton("cancel", B_TRANSLATE("Cancel"),
 		new BMessage(B_QUIT_REQUESTED))),
 	m_cancelled(false),
-	m_exitSemaphore(create_sem(0, "Authentication Panel"))
+	m_exitSemaphore(create_sem(0, "Authentication Panel")),
+	m_jitterRunner(NULL),
+	m_jitterCount(0)
 {
 }
 
@@ -56,6 +59,7 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 AuthenticationPanel::~AuthenticationPanel()
 {
 	delete_sem(m_exitSemaphore);
+	delete m_jitterRunner;
 }
 
 
@@ -91,16 +95,27 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		break;
 	}
 	case kMsgJitter: {
-		UpdateIfNeeded();
-		BPoint leftTop = Frame().LeftTop();
+		if (m_jitterCount == 0) {
+			UpdateIfNeeded();
+			m_originalPos = Frame().LeftTop();
+			BMessage message(kMsgJitter);
+			m_jitterRunner = new BMessageRunner(BMessenger(this), &message,
+				15000, 20);
+		}
+
 		const float jitterOffsets[] = { -10, 0, 10, 0 };
 		const int32 jitterOffsetCount = sizeof(jitterOffsets) / sizeof(float);
-		for (int32 i = 0; i < 20; i++) {
-			float offset = jitterOffsets[i % jitterOffsetCount];
-			MoveTo(leftTop.x + offset, leftTop.y);
-			snooze(15000);
+
+		if (m_jitterCount < 20) {
+			float offset = jitterOffsets[m_jitterCount % jitterOffsetCount];
+			MoveTo(m_originalPos.x + offset, m_originalPos.y);
+			m_jitterCount++;
+		} else {
+			MoveTo(m_originalPos);
+			delete m_jitterRunner;
+			m_jitterRunner = NULL;
+			m_jitterCount = 0;
 		}
-		MoveTo(leftTop);
 		break;
 	}
 	default:
