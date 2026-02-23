@@ -58,6 +58,7 @@
 #include <MessageRunner.h>
 #include <NodeInfo.h>
 #include <NodeMonitor.h>
+#include <OS.h>
 #include <Path.h>
 #include <Roster.h>
 #include <Screen.h>
@@ -2739,12 +2740,10 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 }
 
 
-void
-BrowserWindow::_HandlePageSourceResult(const BMessage* message)
+static status_t
+_HandlePageSourceThread(void* data)
 {
-	// TODO: This should be done in an extra thread perhaps. Doing it in
-	// the application thread is not much better, since it actually draws
-	// the pages...
+	BMessage* message = (BMessage*)data;
 
 	BPath pathToPageSource;
 
@@ -2813,6 +2812,22 @@ BrowserWindow::_HandlePageSourceResult(const BMessage* message)
 		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 		alert->Go(NULL);
 	}
+
+	delete message;
+	return B_OK;
+}
+
+
+void
+BrowserWindow::_HandlePageSourceResult(const BMessage* message)
+{
+	BMessage* messageCopy = new BMessage(*message);
+	thread_id thread = spawn_thread(_HandlePageSourceThread,
+		"page source worker", B_NORMAL_PRIORITY, messageCopy);
+	if (thread < 0)
+		delete messageCopy;
+	else
+		resume_thread(thread);
 }
 
 
