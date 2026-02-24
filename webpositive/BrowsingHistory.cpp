@@ -161,6 +161,13 @@ BrowsingHistory::sDefaultInstance;
 
 BrowsingHistory::BrowsingHistory()
 	:
+	BrowsingHistory(true)
+{
+}
+
+
+BrowsingHistory::BrowsingHistory(bool startThreads)
+	:
 	BLocker("browsing history"),
 	fHistoryItems(64),
 	fMaxHistoryItemAge(7),
@@ -171,11 +178,17 @@ BrowsingHistory::BrowsingHistory()
 	fFileLock("browsing history file lock"),
 	fLastSaveTime(0)
 {
-	fSaveSem = create_sem(0, "browsing history save sem");
-	fSaveThread = spawn_thread(_SaveThread, "browsing history saver",
-		B_LOW_PRIORITY, this);
-	fLoadThread = -1;
-	resume_thread(fSaveThread);
+	if (startThreads) {
+		fSaveSem = create_sem(0, "browsing history save sem");
+		fSaveThread = spawn_thread(_SaveThread, "browsing history saver",
+			B_LOW_PRIORITY, this);
+		fLoadThread = -1;
+		resume_thread(fSaveThread);
+	} else {
+		fSaveSem = -1;
+		fSaveThread = -1;
+		fLoadThread = -1;
+	}
 }
 
 
@@ -190,12 +203,16 @@ BrowsingHistory::~BrowsingHistory()
 	_SaveSettings(true);
 
 	fQuitting = true;
-	release_sem(fSaveSem);
+	if (fSaveSem >= 0)
+		release_sem(fSaveSem);
 
-	status_t exitValue;
-	wait_for_thread(fSaveThread, &exitValue);
+	if (fSaveThread >= 0) {
+		status_t exitValue;
+		wait_for_thread(fSaveThread, &exitValue);
+	}
 
-	delete_sem(fSaveSem);
+	if (fSaveSem >= 0)
+		delete_sem(fSaveSem);
 	_Clear();
 }
 
@@ -467,7 +484,8 @@ BrowsingHistory::_SaveSettings(bool force)
 	fPendingSaveItems = std::move(newItems);
 	fSaveLock.Unlock();
 
-	release_sem(fSaveSem);
+	if (fSaveSem >= 0)
+		release_sem(fSaveSem);
 }
 
 

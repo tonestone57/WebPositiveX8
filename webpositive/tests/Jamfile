@@ -2,6 +2,7 @@ SubDir HAIKU_TOP src apps webpositive tests ;
 
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive autocompletion ] ;
+SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive support ] ;
 
 SimpleTest URLChoiceTest :
 	URLChoiceTest.cpp
@@ -9,6 +10,13 @@ SimpleTest URLChoiceTest :
 	be
 ;
 
+SimpleTest BrowsingHistoryChoiceModelTest :
+	BrowsingHistoryChoiceModelTest.cpp
+	BrowsingHistoryChoiceModel.cpp
+	BrowsingHistory.cpp
+	BaseURL.cpp
+	SettingsFile.cpp
+	AutoCompleter.cpp
 SimpleTest PatternSelectorTest :
 	PatternSelectorTest.cpp
 	AutoCompleterDefaultImpl.cpp
