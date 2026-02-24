@@ -397,6 +397,7 @@ BrowsingHistory::_LoadSettings()
 void
 BrowsingHistory::_SaveSettings(bool force)
 {
+	// Force save if requested, or if enough time has passed since last save.
 	BAutolock _(this);
 
 	if (!force && fLastSaveTime != 0
