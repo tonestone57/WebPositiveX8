@@ -13,6 +13,11 @@
 
 #include <NetworkCookieJar.h>
 
+#include <map>
+#include <vector>
+
+#include <String.h>
+
 
 class BColumnListView;
 class BOutlineListView;
@@ -34,6 +39,8 @@ private:
 			BStringItem*		_AddDomain(BString domain, bool fake);
 			void				_ShowCookiesForDomain(BString domain);
 			void				_DeleteCookies();
+			void				_RemoveCookieFromMap(
+									const BPrivate::Network::BNetworkCookie& cookie);
 
 private:
 	BOutlineListView*			fDomains;
@@ -41,8 +48,10 @@ private:
 	BStringView*				fHeaderView;
 
 	BPrivate::Network::BNetworkCookieJar&	fCookieJar;
+
+	std::map<BString, std::vector<BPrivate::Network::BNetworkCookie>>
+								fCookieMap;
 };
 
 
 #endif // COOKIE_WINDOW_H
-
