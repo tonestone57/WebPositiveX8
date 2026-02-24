@@ -33,6 +33,7 @@
 
 #include <Messenger.h>
 #include <String.h>
+#include <Url.h>
 #include <UrlContext.h>
 
 class BButton;
@@ -101,7 +102,8 @@ public:
 									const BString& url, BPrivate::Network::BUrlContext* context,
 									uint32 interfaceElements = INTERFACE_ELEMENT_ALL,
 									BWebView* webView = NULL,
-									uint32 workspaces = B_CURRENT_WORKSPACE);
+									uint32 workspaces = B_CURRENT_WORKSPACE,
+									bool forDownload = false);
 	virtual						~BrowserWindow();
 
 	virtual	void				DispatchMessage(BMessage* message,
@@ -285,6 +287,9 @@ private:
 			BMenuItem*			fBookmarkBarMenuItem;
 			BookmarkBar*		fBookmarkBar;
 			BFilePanel*			fSavePanel;
+
+			bool				fIsDownloadOnly;
+			BUrl				fInitialURL;
 };
 
 

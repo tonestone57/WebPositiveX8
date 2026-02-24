@@ -9,6 +9,7 @@
 #include <map>
 
 #include <MenuBar.h>
+#include <Messenger.h>
 #include <Node.h>
 #include <NodeMonitor.h>
 #include <PopUpMenu.h>
@@ -37,7 +38,13 @@ public:
 
 	void 							MouseDown(BPoint where);
 private:
+	struct LoaderArgs {
+		BMessenger messenger;
+		node_ref nodeRef;
+	};
+
 	void							_AddItem(ino_t inode, BEntry* entry);
+	static status_t					_LoaderThread(void* data);
 
 private:
 	node_ref						fNodeRef;
