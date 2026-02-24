@@ -41,6 +41,10 @@ const char* kSettingsKeyProxyPassword = "http proxy password";
 
 const char* kSettingsShowBookmarkBar = "show bookmarks bar";
 
+const char* kSettingsFileNameBrowsingHistory = "BrowsingHistory";
+const char* kSettingsFileNameCredentialsStorage = "CredentialsStorage";
+const char* kSettingsFileNameDownloads = "Downloads";
+
 const struct SearchEngine kSearchEngines[] = {
 	{ "Baidu",      "https://www.baidu.com/search?wd=%s",             "a " },
 	{ "Bing",       "https://bing.com/search?q=%s",                   "b " },
