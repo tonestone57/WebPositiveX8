@@ -63,9 +63,6 @@ class BrowsingHistory : public BLocker {
 public:
 	static	BrowsingHistory*	DefaultInstance();
 
-								BrowsingHistory();
-								BrowsingHistory(bool startThreads);
-
 	virtual	bool				AddItem(const BrowsingHistoryItem& item);
 	virtual	bool				RemoveItem(const BString& url);
 
@@ -82,6 +79,9 @@ public:
 			int32				MaxHistoryItemAge() const;
 
 protected:
+								BrowsingHistory();
+								BrowsingHistory(bool startThreads);
+
 	virtual						~BrowsingHistory();
 
 private:
