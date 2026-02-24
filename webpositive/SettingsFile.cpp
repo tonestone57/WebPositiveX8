@@ -11,7 +11,7 @@
 #include <Path.h>
 #include <sys/stat.h>
 
-#include "BrowserApp.h"
+#include "AppConstants.h"
 
 
 status_t
@@ -25,7 +25,7 @@ GetSettingsPath(BPath& path, const char* fileName)
 	if (status != B_OK)
 		return status;
 
-	if (fileName != NULL)
+	if (fileName != nullptr)
 		status = path.Append(fileName);
 
 	return status;

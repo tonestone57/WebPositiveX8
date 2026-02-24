@@ -96,8 +96,7 @@ private:
 };
 
 
-extern const char* kApplicationSignature;
-extern const char* kApplicationName;
+#include "AppConstants.h"
 
 
 #endif // BROWSER_APP_H
