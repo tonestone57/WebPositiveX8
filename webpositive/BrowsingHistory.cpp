@@ -14,11 +14,9 @@
 #include <Autolock.h>
 #include <Entry.h>
 #include <File.h>
-#include <FindDirectory.h>
 #include <Message.h>
 #include <Path.h>
 
-#include "BrowserApp.h"
 #include "SettingsFile.h"
 
 
