@@ -52,7 +52,7 @@ public:
 			int32				FirstTabIndex() { return 0; };
 			int32				LastTabIndex()
 									{ return GroupLayout() == NULL ? -1
-										: GroupLayout()->CountItems() - 1; };
+										: GroupLayout()->CountItems() - 2; };
 			int32				SelectedTabIndex()
 									{ return fSelectedTab == NULL ? -1
 										: IndexOf(fSelectedTab); };
