@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <limits.h>
+#include <DateTime.h>
 #include <String.h>
 #include "BrowsingHistoryChoiceModel.h"
 #include "BrowsingHistory.h"

@@ -16,6 +16,7 @@ SimpleTest BrowsingHistoryChoiceModelTest :
 	BrowsingHistory.cpp
 	BaseURL.cpp
 	SettingsFile.cpp
+	AutoCompleter.cpp
 	:
 	be
 ;
