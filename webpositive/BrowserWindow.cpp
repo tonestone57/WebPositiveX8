@@ -70,8 +70,9 @@
 #include <TextControl.h>
 #include <UnicodeChar.h>
 #include <Url.h>
-#include <memory>
 #include <map>
+#include <memory>
+#include <new>
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -2826,7 +2827,10 @@ BrowserWindow::_HandlePageSourceResult(const BMessage* message)
 	if (message == NULL)
 		return;
 
-	BMessage* messageCopy = new BMessage(*message);
+	BMessage* messageCopy = new(std::nothrow) BMessage(*message);
+	if (messageCopy == NULL)
+		return;
+
 	thread_id thread = spawn_thread(_HandlePageSourceThread,
 		"page source worker", B_LOW_PRIORITY, messageCopy);
 	if (thread < 0)
