@@ -9,6 +9,13 @@ SimpleTest URLChoiceTest :
 	be
 ;
 
+SimpleTest PatternSelectorTest :
+	PatternSelectorTest.cpp
+	AutoCompleterDefaultImpl.cpp
+	:
+	be
+;
+
 SimpleTest BrowsingHistoryItemTest :
 	BrowsingHistoryItemTest.cpp
 	BrowsingHistory.cpp
