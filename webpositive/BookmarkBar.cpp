@@ -24,6 +24,7 @@
 #include "BrowserWindow.h"
 #include "NavMenu.h"
 
+#include <new>
 #include <stdio.h>
 
 
@@ -35,6 +36,7 @@ const uint32 kAskBookmarkNameMsg = 'askn';
 const uint32 kShowInTrackerMsg = 'otrk';
 const uint32 kRenameBookmarkMsg = 'rena';
 const uint32 kFolderMsg = 'fold';
+const uint32 kAddBookmarkMsg = 'adbk';
 
 
 BookmarkBar::BookmarkBar(const char* title, BHandler* target,
@@ -115,14 +117,20 @@ BookmarkBar::AttachedToWindow()
 	BMenuBar::AttachedToWindow();
 	watch_node(&fNodeRef, B_WATCH_DIRECTORY, BMessenger(this));
 
-	// Enumerate initial directory content
-	BDirectory dir(&fNodeRef);
-	BEntry bookmark;
-	while (dir.GetNextEntry(&bookmark, false) == B_OK) {
-		node_ref ref;
-		if (bookmark.GetNodeRef(&ref) == B_OK)
-			_AddItem(ref.node, &bookmark);
-	}
+	// Enumerate initial directory content in a background thread
+	LoaderArgs* args = new(std::nothrow) LoaderArgs;
+	if (args == NULL)
+		return;
+
+	args->messenger = BMessenger(this);
+	args->nodeRef = fNodeRef;
+
+	thread_id thread = spawn_thread(_LoaderThread, "BookmarkBar loader",
+		B_LOW_PRIORITY, args);
+	if (thread < 0)
+		delete args;
+	else
+		resume_thread(thread);
 }
 
 
@@ -130,6 +138,18 @@ void
 BookmarkBar::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
+		case kAddBookmarkMsg:
+		{
+			ino_t inode;
+			entry_ref ref;
+			if (message->FindInt64("node", &inode) == B_OK
+				&& message->FindRef("ref", &ref) == B_OK) {
+				BEntry entry(&ref);
+				_AddItem(inode, &entry);
+			}
+			break;
+		}
+
 		case B_NODE_MONITOR:
 		{
 			int32 opcode = message->FindInt32("opcode");
@@ -472,4 +492,27 @@ BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 	// Move the item to the "more" menu if it overflows.
 	BRect rect = Bounds();
 	FrameResized(rect.Width(), rect.Height());
+}
+
+
+status_t
+BookmarkBar::_LoaderThread(void* data)
+{
+	LoaderArgs* args = static_cast<LoaderArgs*>(data);
+	BDirectory dir(&args->nodeRef);
+	BEntry bookmark;
+	while (dir.GetNextEntry(&bookmark, false) == B_OK) {
+		node_ref ref;
+		if (bookmark.GetNodeRef(&ref) == B_OK) {
+			BMessage message(kAddBookmarkMsg);
+			message.AddInt64("node", ref.node);
+			entry_ref eref;
+			if (bookmark.GetRef(&eref) == B_OK) {
+				message.AddRef("ref", &eref);
+				args->messenger.SendMessage(&message);
+			}
+		}
+	}
+	delete args;
+	return B_OK;
 }
