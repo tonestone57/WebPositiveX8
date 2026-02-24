@@ -45,7 +45,7 @@ Credentials::Credentials(const Credentials& other)
 
 Credentials::Credentials(const BMessage* archive)
 {
-	if (archive == nullptr)
+	if (archive == NULL)
 		return;
 	archive->FindString("username", &fUsername);
 	archive->FindString("password", &fPassword);
@@ -60,7 +60,7 @@ Credentials::~Credentials()
 status_t
 Credentials::Archive(BMessage* archive) const
 {
-	if (archive == nullptr)
+	if (archive == NULL)
 		return B_BAD_VALUE;
 	status_t status = archive->AddString("username", fUsername);
 	if (status == B_OK)

@@ -11,6 +11,8 @@ local sourceDirs =
 ;
 
 local sources =
+	AppConstants.cpp
+
 	# autocompletion
 	AutoCompleter.cpp
 	AutoCompleterDefaultImpl.cpp

@@ -61,10 +61,10 @@ private:
 			 *                               the number of created pages.
 			*/
 			void				_RefsReceived(BMessage* message,
-									int32* pagesCreated = nullptr,
-									bool* fullscreen = nullptr);
+									int32* pagesCreated = NULL,
+									bool* fullscreen = NULL);
 			BrowserWindow*		_CreateNewPage(const BString& url,
-									BrowserWindow* window = nullptr,
+									BrowserWindow* window = NULL,
 									bool fullscreen = false,
 									bool useBlankTab = true);
 			BrowserWindow*		_CreateNewWindow(const BString& url,
