@@ -63,25 +63,28 @@ class BrowsingHistory : public BLocker {
 public:
 	static	BrowsingHistory*	DefaultInstance();
 
-			bool				AddItem(const BrowsingHistoryItem& item);
-			bool				RemoveItem(const BString& url);
+								BrowsingHistory();
+								BrowsingHistory(bool startThreads);
+
+	virtual	bool				AddItem(const BrowsingHistoryItem& item);
+	virtual	bool				RemoveItem(const BString& url);
 
 	// Should Lock() the object when using these in some loop or so:
-			int32				CountItems() const;
+	virtual	int32				CountItems() const;
 			BrowsingHistoryItem	HistoryItemAt(int32 index) const;
 
 	// Requires the object to be Lock()ed:
-			const BrowsingHistoryItem* ItemAt(int32 index) const;
+	virtual	const BrowsingHistoryItem* ItemAt(int32 index) const;
 
-			void				Clear();
+	virtual	void				Clear();
 
 			void				SetMaxHistoryItemAge(int32 days);
 			int32				MaxHistoryItemAge() const;
 
-private:
-								BrowsingHistory();
+protected:
 	virtual						~BrowsingHistory();
 
+private:
 			void				_Clear();
 			bool				_AddItem(const BrowsingHistoryItem& item,
 									bool invoke);

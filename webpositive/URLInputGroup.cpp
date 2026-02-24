@@ -29,6 +29,7 @@
 #include "BrowserWindow.h"
 #include "BrowsingHistory.h"
 #include "IconButton.h"
+#include "BrowsingHistoryChoiceModel.h"
 #include "IconUtils.h"
 #include "TextViewCompleter.h"
 #include "URLChoice.h"
@@ -40,76 +41,6 @@
 #define B_TRANSLATION_CONTEXT "URL Bar"
 
 
-class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
-public:
-	BrowsingHistoryChoiceModel()
-		:
-		fChoices(20)
-	{
-	}
-
-	virtual void FetchChoicesFor(const BString& pattern)
-	{
-		fChoices.MakeEmpty();
-
-		// Search through BrowsingHistory for any matches.
-		BrowsingHistory* history = BrowsingHistory::DefaultInstance();
-		if (!history->Lock())
-			return;
-
-		BString lastBaseURL;
-		int32 priority = INT_MAX;
-
-		int32 count = history->CountItems();
-		for (int32 i = 0; i < count; i++) {
-			const BrowsingHistoryItem* item = history->ItemAt(i);
-			if (item == NULL)
-				continue;
-			const BString& choiceText = item->URL();
-			int32 matchPos = choiceText.IFindFirst(pattern);
-			if (matchPos < 0)
-				continue;
-			if (lastBaseURL.Length() > 0
-				&& choiceText.FindFirst(lastBaseURL) >= 0) {
-				priority--;
-			} else
-				priority = INT_MAX;
-			lastBaseURL = baseURL(choiceText);
-			fChoices.AddItem(new URLChoice(choiceText,
-				choiceText, matchPos, pattern.Length(), priority));
-		}
-
-		history->Unlock();
-
-		fChoices.SortItems(_CompareChoices);
-	}
-
-	virtual int32 CountChoices() const
-	{
-		return fChoices.CountItems();
-	}
-
-	virtual const BAutoCompleter::Choice* ChoiceAt(int32 index) const
-	{
-		return fChoices.ItemAt(index);
-	}
-
-	static int _CompareChoices(const BAutoCompleter::Choice* a,
-		const BAutoCompleter::Choice* b)
-	{
-		const URLChoice* aChoice = static_cast<const URLChoice*>(a);
-		const URLChoice* bChoice = static_cast<const URLChoice*>(b);
-
-		if (*aChoice < *bChoice)
-			return -1;
-		else if (*aChoice == *bChoice)
-			return 0;
-		return 1;
-	}
-
-private:
-	BObjectList<BAutoCompleter::Choice, true> fChoices;
-};
 
 
 // #pragma mark - URLTextView
