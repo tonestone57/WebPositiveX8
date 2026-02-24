@@ -70,6 +70,7 @@
 #include <TextControl.h>
 #include <UnicodeChar.h>
 #include <Url.h>
+#include <memory>
 #include <map>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -2740,10 +2741,12 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 }
 
 
-static status_t
-_HandlePageSourceThread(void* data)
+status_t
+BrowserWindow::_HandlePageSourceThread(void* data)
 {
-	BMessage* message = (BMessage*)data;
+	if (data == NULL)
+		return B_BAD_VALUE;
+	std::unique_ptr<BMessage> message(static_cast<BMessage*>(data));
 
 	BPath pathToPageSource;
 
@@ -2813,7 +2816,6 @@ _HandlePageSourceThread(void* data)
 		alert->Go(NULL);
 	}
 
-	delete message;
 	return B_OK;
 }
 
@@ -2821,9 +2823,12 @@ _HandlePageSourceThread(void* data)
 void
 BrowserWindow::_HandlePageSourceResult(const BMessage* message)
 {
+	if (message == NULL)
+		return;
+
 	BMessage* messageCopy = new BMessage(*message);
 	thread_id thread = spawn_thread(_HandlePageSourceThread,
-		"page source worker", B_NORMAL_PRIORITY, messageCopy);
+		"page source worker", B_LOW_PRIORITY, messageCopy);
 	if (thread < 0)
 		delete messageCopy;
 	else
