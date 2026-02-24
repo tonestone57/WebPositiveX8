@@ -14,25 +14,6 @@
 #include "AutoCompleterDefaultImpl.h"
 
 
-// #pragma mark - DefaultPatternSelector
-
-
-class DefaultPatternSelector : public BAutoCompleter::PatternSelector {
-public:
-	virtual void SelectPatternBounds(const BString& text, int32 caretPos,
-		int32* start, int32* length);
-};
-
-
-void
-DefaultPatternSelector::SelectPatternBounds(const BString& text,
-	int32 caretPos, int32* start, int32* length)
-{
-	if (!start || !length)
-		return;
-	*start = 0;
-	*length = text.Length();
-}
 
 
 // #pragma mark - CompletionStyle
@@ -44,7 +25,7 @@ BAutoCompleter::CompletionStyle::CompletionStyle(EditView* editView,
 	:
 	fEditView(editView),
 	fPatternSelector(patternSelector ? patternSelector
-		: new DefaultPatternSelector()),
+		: new BDefaultPatternSelector()),
 	fChoiceModel(choiceModel),
 	fChoiceView(choiceView)
 {
