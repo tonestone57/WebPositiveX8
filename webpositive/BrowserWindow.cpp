@@ -1840,8 +1840,9 @@ BrowserWindow::SetResizable(bool flag, BWebView* view)
 	if (view != CurrentWebView())
 		return;
 
-	// Ignore request when there is more than one BWebView embedded!
-	if (fTabManager->CountTabs() > 1)
+	// Ignore the request to make the window non-resizable when there is
+	// more than one BWebView embedded.
+	if (!flag && fTabManager->CountTabs() > 1)
 		return;
 
 	if (flag)
