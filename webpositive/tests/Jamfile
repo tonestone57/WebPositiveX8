@@ -8,3 +8,10 @@ SimpleTest URLChoiceTest :
 	:
 	be
 ;
+
+SimpleTest BrowsingHistoryItemTest :
+	BrowsingHistoryItemTest.cpp
+	BrowsingHistory.cpp
+	:
+	be
+;

@@ -163,7 +163,8 @@ BrowsingHistory::BrowsingHistory()
 	fQuitting(false),
 	fPendingSaveItems(nullptr),
 	fSaveLock("browsing history save lock"),
-	fFileLock("browsing history file lock")
+	fFileLock("browsing history file lock"),
+	fLastSaveTime(0)
 {
 	fSaveSem = create_sem(0, "browsing history save sem");
 	fSaveThread = spawn_thread(_SaveThread, "browsing history saver",
@@ -181,7 +182,7 @@ BrowsingHistory::~BrowsingHistory()
 	}
 
 	// Queue a final save
-	_SaveSettings();
+	_SaveSettings(true);
 
 	fQuitting = true;
 	release_sem(fSaveSem);
@@ -222,6 +223,7 @@ BrowsingHistory::RemoveItem(const BString& url)
 	for (int32 i = fHistoryItems.CountItems() - 1; i >= 0; i--) {
 		BrowsingHistoryItem* item = fHistoryItems.ItemAt(i);
 		if (item->URL() == url) {
+			fHistoryMap.erase(item->URL().String());
 			fHistoryItems.RemoveItem(i);
 			delete item;
 			removed = true;
@@ -269,7 +271,7 @@ BrowsingHistory::Clear()
 {
 	BAutolock _(this);
 	_Clear();
-	_SaveSettings();
+	_SaveSettings(true);
 }	
 
 
@@ -279,7 +281,7 @@ BrowsingHistory::SetMaxHistoryItemAge(int32 days)
 	BAutolock _(this);
 	if (fMaxHistoryItemAge != days) {
 		fMaxHistoryItemAge = days;
-		_SaveSettings();
+		_SaveSettings(true);
 	}
 }	
 
@@ -298,23 +300,26 @@ void
 BrowsingHistory::_Clear()
 {
 	fHistoryItems.MakeEmpty();
+	fHistoryMap.clear();
 }
 
 
 bool
 BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 {
+	auto it = fHistoryMap.find(item.URL().String());
+	if (it != fHistoryMap.end()) {
+		if (!internal) {
+			it->second->Invoked();
+			_SaveSettings();
+		}
+		return true;
+	}
+
 	int32 count = CountItems();
 	int32 insertionIndex = count;
 	for (int32 i = 0; i < count; i++) {
 		BrowsingHistoryItem* existingItem = fHistoryItems.ItemAt(i);
-		if (item.URL() == existingItem->URL()) {
-			if (!internal) {
-				existingItem->Invoked();
-				_SaveSettings();
-			}
-			return true;
-		}
 		if (item < *existingItem)
 			insertionIndex = i;
 	}
@@ -323,6 +328,8 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 		delete newItem;
 		return false;
 	}
+
+	fHistoryMap[newItem->URL().String()] = newItem;
 
 	if (!internal) {
 		newItem->Invoked();
@@ -348,9 +355,16 @@ BrowsingHistory::_LoadSettings()
 
 
 void
-BrowsingHistory::_SaveSettings()
+BrowsingHistory::_SaveSettings(bool force)
 {
 	BAutolock _(this);
+
+	if (!force && fLastSaveTime != 0
+		&& system_time() - fLastSaveTime < 30000000) {
+		return;
+	}
+
+	fLastSaveTime = system_time();
 
 	// Create deep copy of items to save
 	// BObjectList(..., true) owns the items and will delete them on destruction
