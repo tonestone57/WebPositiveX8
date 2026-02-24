@@ -46,7 +46,6 @@ private:
 			void				_ValidateButtonStatus();
 			void				_SaveSettings();
 			void				_LoadSettings();
-			bool				_OpenSettingsFile(BFile& file, uint32 mode);
 
 	static	status_t			_SaveThread(void* data);
 

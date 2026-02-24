@@ -18,6 +18,7 @@
 #include <Path.h>
 
 #include "BrowserApp.h"
+#include "SettingsFile.h"
 
 
 BrowsingHistoryItem::BrowsingHistoryItem(const BString& url)
@@ -408,8 +409,8 @@ BrowsingHistory::_SaveThread(void* data)
 		if (itemsToSave) {
 			self->fFileLock.Lock();
 			BFile settingsFile;
-			if (self->_OpenSettingsFile(settingsFile,
-					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
+			if (OpenSettingsFile(settingsFile, "BrowsingHistory",
+					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
 				BMessage settingsArchive;
 
 				self->Lock();
@@ -449,7 +450,8 @@ BrowsingHistory::_LoadThread(void* data)
 	// We read into a BMessage first, then lock the main object to add items.
 	// This keeps the critical section (reading/parsing) out of the main lock.
 	BMessage settingsArchive;
-	bool fileOpened = self->_OpenSettingsFile(settingsFile, B_READ_ONLY);
+	bool fileOpened = OpenSettingsFile(settingsFile, "BrowsingHistory",
+		B_READ_ONLY) == B_OK;
 	if (fileOpened)
 		settingsArchive.Unflatten(&settingsFile);
 	self->fFileLock.Unlock();
@@ -488,19 +490,4 @@ BrowsingHistory::_LoadThread(void* data)
 }
 
 
-bool
-BrowsingHistory::_OpenSettingsFile(BFile& file, uint32 mode)
-{
-	BPath path;
-	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path) != B_OK
-		|| path.Append(kApplicationName) != B_OK
-		|| path.Append("BrowsingHistory") != B_OK) {
-		return false;
-	}
-	if (file.SetTo(path.Path(), mode) != B_OK)
-		return false;
-	if ((mode & B_CREATE_FILE) != 0)
-		file.SetPermissions(S_IRUSR | S_IWUSR);
-	return true;
-}
 

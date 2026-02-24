@@ -85,8 +85,7 @@ private:
 									bool invoke);
 
 			void				_LoadSettings();
-			void				_SaveSettings(bool force = false);
-			bool				_OpenSettingsFile(BFile& file, uint32 mode);
+			void				_SaveSettings();
 
 	static	status_t			_SaveThread(void* data);
 	static	status_t			_LoadThread(void* data);
