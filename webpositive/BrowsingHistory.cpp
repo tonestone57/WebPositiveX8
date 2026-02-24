@@ -228,22 +228,17 @@ BrowsingHistory::RemoveItem(const BString& url)
 		return false;
 
 	BrowsingHistoryItem* itemToRemove = it->second;
-	bool removed = false;
-	for (int32 i = fHistoryItems.CountItems() - 1; i >= 0; i--) {
-		BrowsingHistoryItem* item = fHistoryItems.ItemAt(i);
-		if (item == itemToRemove) {
-			fHistoryMap.erase(it);
-			fHistoryItems.RemoveItem(i);
-			delete item;
-			removed = true;
-			break;
-		}
-	}
+	int32 index = _FindIndex(*itemToRemove);
+	if (index < 0)
+		return false;
 
-	if (removed)
-		_SaveSettings();
+	fHistoryMap.erase(it);
+	fHistoryItems.RemoveItem(index);
+	delete itemToRemove;
 
-	return removed;
+	_SaveSettings();
+
+	return true;
 }
 
 
@@ -320,17 +315,73 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 	auto it = fHistoryMap.find(item.URL().String());
 	if (it != fHistoryMap.end()) {
 		if (!internal) {
-			it->second->Invoked();
+			BrowsingHistoryItem* existingItem = it->second;
+			int32 index = _FindIndex(*existingItem);
+			if (index >= 0) {
+				fHistoryItems.RemoveItem(index);
+				existingItem->Invoked();
+				int32 insertionIndex = _InsertionIndex(*existingItem);
+				if (!fHistoryItems.AddItem(existingItem, insertionIndex)) {
+					fHistoryMap.erase(it);
+					delete existingItem;
+				}
+			} else {
+				existingItem->Invoked();
+			}
+
 			_SaveSettings();
 		}
 		return true;
 	}
 
-	int32 count = fHistoryItems.CountItems();
-	int32 insertionIndex = count;
+	BrowsingHistoryItem* newItem = new(std::nothrow) BrowsingHistoryItem(item);
+	if (!newItem)
+		return false;
 
+	if (!internal)
+		newItem->Invoked();
+
+	int32 insertionIndex = _InsertionIndex(*newItem);
+	if (!fHistoryItems.AddItem(newItem, insertionIndex)) {
+		delete newItem;
+		return false;
+	}
+
+	fHistoryMap[newItem->URL().String()] = newItem;
+
+	if (!internal)
+		_SaveSettings();
+
+	return true;
+}
+
+
+int32
+BrowsingHistory::_FindIndex(const BrowsingHistoryItem& item) const
+{
+	int32 low = 0;
+	int32 high = fHistoryItems.CountItems() - 1;
+	while (low <= high) {
+		int32 mid = (low + high) / 2;
+		const BrowsingHistoryItem* midItem = fHistoryItems.ItemAt(mid);
+		if (item == *midItem)
+			return mid;
+		if (item < *midItem)
+			high = mid - 1;
+		else
+			low = mid + 1;
+	}
+	return -1;
+}
+
+
+int32
+BrowsingHistory::_InsertionIndex(const BrowsingHistoryItem& item) const
+{
+	int32 count = fHistoryItems.CountItems();
 	int32 low = 0;
 	int32 high = count - 1;
+	int32 insertionIndex = count;
 	while (low <= high) {
 		int32 mid = (low + high) / 2;
 		if (item < *fHistoryItems.ItemAt(mid)) {
@@ -340,20 +391,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 			low = mid + 1;
 		}
 	}
-	BrowsingHistoryItem* newItem = new(std::nothrow) BrowsingHistoryItem(item);
-	if (!newItem || !fHistoryItems.AddItem(newItem, insertionIndex)) {
-		delete newItem;
-		return false;
-	}
-
-	fHistoryMap[newItem->URL().String()] = newItem;
-
-	if (!internal) {
-		newItem->Invoked();
-		_SaveSettings();
-	}
-
-	return true;
+	return insertionIndex;
 }
 
 
