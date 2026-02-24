@@ -411,6 +411,7 @@ public:
 		:
 		BView("page icon view", B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE),
 		fIcon(NULL),
+		fLargeIcon(NULL),
 		fClickPoint(-1, 0),
 		fPageIconSet(false)
 	{
@@ -422,6 +423,7 @@ public:
 	~PageIconView()
 	{
 		delete fIcon;
+		delete fLargeIcon;
 	}
 
 	virtual void Draw(BRect updateRect)
@@ -497,8 +499,13 @@ public:
 			BBitmap miniIcon(BRect(0, 0, 15, 15), B_BITMAP_NO_SERVER_LINK,
 				B_CMAP8);
 			miniIcon.ImportBits(fIcon);
-			// TODO:  obtain and send the large icon in addition to the mini icon.
-			// Currently PageUserData does not provide a function that returns this.
+
+			BBitmap largeIcon(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK,
+				B_CMAP8);
+			if (fLargeIcon != NULL)
+				largeIcon.ImportBits(fLargeIcon);
+			else
+				largeIcon.ImportBits(fIcon);
 
 			BMessage drag(B_SIMPLE_DATA);
 			drag.AddInt32("be:actions", B_COPY_TARGET);
@@ -512,7 +519,10 @@ public:
 				// The title may differ from the validated filename
 			if (fPageIconSet == true) {
 				// Don't bother sending the placeholder web icon, if that is all we have.
-				data.AddData("miniIcon", B_COLOR_8_BIT_TYPE, &miniIcon, sizeof(miniIcon));
+				data.AddData("miniIcon", B_COLOR_8_BIT_TYPE, miniIcon.Bits(),
+					miniIcon.BitsLength());
+				data.AddData("largeIcon", B_COLOR_8_BIT_TYPE, largeIcon.Bits(),
+					largeIcon.BitsLength());
 			}
 			drag.AddMessage("be:originator-data", &data);
 
@@ -524,12 +534,17 @@ public:
 		return;
 	}
 
-	void SetIcon(const BBitmap* icon)
+	void SetIcon(const BBitmap* icon, const BBitmap* largeIcon)
 	{
 		delete fIcon;
+		delete fLargeIcon;
+		fLargeIcon = NULL;
+
 		if (icon) {
 			fIcon = new BBitmap(icon);
 			fPageIconSet = true;
+			if (largeIcon != NULL)
+				fLargeIcon = new BBitmap(largeIcon);
 		} else {
 			fIcon = new BBitmap(BRect(0, 0, 15, 15), B_RGB32);
 			BIconUtils::GetVectorIcon(kPlaceholderIcon,
@@ -542,6 +557,7 @@ public:
 private:
 	BBitmap* fIcon;
 	BPoint fClickPoint;
+	BBitmap* fLargeIcon;
 	bool fPageIconSet;
 };
 
@@ -664,9 +680,9 @@ URLInputGroup::GoButton() const
 
 
 void
-URLInputGroup::SetPageIcon(const BBitmap* icon)
+URLInputGroup::SetPageIcon(const BBitmap* icon, const BBitmap* largeIcon)
 {
-	fIconView->SetIcon(icon);
+	fIconView->SetIcon(icon, largeIcon);
 }
 
 

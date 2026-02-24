@@ -200,6 +200,7 @@ public:
 		:
 		fFocusedView(focusedView),
 		fPageIcon(NULL),
+		fPageLargeIcon(NULL),
 		fURLInputSelectionStart(-1),
 		fURLInputSelectionEnd(-1)
 	{
@@ -208,6 +209,7 @@ public:
 	~PageUserData()
 	{
 		delete fPageIcon;
+		delete fPageLargeIcon;
 	}
 
 	void SetFocusedView(BView* focusedView)
@@ -222,16 +224,31 @@ public:
 
 	void SetPageIcon(const BBitmap* icon)
 	{
-		delete fPageIcon;
-		if (icon)
-			fPageIcon = new BBitmap(icon);
-		else
+		if (icon == NULL) {
+			delete fPageIcon;
 			fPageIcon = NULL;
+			delete fPageLargeIcon;
+			fPageLargeIcon = NULL;
+			return;
+		}
+
+		if (icon->Bounds().IntegerWidth() + 1 <= 16) {
+			delete fPageIcon;
+			fPageIcon = new BBitmap(icon);
+		} else {
+			delete fPageLargeIcon;
+			fPageLargeIcon = new BBitmap(icon);
+		}
 	}
 
 	const BBitmap* PageIcon() const
 	{
 		return fPageIcon;
+	}
+
+	const BBitmap* PageLargeIcon() const
+	{
+		return fPageLargeIcon;
 	}
 
 	void SetURLInputContents(const char* text)
@@ -263,6 +280,7 @@ public:
 private:
 	BView*		fFocusedView;
 	BBitmap*	fPageIcon;
+	BBitmap*	fPageLargeIcon;
 	BString		fURLInputContents;
 	int32		fURLInputSelectionStart;
 	int32		fURLInputSelectionEnd;
@@ -1391,7 +1409,8 @@ BrowserWindow::SetCurrentWebView(BWebView* webView)
 			// Unlock it so the following code can update the URL
 
 		if (userData != NULL) {
-			fURLInputGroup->SetPageIcon(userData->PageIcon());
+			fURLInputGroup->SetPageIcon(userData->PageIcon(),
+				userData->PageLargeIcon());
 			if (userData->URLInputContents().Length())
 				fURLInputGroup->SetText(userData->URLInputContents());
 			else
@@ -2179,16 +2198,27 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 			// This string is only present if the message originated from Tracker (drag and drop).
 			fileName = "";
 		}
-		const BBitmap* miniIcon = NULL;
-		const BBitmap* largeIcon = NULL;
-		originatorData.FindData("miniIcon", B_COLOR_8_BIT_TYPE,
-			reinterpret_cast<const void**>(&miniIcon), NULL);
-		originatorData.FindData("largeIcon", B_COLOR_8_BIT_TYPE,
-			reinterpret_cast<const void**>(&miniIcon), NULL);
+		BBitmap* miniIcon = NULL;
+		BBitmap* largeIcon = NULL;
+
+		const void* bits;
+		ssize_t length;
+		if (originatorData.FindData("miniIcon", B_COLOR_8_BIT_TYPE, &bits,
+				&length) == B_OK) {
+			miniIcon = new(std::nothrow) BBitmap(BRect(0, 0, 15, 15), B_CMAP8);
+			if (miniIcon != NULL)
+				memcpy(miniIcon->Bits(), bits, length);
+		}
+		if (originatorData.FindData("largeIcon", B_COLOR_8_BIT_TYPE, &bits,
+				&length) == B_OK) {
+			largeIcon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), B_CMAP8);
+			if (largeIcon != NULL)
+				memcpy(largeIcon->Bits(), bits, length);
+		}
 
 		if (validData == true) {
-			_CreateBookmark(BPath(&ref), BString(fileName), BString(title), BString(url),
-				miniIcon, largeIcon);
+			_CreateBookmark(BPath(&ref), BString(fileName), BString(title),
+				BString(url), miniIcon, largeIcon);
 		} else {
 			BString message(B_TRANSLATE("There was an error setting up "
 				"the bookmark."));
@@ -2198,6 +2228,9 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 			alert->Go();
 		}
+
+		delete miniIcon;
+		delete largeIcon;
 		return;
 }
 
@@ -2215,10 +2248,17 @@ BrowserWindow::_CreateBookmark()
 	BBitmap* miniIcon = NULL;
 	BBitmap* largeIcon = NULL;
 	PageUserData* userData = static_cast<PageUserData*>(CurrentWebView()->GetUserData());
-	if (userData != NULL && userData->PageIcon() != NULL) {
-		miniIcon = new BBitmap(BRect(0, 0, 15, 15), B_BITMAP_NO_SERVER_LINK, B_CMAP8);
-		miniIcon->ImportBits(userData->PageIcon());
-		// TODO:  retrieve the large icon too, once PageUserData can provide it.
+	if (userData != NULL) {
+		if (userData->PageIcon() != NULL) {
+			miniIcon = new BBitmap(BRect(0, 0, 15, 15), B_BITMAP_NO_SERVER_LINK,
+				B_CMAP8);
+			miniIcon->ImportBits(userData->PageIcon());
+		}
+		if (userData->PageLargeIcon() != NULL) {
+			largeIcon = new BBitmap(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK,
+				B_CMAP8);
+			largeIcon->ImportBits(userData->PageLargeIcon());
+		}
 	}
 
 	if (status == B_OK)
@@ -2234,6 +2274,9 @@ BrowserWindow::_CreateBookmark()
 		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 		alert->Go();
 	}
+
+	delete miniIcon;
+	delete largeIcon;
 	return;
 }
 
@@ -2330,9 +2373,17 @@ BrowserWindow::_SetPageIcon(BWebView* view, const BBitmap* icon)
 	// The PageUserData makes a copy of the icon, which we pass on to
 	// the TabManager for display in the respective tab.
 	userData->SetPageIcon(icon);
-	fTabManager->SetTabIcon(view, userData->PageIcon());
+
+	const BBitmap* miniIcon = userData->PageIcon();
+	const BBitmap* largeIcon = userData->PageLargeIcon();
+	if (miniIcon == NULL)
+		miniIcon = largeIcon;
+	if (largeIcon == NULL)
+		largeIcon = miniIcon;
+
+	fTabManager->SetTabIcon(view, miniIcon);
 	if (view == CurrentWebView())
-		fURLInputGroup->SetPageIcon(icon);
+		fURLInputGroup->SetPageIcon(miniIcon, largeIcon);
 }
 
 
