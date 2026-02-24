@@ -304,7 +304,9 @@ BrowsingHistory::MaxHistoryItemAge() const
 void
 BrowsingHistory::_Clear()
 {
-	fHistoryItems.MakeEmpty();
+	while (fHistoryItems.CountItems() > 0)
+		delete fHistoryItems.RemoveItem(0);
+
 	fHistoryMap.clear();
 }
 
