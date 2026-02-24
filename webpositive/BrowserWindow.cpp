@@ -2205,7 +2205,8 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 		ssize_t length;
 		if (originatorData.FindData("miniIcon", B_COLOR_8_BIT_TYPE, &bits,
 				&length) == B_OK) {
-			miniIcon = new(std::nothrow) BBitmap(BRect(0, 0, 15, 15), B_CMAP8);
+			miniIcon = new(std::nothrow) BBitmap(BRect(0, 0, 15, 15),
+				B_BITMAP_NO_SERVER_LINK, B_CMAP8);
 			if (miniIcon != NULL && miniIcon->InitCheck() == B_OK
 				&& length == (ssize_t)miniIcon->BitsLength()) {
 				memcpy(miniIcon->Bits(), bits, length);
@@ -2213,7 +2214,8 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 		}
 		if (originatorData.FindData("largeIcon", B_COLOR_8_BIT_TYPE, &bits,
 				&length) == B_OK) {
-			largeIcon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), B_CMAP8);
+			largeIcon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31),
+				B_BITMAP_NO_SERVER_LINK, B_CMAP8);
 			if (largeIcon != NULL && largeIcon->InitCheck() == B_OK
 				&& length == (ssize_t)largeIcon->BitsLength()) {
 				memcpy(largeIcon->Bits(), bits, length);
