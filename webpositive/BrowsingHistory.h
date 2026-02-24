@@ -10,6 +10,8 @@
 #include <string>
 #include <unordered_map>
 
+#include <String.h>
+
 #include "DateTime.h"
 #include <Locker.h>
 #include <ObjectList.h>
@@ -85,7 +87,7 @@ private:
 									bool invoke);
 
 			void				_LoadSettings();
-			void				_SaveSettings();
+			void				_SaveSettings(bool force = false);
 
 	static	status_t			_SaveThread(void* data);
 	static	status_t			_LoadThread(void* data);
