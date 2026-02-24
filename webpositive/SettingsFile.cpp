@@ -1,7 +1,8 @@
 /*
- * Copyright 2024 Haiku, Inc. All rights reserved.
+ * Copyright (C) 2024 Haiku, Inc. All rights reserved.
  * Distributed under the terms of the MIT License.
  */
+
 
 #include "SettingsFile.h"
 
@@ -11,6 +12,7 @@
 #include <sys/stat.h>
 
 #include "BrowserApp.h"
+
 
 status_t
 OpenSettingsFile(BFile& file, const char* fileName, uint32 mode)
@@ -32,8 +34,11 @@ OpenSettingsFile(BFile& file, const char* fileName, uint32 mode)
 	if (status != B_OK)
 		return status;
 
-	if ((mode & B_CREATE_FILE) != 0)
-		file.SetPermissions(S_IRUSR | S_IWUSR);
+	if ((mode & B_CREATE_FILE) != 0) {
+		status = file.SetPermissions(S_IRUSR | S_IWUSR);
+		if (status != B_OK)
+			return status;
+	}
 
 	return B_OK;
 }
