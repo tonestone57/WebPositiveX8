@@ -38,6 +38,9 @@
 #include "WebPage.h"
 
 
+static const char* kSettingsFileName = "Downloads";
+
+
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "Download Window"
 
@@ -581,7 +584,7 @@ DownloadWindow::_SaveThread(void* data)
 
 		if (messageToSave) {
 			BFile file;
-			if (OpenSettingsFile(file, "Downloads",
+			if (OpenSettingsFile(file, kSettingsFileName,
 					B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY) == B_OK) {
 				messageToSave->Flatten(&file);
 			}
@@ -598,7 +601,7 @@ void
 DownloadWindow::_LoadSettings()
 {
 	BFile file;
-	if (OpenSettingsFile(file, "Downloads", B_READ_ONLY) != B_OK)
+	if (OpenSettingsFile(file, kSettingsFileName, B_READ_ONLY) != B_OK)
 		return;
 	BMessage message;
 	if (message.Unflatten(&file) != B_OK)

@@ -13,7 +13,7 @@ class BFile;
 class BPath;
 
 
-status_t GetSettingsPath(BPath& path, const char* fileName = nullptr);
+status_t GetSettingsPath(BPath& path, const char* fileName = NULL);
 status_t OpenSettingsFile(BFile& file, const char* fileName, uint32 mode);
 
 
