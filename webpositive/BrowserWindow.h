@@ -33,6 +33,7 @@
 
 #include <Messenger.h>
 #include <String.h>
+#include <Url.h>
 #include <UrlContext.h>
 
 class BButton;
@@ -288,7 +289,7 @@ private:
 			BFilePanel*			fSavePanel;
 
 			bool				fIsDownloadOnly;
-			BString				fInitialURL;
+			BUrl				fInitialURL;
 };
 
 

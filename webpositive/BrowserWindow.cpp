@@ -69,7 +69,6 @@
 #include <StringView.h>
 #include <TextControl.h>
 #include <UnicodeChar.h>
-#include <Url.h>
 #include <map>
 #include <memory>
 #include <new>
@@ -1665,6 +1664,11 @@ BrowserWindow::MainDocumentError(const BString& failingURL,
 	// Make sure we show the page that contains the view.
 	if (!_ShowPage(view))
 		return;
+
+	if (fIsDownloadOnly) {
+		fIsDownloadOnly = false;
+		Show();
+	}
 
 	// Try delegating the URL to an external app instead.
 	int32 at = failingURL.FindFirst(":");

@@ -386,8 +386,11 @@ BrowserApp::MessageReceived(BMessage* message)
 	case B_DOWNLOAD_ADDED:
 	{
 		for (int i = 0; BWindow* window = WindowAt(i); i++) {
-			if (dynamic_cast<BrowserWindow*>(window))
-				window->PostMessage(message);
+			if (dynamic_cast<BrowserWindow*>(window)) {
+				BMessage* copy = new(std::nothrow) BMessage(*message);
+				if (copy != NULL)
+					window->PostMessage(copy);
+			}
 		}
 		break;
 	}
