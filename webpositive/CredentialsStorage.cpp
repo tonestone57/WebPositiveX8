@@ -21,6 +21,9 @@
 #include "SettingsFile.h"
 
 
+static const char* kSettingsFileName = "CredentialsStorage";
+
+
 Credentials::Credentials()
 	:
 	fUsername(),
@@ -214,7 +217,7 @@ CredentialsStorage::_LoadSettings()
 	fSettingsLoaded = true;
 
 	BFile settingsFile;
-	if (OpenSettingsFile(settingsFile, "CredentialsStorage", B_READ_ONLY) == B_OK) {
+	if (OpenSettingsFile(settingsFile, kSettingsFileName, B_READ_ONLY) == B_OK) {
 		BMessage settingsArchive;
 		settingsArchive.Unflatten(&settingsFile);
 		BMessage credentialsArchive;
@@ -284,7 +287,7 @@ CredentialsStorage::_SaveThread(void* data)
 
 		if (messageToSave) {
 			BFile settingsFile;
-			if (OpenSettingsFile(settingsFile, "CredentialsStorage",
+			if (OpenSettingsFile(settingsFile, kSettingsFileName,
 					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
 				messageToSave->Flatten(&settingsFile);
 			}

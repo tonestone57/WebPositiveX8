@@ -22,9 +22,6 @@
 #include "SettingsFile.h"
 
 
-static const char* kSettingsFileName = "BrowsingHistory";
-
-
 BrowsingHistoryItem::BrowsingHistoryItem(const BString& url)
 	:
 	fURL(url),
@@ -297,7 +294,7 @@ BrowsingHistory::Clear()
 	BAutolock _(this);
 	_Clear();
 	_SaveSettings(true);
-}	
+}
 
 
 void
@@ -308,14 +305,14 @@ BrowsingHistory::SetMaxHistoryItemAge(int32 days)
 		fMaxHistoryItemAge = days;
 		_SaveSettings(true);
 	}
-}	
+}
 
 
 int32
 BrowsingHistory::MaxHistoryItemAge() const
 {
 	return fMaxHistoryItemAge;
-}	
+}
 
 
 // #pragma mark - private
@@ -512,7 +509,7 @@ BrowsingHistory::_SaveThread(void* data)
 		if (itemsToSave) {
 			self->fFileLock.Lock();
 			BFile settingsFile;
-			if (OpenSettingsFile(settingsFile, kSettingsFileName,
+			if (OpenSettingsFile(settingsFile, "BrowsingHistory",
 					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
 				BMessage settingsArchive;
 
@@ -553,7 +550,7 @@ BrowsingHistory::_LoadThread(void* data)
 	// We read into a BMessage first, then lock the main object to add items.
 	// This keeps the critical section (reading/parsing) out of the main lock.
 	BMessage settingsArchive;
-	bool fileOpened = OpenSettingsFile(settingsFile, kSettingsFileName,
+	bool fileOpened = OpenSettingsFile(settingsFile, "BrowsingHistory",
 		B_READ_ONLY) == B_OK;
 	if (fileOpened)
 		settingsArchive.Unflatten(&settingsFile);
@@ -591,6 +588,3 @@ BrowsingHistory::_LoadThread(void* data)
 	self->fSettingsLoaded = true;
 	return B_OK;
 }
-
-
-
