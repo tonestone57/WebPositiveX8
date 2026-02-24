@@ -260,7 +260,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 			_LoadSettings();
 			// Small trick to get the correct enabled status of the Remove
 			// finished button
-			_DownloadFinished(NULL);
+			_DownloadFinished(nullptr);
 			break;
 		}
 		case B_DOWNLOAD_ADDED:
@@ -270,7 +270,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 					&download)) == B_OK) {
 				_DownloadStarted(download);
 				BMessage* copy = new(std::nothrow) BMessage(*message);
-				if (copy != NULL)
+				if (copy != nullptr)
 					be_app->PostMessage(copy);
 			}
 			break;
@@ -298,7 +298,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 				BAlert* alert = new BAlert(B_TRANSLATE("Error opening downloads "
 					"folder"), errorString.String(), B_TRANSLATE("OK"));
 				alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-				alert->Go(NULL);
+				alert->Go(nullptr);
 			}
 			break;
 		}
@@ -357,7 +357,7 @@ DownloadWindow::DownloadsInProgress()
 			item->View());
 		if (!view)
 			continue;
-		if (view->Download() != NULL) {
+		if (view->Download() != nullptr) {
 			downloadsInProgress = true;
 			break;
 		}

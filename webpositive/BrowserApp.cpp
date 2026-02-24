@@ -112,14 +112,10 @@ BrowserApp::BrowserApp()
 	if (GetSettingsPath(curlCookies, "cookie.jar.db") == B_OK)
 		setenv("CURL_COOKIE_JAR_PATH", curlCookies.Path(), 0);
 
-	BPath sessionPath;
-	if (GetSettingsPath(sessionPath, "Session") == B_OK) {
-		fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-			sessionPath.Path() + strlen("/boot/home/config/settings/"));
-	} else {
-		fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-			"WebPositive/Session");
-	}
+	BString sessionStorePath(kApplicationName);
+	sessionStorePath << "/Session";
+	fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+		sessionStorePath.String());
 }
 
 
