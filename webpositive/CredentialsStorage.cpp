@@ -14,6 +14,8 @@
 #include <Entry.h>
 #include <File.h>
 #include <FindDirectory.h>
+#include <Key.h>
+#include <KeyStore.h>
 #include <Message.h>
 #include <Path.h>
 
@@ -62,10 +64,7 @@ Credentials::Archive(BMessage* archive) const
 {
 	if (archive == NULL)
 		return B_BAD_VALUE;
-	status_t status = archive->AddString("username", fUsername);
-	if (status == B_OK)
-		status = archive->AddString("password", fPassword);
-	return status;
+	return archive->AddString("username", fUsername);
 }
 
 
@@ -189,6 +188,22 @@ CredentialsStorage::PutCredentials(const HashString& key,
 {
 	BAutolock _(this);
 
+	if (fPersistent) {
+		BKeyStore keyStore;
+		BPasswordKey passwordKey(credentials.Password().String(),
+			B_KEY_PURPOSE_WEB, key.GetString(),
+			credentials.Username().String());
+
+		// Remove any existing key for this identifier
+		BPasswordKey oldKey;
+		if (keyStore.GetKey(B_KEY_TYPE_PASSWORD, key.GetString(), NULL, true,
+				oldKey) == B_OK) {
+			keyStore.RemoveKey(oldKey);
+		}
+
+		keyStore.AddKey(passwordKey);
+	}
+
 	return fCredentialMap.Put(key, credentials);
 }
 
@@ -218,11 +233,26 @@ CredentialsStorage::_LoadSettings()
 		BMessage settingsArchive;
 		settingsArchive.Unflatten(&settingsFile);
 		BMessage credentialsArchive;
+		BKeyStore keyStore;
 		for (int32 i = 0; settingsArchive.FindMessage("credentials", i,
 				&credentialsArchive) == B_OK; i++) {
 			BString key;
 			if (credentialsArchive.FindString("key", &key) == B_OK) {
 				Credentials credentials(&credentialsArchive);
+
+				BPasswordKey passwordKey;
+				if (keyStore.GetKey(B_KEY_TYPE_PASSWORD, key.String(), NULL,
+						true, passwordKey) == B_OK) {
+					credentials = Credentials(passwordKey.SecondaryIdentifier(),
+						passwordKey.Password());
+				} else if (credentials.Password().Length() > 0) {
+					// Migration: save to KeyStore
+					BPasswordKey newKey(credentials.Password().String(),
+						B_KEY_PURPOSE_WEB, key.String(),
+						credentials.Username().String());
+					keyStore.AddKey(newKey);
+				}
+
 				fCredentialMap.Put(key.String(), credentials);
 			}
 		}
