@@ -2254,13 +2254,11 @@ BrowserWindow::_CreateBookmark()
 	PageUserData* userData = static_cast<PageUserData*>(CurrentWebView()->GetUserData());
 	if (userData != NULL) {
 		if (userData->PageIcon() != NULL) {
-			miniIcon = new BBitmap(BRect(0, 0, 15, 15), B_BITMAP_NO_SERVER_LINK,
-				B_CMAP8);
+			miniIcon = new BBitmap(BRect(0, 0, 15, 15), B_CMAP8);
 			miniIcon->ImportBits(userData->PageIcon());
 		}
 		if (userData->PageLargeIcon() != NULL) {
-			largeIcon = new BBitmap(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK,
-				B_CMAP8);
+			largeIcon = new BBitmap(BRect(0, 0, 31, 31), B_CMAP8);
 			largeIcon->ImportBits(userData->PageLargeIcon());
 		}
 	}

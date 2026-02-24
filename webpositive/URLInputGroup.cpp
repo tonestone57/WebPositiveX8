@@ -496,12 +496,10 @@ public:
 			fileName.ReplaceAll('/', '-');
 			fileName.Truncate(B_FILE_NAME_LENGTH - 1);
 
-			BBitmap miniIcon(BRect(0, 0, 15, 15), B_BITMAP_NO_SERVER_LINK,
-				B_CMAP8);
+			BBitmap miniIcon(BRect(0, 0, 15, 15), B_CMAP8);
 			miniIcon.ImportBits(fIcon);
 
-			BBitmap largeIcon(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK,
-				B_CMAP8);
+			BBitmap largeIcon(BRect(0, 0, 31, 31), B_CMAP8);
 			if (fLargeIcon != NULL)
 				largeIcon.ImportBits(fLargeIcon);
 			else
