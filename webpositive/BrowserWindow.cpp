@@ -32,7 +32,6 @@
 #include "BrowserWindow.h"
 
 #include <Alert.h>
-#include "SettingsFile.h"
 #include <Application.h>
 #include <Bitmap.h>
 #include <Button.h>
@@ -86,6 +85,7 @@
 #include "CredentialsStorage.h"
 #include "IconButton.h"
 #include "NavMenu.h"
+#include "SettingsFile.h"
 #include "SettingsKeys.h"
 #include "SettingsMessage.h"
 #include "TabManager.h"

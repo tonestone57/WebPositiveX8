@@ -29,7 +29,6 @@
 #include "BrowserApp.h"
 
 #include <AboutWindow.h>
-#include "SettingsFile.h"
 #include <Alert.h>
 #include <Autolock.h>
 #include <Catalog.h>
@@ -49,6 +48,7 @@
 #include "DownloadWindow.h"
 #include "SettingsMessage.h"
 #include "SettingsWindow.h"
+#include "SettingsFile.h"
 #include "ConsoleWindow.h"
 #include "CookieWindow.h"
 #include "NetworkCookieJar.h"
