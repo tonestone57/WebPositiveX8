@@ -221,12 +221,21 @@ CookieWindow::_BuildDomainList()
 	DomainItem* rootItem = new DomainItem("", true);
 	fDomains->AddItem(rootItem);
 
-	// Populate the domain list
+	// Populate the domain list and cookie cache
 	BPrivate::Network::BNetworkCookieJar::Iterator it = fCookieJar.GetIterator();
 
+	fCookieMap.clear();
 	const BPrivate::Network::BNetworkCookie* cookie;
-	while ((cookie = it.NextDomain()) != NULL) {
-		_AddDomain(cookie->Domain(), false);
+	BString lastDomain;
+	bool first = true;
+	while ((cookie = it.Next()) != NULL) {
+		BString domain = cookie->Domain();
+		if (first || domain != lastDomain) {
+			_AddDomain(domain, false);
+			lastDomain = domain;
+			first = false;
+		}
+		fCookieMap[domain].push_back(*cookie);
 	}
 
 	int i = 1;
@@ -354,24 +363,32 @@ CookieWindow::_ShowCookiesForDomain(BString domain)
 	// Empty the cookie list
 	fCookies->Clear();
 
-	// Populate the domain list
-	BPrivate::Network::BNetworkCookieJar::Iterator it
-		= fCookieJar.GetIterator();
+	// Populate the cookie list from the cache
+	auto it = fCookieMap.find(domain);
 
-	const BPrivate::Network::BNetworkCookie* cookie;
-	/* FIXME A direct access to a domain would be needed in BNetworkCookieJar. */
-	while ((cookie = it.Next()) != NULL) {
-		if (cookie->Domain() == domain)
-			break;
-	}
-
-	if (cookie == NULL)
+	if (it == fCookieMap.end())
 		return;
 
-	do {
-		new CookieRow(fCookies, *cookie); // Attaches itself to the list
-		cookie = it.Next();
-	} while (cookie != NULL && cookie->Domain() == domain);
+	for (const auto& cookie : it->second) {
+		new CookieRow(fCookies, cookie);
+	}
+}
+
+
+void
+CookieWindow::_RemoveCookieFromMap(const BPrivate::Network::BNetworkCookie& cookie)
+{
+	auto it = fCookieMap.find(cookie.Domain());
+	if (it == fCookieMap.end())
+		return;
+
+	auto& cookies = it->second;
+	for (auto vecIt = cookies.begin(); vecIt != cookies.end(); ++vecIt) {
+		if (vecIt->Name() == cookie.Name() && vecIt->Path() == cookie.Path()) {
+			cookies.erase(vecIt);
+			break;
+		}
+	}
 }
 
 
@@ -385,6 +402,7 @@ CookieWindow::_DeleteCookies()
 		row = (CookieRow*)fCookies->CurrentSelection(prevRow);
 
 		if (prevRow != NULL) {
+			_RemoveCookieFromMap(prevRow->Cookie());
 			fCookies->RemoveRow(prevRow);
 			delete prevRow;
 		}
@@ -408,6 +426,7 @@ CookieWindow::_DeleteCookies()
 				break;
 
 			BPrivate::Network::BNetworkCookie& cookie = row->Cookie();
+			_RemoveCookieFromMap(cookie);
 			cookie.SetExpirationDate(0);
 			fCookieJar.AddCookie(cookie);
 			fCookies->RemoveRow(row);
