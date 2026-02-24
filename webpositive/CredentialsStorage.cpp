@@ -47,7 +47,7 @@ Credentials::Credentials(const Credentials& other)
 
 Credentials::Credentials(const BMessage* archive)
 {
-	if (archive == NULL)
+	if (archive == nullptr)
 		return;
 	archive->FindString("username", &fUsername);
 	archive->FindString("password", &fPassword);
@@ -62,7 +62,7 @@ Credentials::~Credentials()
 status_t
 Credentials::Archive(BMessage* archive) const
 {
-	if (archive == NULL)
+	if (archive == nullptr)
 		return B_BAD_VALUE;
 	return archive->AddString("username", fUsername);
 }
@@ -196,7 +196,7 @@ CredentialsStorage::PutCredentials(const HashString& key,
 
 		// Remove any existing key for this identifier
 		BPasswordKey oldKey;
-		if (keyStore.GetKey(B_KEY_TYPE_PASSWORD, key.GetString(), NULL, true,
+		if (keyStore.GetKey(B_KEY_TYPE_PASSWORD, key.GetString(), nullptr, true,
 				oldKey) == B_OK) {
 			keyStore.RemoveKey(oldKey);
 		}
@@ -241,7 +241,7 @@ CredentialsStorage::_LoadSettings()
 				Credentials credentials(&credentialsArchive);
 
 				BPasswordKey passwordKey;
-				if (keyStore.GetKey(B_KEY_TYPE_PASSWORD, key.String(), NULL,
+				if (keyStore.GetKey(B_KEY_TYPE_PASSWORD, key.String(), nullptr,
 						true, passwordKey) == B_OK) {
 					credentials = Credentials(passwordKey.SecondaryIdentifier(),
 						passwordKey.Password());
