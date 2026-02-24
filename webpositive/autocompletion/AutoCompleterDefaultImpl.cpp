@@ -17,6 +17,8 @@
 // #pragma mark - BDefaultPatternSelector
 
 
+// SelectPatternBounds is the default implementation for selecting the pattern
+// to be completed. It simply selects the whole text.
 void
 BDefaultPatternSelector::SelectPatternBounds(const BString& text,
 	int32 caretPos, int32* start, int32* length)
