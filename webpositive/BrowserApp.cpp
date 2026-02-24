@@ -46,6 +46,7 @@
 #include "BrowserWindow.h"
 #include "BrowsingHistory.h"
 #include "SettingsFile.h"
+#include "SettingsKeys.h"
 #include "DownloadWindow.h"
 #include "SettingsMessage.h"
 #include "SettingsWindow.h"
@@ -109,11 +110,11 @@ BrowserApp::BrowserApp()
 		resume_thread(fCookieLoaderThread);
 
 	BPath curlCookies;
-	if (GetSettingsPath(curlCookies, "cookie.jar.db") == B_OK)
+	if (GetSettingsPath(curlCookies, kSettingsFileNameCookieJar) == B_OK)
 		setenv("CURL_COOKIE_JAR_PATH", curlCookies.Path(), 0);
 
 	BString sessionStorePath = kApplicationName;
-	sessionStorePath << "/Session";
+	sessionStorePath << "/" << kSettingsFileNameSession;
 	fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
 		sessionStorePath.String());
 }
@@ -206,7 +207,7 @@ BrowserApp::ReadyToRun()
 	}
 
 	BString mainSettingsPath(kApplicationName);
-	mainSettingsPath << "/Application";
+	mainSettingsPath << "/" << kSettingsFileNameApplication;
 	fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
 		mainSettingsPath.String());
 
@@ -692,7 +693,7 @@ BrowserApp::_CookieLoaderThread(void* data)
 	BrowserApp* self = (BrowserApp*)data;
 
 	BString cookieStorePath = kApplicationName;
-	cookieStorePath << "/Cookies";
+	cookieStorePath << "/" << kSettingsFileNameCookies;
 	SettingsMessage* cookies = new(std::nothrow) SettingsMessage(
 		B_USER_SETTINGS_DIRECTORY, cookieStorePath.String());
 

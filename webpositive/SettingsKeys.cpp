@@ -44,6 +44,11 @@ const char* kSettingsShowBookmarkBar = "show bookmarks bar";
 const char* kSettingsFileNameBrowsingHistory = "BrowsingHistory";
 const char* kSettingsFileNameCredentialsStorage = "CredentialsStorage";
 const char* kSettingsFileNameDownloads = "Downloads";
+const char* kSettingsFileNameBookmarks = "Bookmarks";
+const char* kSettingsFileNameCookies = "Cookies";
+const char* kSettingsFileNameCookieJar = "cookie.jar.db";
+const char* kSettingsFileNameSession = "Session";
+const char* kSettingsFileNameApplication = "Application";
 
 const struct SearchEngine kSearchEngines[] = {
 	{ "Baidu",      "https://www.baidu.com/search?wd=%s",             "a " },
