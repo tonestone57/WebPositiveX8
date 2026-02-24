@@ -336,7 +336,9 @@ BrowserApp::MessageReceived(BMessage* message)
 		BString url;
 		if (message->FindString("url", &url) != B_OK)
 			break;
-		_CreateNewWindow(url);
+		bool forDownload = false;
+		message->FindBool("forDownload", &forDownload);
+		_CreateNewWindow(url, false, forDownload);
 		break;
 	}
 	case NEW_TAB: {
@@ -380,6 +382,18 @@ BrowserApp::MessageReceived(BMessage* message)
 	case ADD_CONSOLE_MESSAGE:
 		fConsoleWindow->PostMessage(message);
 		break;
+
+	case B_DOWNLOAD_ADDED:
+	{
+		for (int i = 0; BWindow* window = WindowAt(i); i++) {
+			if (dynamic_cast<BrowserWindow*>(window)) {
+				BMessage* copy = new(std::nothrow) BMessage(*message);
+				if (copy != NULL)
+					window->PostMessage(copy);
+			}
+		}
+		break;
+	}
 
 	default:
 		BApplication::MessageReceived(message);
@@ -630,7 +644,8 @@ BrowserApp::_CreateNewPage(const BString& url, BrowserWindow* webWindow,
 
 
 BrowserWindow*
-BrowserApp::_CreateNewWindow(const BString& url, bool fullscreen)
+BrowserApp::_CreateNewWindow(const BString& url, bool fullscreen,
+	bool forDownload)
 {
 	// Offset the window frame unless this is the first window created in the
 	// session.
@@ -640,10 +655,12 @@ BrowserApp::_CreateNewWindow(const BString& url, bool fullscreen)
 		fLastWindowFrame.OffsetTo(50, 50);
 
 	BrowserWindow* window = new BrowserWindow(fLastWindowFrame, fSettings,
-		url, fContext);
+		url, fContext, INTERFACE_ELEMENT_ALL, NULL, B_CURRENT_WORKSPACE,
+		forDownload);
 	if (fullscreen)
 		window->ToggleFullscreen();
-	window->Show();
+	if (!forDownload)
+		window->Show();
 	return window;
 }
 

@@ -69,7 +69,6 @@
 #include <StringView.h>
 #include <TextControl.h>
 #include <UnicodeChar.h>
-#include <Url.h>
 #include <map>
 #include <memory>
 #include <new>
@@ -350,7 +349,7 @@ private:
 
 BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BString& url,
 	BPrivate::Network::BUrlContext* context, uint32 interfaceElements, BWebView* webView,
-	uint32 workspaces)
+	uint32 workspaces, bool forDownload)
 	:
 	BWebWindow(frame, kApplicationName, B_DOCUMENT_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL,
 		B_AUTO_UPDATE_SIZE_LIMITS | B_ASYNCHRONOUS_CONTROLS, workspaces),
@@ -365,7 +364,9 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	fShowTabsIfSinglePageOpen(true),
 	fAutoHideInterfaceInFullscreenMode(false),
 	fAutoHidePointer(false),
-	fBookmarkBar(NULL)
+	fBookmarkBar(NULL),
+	fIsDownloadOnly(forDownload),
+	fInitialURL(url)
 {
 	// Begin listening to settings changes and read some current values.
 	fAppSettings->AddListener(BMessenger(this));
@@ -1155,6 +1156,19 @@ BrowserWindow::MessageReceived(BMessage* message)
 			break;
 		}
 
+		case B_DOWNLOAD_ADDED:
+		{
+			if (fIsDownloadOnly) {
+				BWebDownload* download;
+				if (message->FindPointer("download",
+						reinterpret_cast<void**>(&download)) == B_OK) {
+					if (download->URL() == fInitialURL)
+						PostMessage(B_QUIT_REQUESTED);
+				}
+			}
+			break;
+		}
+
 		case TAB_CHANGED:
 		{
 			// This message may be received also when the last tab closed,
@@ -1549,6 +1563,9 @@ BrowserWindow::LoadNegotiating(const BString& url, BWebView* view)
 		}
 	}
 
+	if (fIsDownloadOnly)
+		fInitialURL = url;
+
 	fURLInputGroup->SetText(url.String());
 
 	BString status(B_TRANSLATE("Requesting %url"));
@@ -1562,6 +1579,11 @@ BrowserWindow::LoadCommitted(const BString& url, BWebView* view)
 {
 	if (view != CurrentWebView())
 		return;
+
+	if (fIsDownloadOnly) {
+		fIsDownloadOnly = false;
+		Show();
+	}
 
 	// This hook is invoked when the load is committed.
 	fURLInputGroup->SetText(url.String());
@@ -1592,6 +1614,11 @@ BrowserWindow::LoadFailed(const BString& url, BWebView* view)
 	if (view != CurrentWebView())
 		return;
 
+	if (fIsDownloadOnly) {
+		fIsDownloadOnly = false;
+		Show();
+	}
+
 	BString status(B_TRANSLATE_COMMENT("%url failed", "Loading URL failed. "
 		"Don't translate variable %url."));
 	status.ReplaceFirst("%url", url);
@@ -1606,6 +1633,11 @@ BrowserWindow::LoadFinished(const BString& url, BWebView* view)
 {
 	if (view != CurrentWebView())
 		return;
+
+	if (fIsDownloadOnly) {
+		fIsDownloadOnly = false;
+		Show();
+	}
 
 	fURLInputGroup->SetText(url.String());
 
@@ -1633,6 +1665,11 @@ BrowserWindow::MainDocumentError(const BString& failingURL,
 	// Make sure we show the page that contains the view.
 	if (!_ShowPage(view))
 		return;
+
+	if (fIsDownloadOnly) {
+		fIsDownloadOnly = false;
+		Show();
+	}
 
 	// Try delegating the URL to an external app instead.
 	int32 at = failingURL.FindFirst(":");
