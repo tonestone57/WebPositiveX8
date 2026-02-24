@@ -27,7 +27,8 @@ public:
 
 			BButton*			GoButton() const;
 
-			void				SetPageIcon(const BBitmap* icon);
+			void				SetPageIcon(const BBitmap* icon,
+									const BBitmap* largeIcon = NULL);
 
 			bool				IsURLInputLocked() const;
 	virtual	void				LockURLInput(bool lock = true);
