@@ -220,6 +220,7 @@ private:
 
 			void				_HandlePageSourceResult(
 									const BMessage* message);
+	static	status_t			_HandlePageSourceThread(void* data);
 
 			void				_ShowBookmarkBar(bool show);
 

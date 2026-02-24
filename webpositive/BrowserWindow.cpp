@@ -58,6 +58,7 @@
 #include <MessageRunner.h>
 #include <NodeInfo.h>
 #include <NodeMonitor.h>
+#include <OS.h>
 #include <Path.h>
 #include <Roster.h>
 #include <Screen.h>
@@ -70,6 +71,8 @@
 #include <UnicodeChar.h>
 #include <Url.h>
 #include <map>
+#include <memory>
+#include <new>
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -2783,12 +2786,12 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 }
 
 
-void
-BrowserWindow::_HandlePageSourceResult(const BMessage* message)
+status_t
+BrowserWindow::_HandlePageSourceThread(void* data)
 {
-	// TODO: This should be done in an extra thread perhaps. Doing it in
-	// the application thread is not much better, since it actually draws
-	// the pages...
+	if (data == NULL)
+		return B_BAD_VALUE;
+	std::unique_ptr<BMessage> message(static_cast<BMessage*>(data));
 
 	BPath pathToPageSource;
 
@@ -2857,6 +2860,27 @@ BrowserWindow::_HandlePageSourceResult(const BMessage* message)
 		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 		alert->Go(NULL);
 	}
+
+	return B_OK;
+}
+
+
+void
+BrowserWindow::_HandlePageSourceResult(const BMessage* message)
+{
+	if (message == NULL)
+		return;
+
+	BMessage* messageCopy = new(std::nothrow) BMessage(*message);
+	if (messageCopy == NULL)
+		return;
+
+	thread_id thread = spawn_thread(_HandlePageSourceThread,
+		"page source worker", B_LOW_PRIORITY, messageCopy);
+	if (thread < 0)
+		delete messageCopy;
+	else
+		resume_thread(thread);
 }
 
 
