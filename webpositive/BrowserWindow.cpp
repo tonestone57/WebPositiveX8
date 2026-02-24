@@ -1614,6 +1614,11 @@ BrowserWindow::LoadFailed(const BString& url, BWebView* view)
 	if (view != CurrentWebView())
 		return;
 
+	if (fIsDownloadOnly) {
+		fIsDownloadOnly = false;
+		Show();
+	}
+
 	BString status(B_TRANSLATE_COMMENT("%url failed", "Loading URL failed. "
 		"Don't translate variable %url."));
 	status.ReplaceFirst("%url", url);
