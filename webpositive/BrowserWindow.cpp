@@ -1027,8 +1027,9 @@ BrowserWindow::MessageReceived(BMessage* message)
 		case ZOOM_TEXT_ONLY:
 			fZoomTextOnly = !fZoomTextOnly;
 			fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
-			// TODO: Would be nice to have an instant update if the page is
-			// already zoomed.
+			fAppSettings->SetValue("zoom text only", fZoomTextOnly);
+			if (CurrentWebView() != NULL)
+				CurrentWebView()->SetZoomTextOnly(fZoomTextOnly);
 			break;
 
 		case TOGGLE_FULLSCREEN:
