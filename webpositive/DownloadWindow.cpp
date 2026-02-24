@@ -398,8 +398,10 @@ DownloadWindow::_DownloadStarted(BWebDownload* download)
 			continue;
 		if (view->URL() == download->URL()) {
 			index = i;
+			fDownloadViewsLayout->RemoveItem(i);
 			view->RemoveSelf();
 			delete view;
+			delete item;
 			continue;
 		}
 		if (view->IsFinished())
@@ -480,8 +482,10 @@ DownloadWindow::_RemoveFinishedDownloads()
 		if (!view)
 			continue;
 		if (view->IsFinished()) {
+			fDownloadViewsLayout->RemoveItem(i);
 			view->RemoveSelf();
 			delete view;
+			delete item;
 		} else if (view->IsMissing())
 			missingCount++;
 	}
@@ -502,8 +506,10 @@ DownloadWindow::_RemoveMissingDownloads()
 		if (!view)
 			continue;
 		if (view->IsMissing()) {
+			fDownloadViewsLayout->RemoveItem(i);
 			view->RemoveSelf();
 			delete view;
+			delete item;
 		} else if (view->IsFinished())
 			finishedCount++;
 	}
