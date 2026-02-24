@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <vector>
-#include <List.h>
 #include "AutoCompleterDefaultImpl.h"
 
 int gTestFailures = 0;
