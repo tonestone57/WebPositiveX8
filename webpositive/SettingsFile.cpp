@@ -15,9 +15,8 @@
 
 
 status_t
-OpenSettingsFile(BFile& file, const char* fileName, uint32 mode)
+GetSettingsPath(BPath& path, const char* fileName)
 {
-	BPath path;
 	status_t status = find_directory(B_USER_SETTINGS_DIRECTORY, &path);
 	if (status != B_OK)
 		return status;
@@ -26,7 +25,18 @@ OpenSettingsFile(BFile& file, const char* fileName, uint32 mode)
 	if (status != B_OK)
 		return status;
 
-	status = path.Append(fileName);
+	if (fileName != NULL && fileName[0] != '\0')
+		status = path.Append(fileName);
+
+	return status;
+}
+
+
+status_t
+OpenSettingsFile(BFile& file, const char* fileName, uint32 mode)
+{
+	BPath path;
+	status_t status = GetSettingsPath(path, fileName);
 	if (status != B_OK)
 		return status;
 
