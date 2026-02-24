@@ -9,6 +9,7 @@
 #include <new>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <utility>
 
 #include <Autolock.h>
 #include <Entry.h>
@@ -165,10 +166,9 @@ CredentialsStorage::SessionInstance()
 /*static*/ CredentialsStorage*
 CredentialsStorage::PersistentInstance()
 {
-	if (sPersistentInstance.Lock()) {
+	BAutolock _(&sPersistentInstance);
+	if (_.IsLocked())
 		sPersistentInstance._LoadSettings();
-		sPersistentInstance.Unlock();
-	}
 	return &sPersistentInstance;
 }
 
@@ -234,23 +234,24 @@ CredentialsStorage::_LoadSettings()
 		settingsArchive.Unflatten(&settingsFile);
 		BMessage credentialsArchive;
 		BKeyStore keyStore;
+		BPasswordKey passwordKey;
 		for (int32 i = 0; settingsArchive.FindMessage("credentials", i,
 				&credentialsArchive) == B_OK; i++) {
 			BString key;
 			if (credentialsArchive.FindString("key", &key) == B_OK) {
 				Credentials credentials(&credentialsArchive);
 
-				BPasswordKey passwordKey;
+				passwordKey.Unset();
 				if (keyStore.GetKey(B_KEY_TYPE_PASSWORD, key.String(), nullptr,
 						true, passwordKey) == B_OK) {
 					credentials = Credentials(passwordKey.SecondaryIdentifier(),
 						passwordKey.Password());
 				} else if (credentials.Password().Length() > 0) {
 					// Migration: save to KeyStore
-					BPasswordKey newKey(credentials.Password().String(),
+					passwordKey.SetTo(credentials.Password().String(),
 						B_KEY_PURPOSE_WEB, key.String(),
 						credentials.Username().String());
-					keyStore.AddKey(newKey);
+					keyStore.AddKey(passwordKey);
 				}
 
 				fCredentialMap.Put(key.String(), credentials);
