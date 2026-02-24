@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+#include "SettingsFile.h"
 #include "BrowserWindow.h"
 #include "BrowsingHistory.h"
 #include "DownloadWindow.h"
@@ -108,12 +109,8 @@ BrowserApp::BrowserApp()
 		resume_thread(fCookieLoaderThread);
 
 	BPath curlCookies;
-	if (find_directory(B_USER_SETTINGS_DIRECTORY, &curlCookies) == B_OK
-		&& curlCookies.Append(kApplicationName) == B_OK
-		&& curlCookies.Append("cookie.jar.db") == B_OK) {
-
+	if (GetSettingsPath(curlCookies, "cookie.jar.db") == B_OK)
 		setenv("CURL_COOKIE_JAR_PATH", curlCookies.Path(), 0);
-	}
 
 	BString sessionStorePath = kApplicationName;
 	sessionStorePath << "/Session";
@@ -202,8 +199,7 @@ BrowserApp::ReadyToRun()
 	BWebPage::SetCacheModel(B_WEBKIT_CACHE_MODEL_WEB_BROWSER);
 
 	BPath path;
-	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path) == B_OK
-		&& path.Append(kApplicationName) == B_OK
+	if (GetSettingsPath(path) == B_OK
 		&& create_directory(path.Path(), S_IRWXU) == B_OK) {
 
 		BWebSettings::SetPersistentStoragePath(path.Path());

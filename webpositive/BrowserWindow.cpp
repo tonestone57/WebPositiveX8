@@ -80,6 +80,7 @@
 #include "BitmapButton.h"
 #include "BookmarkBar.h"
 #include "BrowserApp.h"
+#include "SettingsFile.h"
 #include "BrowsingHistory.h"
 #include "CredentialsStorage.h"
 #include "IconButton.h"
@@ -2006,15 +2007,7 @@ BrowserWindow::_TabChanged(int32 index)
 status_t
 BrowserWindow::_BookmarkPath(BPath& path) const
 {
-	status_t ret = find_directory(B_USER_SETTINGS_DIRECTORY, &path);
-	if (ret != B_OK)
-		return ret;
-
-	ret = path.Append(kApplicationName);
-	if (ret != B_OK)
-		return ret;
-
-	ret = path.Append("Bookmarks");
+	status_t ret = GetSettingsPath(path, "Bookmarks");
 	if (ret != B_OK)
 		return ret;
 
