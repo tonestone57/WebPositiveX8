@@ -382,6 +382,45 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 }
 
 
+int32
+BrowsingHistory::_FindIndex(const BrowsingHistoryItem& item) const
+{
+	int32 low = 0;
+	int32 high = fHistoryItems.CountItems() - 1;
+	while (low <= high) {
+		int32 mid = (low + high) / 2;
+		const BrowsingHistoryItem* midItem = fHistoryItems.ItemAt(mid);
+		if (item == *midItem)
+			return mid;
+		if (item < *midItem)
+			high = mid - 1;
+		else
+			low = mid + 1;
+	}
+	return -1;
+}
+
+
+int32
+BrowsingHistory::_InsertionIndex(const BrowsingHistoryItem& item) const
+{
+	int32 count = fHistoryItems.CountItems();
+	int32 low = 0;
+	int32 high = count - 1;
+	int32 insertionIndex = count;
+	while (low <= high) {
+		int32 mid = (low + high) / 2;
+		if (item < *fHistoryItems.ItemAt(mid)) {
+			insertionIndex = mid;
+			high = mid - 1;
+		} else {
+			low = mid + 1;
+		}
+	}
+	return insertionIndex;
+}
+
+
 void
 BrowsingHistory::_LoadSettings()
 {
