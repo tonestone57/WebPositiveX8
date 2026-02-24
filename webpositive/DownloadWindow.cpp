@@ -226,8 +226,8 @@ DownloadWindow::DispatchMessage(BMessage* message, BHandler* target)
 		&& message->FindPoint("screen_where", &where) == B_OK
 		&& message->FindInt32("buttons", &buttons) == B_OK
 		&& (buttons & B_SECONDARY_MOUSE_BUTTON) != 0) {
-		for (int32 i = fDownloadViewsLayout->CountItems() - 1;
-				BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i--) {
+		for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
 			DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
 				item->View());
 			if (!view)
@@ -351,8 +351,8 @@ DownloadWindow::DownloadsInProgress()
 	if (!Lock())
 		return downloadsInProgress;
 
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1;
-			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
 		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
 			item->View());
 		if (!view)
@@ -390,15 +390,15 @@ DownloadWindow::_DownloadStarted(BWebDownload* download)
 	int32 finishedCount = 0;
 	int32 missingCount = 0;
 	int32 index = 0;
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1;
-			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
 		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
 			item->View());
 		if (!view)
 			continue;
 		if (view->URL() == download->URL()) {
 			index = i;
-			view->RemoveSelf();
+			delete fDownloadViewsLayout->RemoveItem(i);
 			delete view;
 			continue;
 		}
@@ -473,14 +473,14 @@ void
 DownloadWindow::_RemoveFinishedDownloads()
 {
 	int32 missingCount = 0;
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1;
-			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
 		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
 			item->View());
 		if (!view)
 			continue;
 		if (view->IsFinished()) {
-			view->RemoveSelf();
+			delete fDownloadViewsLayout->RemoveItem(i);
 			delete view;
 		} else if (view->IsMissing())
 			missingCount++;
@@ -495,14 +495,14 @@ void
 DownloadWindow::_RemoveMissingDownloads()
 {
 	int32 finishedCount = 0;
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1;
-			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
 		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
 			item->View());
 		if (!view)
 			continue;
 		if (view->IsMissing()) {
-			view->RemoveSelf();
+			delete fDownloadViewsLayout->RemoveItem(i);
 			delete view;
 		} else if (view->IsFinished())
 			finishedCount++;
@@ -518,8 +518,8 @@ DownloadWindow::_ValidateButtonStatus()
 {
 	int32 finishedCount = 0;
 	int32 missingCount = 0;
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1;
-			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
 		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
 			item->View());
 		if (!view)
@@ -542,8 +542,8 @@ DownloadWindow::_SaveSettings()
 		return;
 
 	// Create snapshot of settings on window thread
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1;
-			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
 		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
 			item->View());
 		if (!view)
