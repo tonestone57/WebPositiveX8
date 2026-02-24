@@ -7,6 +7,8 @@
 #define DOWNLOAD_WINDOW_H
 
 
+#include <memory>
+
 #include <Locker.h>
 #include <OS.h>
 #include <String.h>
@@ -14,6 +16,7 @@
 
 class BButton;
 class BFile;
+class BMessage;
 class BGroupLayout;
 class BScrollView;
 class BWebDownload;
@@ -43,7 +46,6 @@ private:
 			void				_ValidateButtonStatus();
 			void				_SaveSettings();
 			void				_LoadSettings();
-			bool				_OpenSettingsFile(BFile& file, uint32 mode);
 
 	static	status_t			_SaveThread(void* data);
 
@@ -58,7 +60,8 @@ private:
 			thread_id			fSaveThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			BMessage*			fPendingSaveMessage;
+			std::unique_ptr<BMessage>
+								fPendingSaveMessage;
 			BLocker				fSaveLock;
 };
 

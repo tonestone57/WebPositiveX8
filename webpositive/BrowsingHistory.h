@@ -90,7 +90,6 @@ private:
 
 			void				_LoadSettings();
 			void				_SaveSettings();
-			bool				_OpenSettingsFile(BFile& file, uint32 mode);
 
 	static	status_t			_SaveThread(void* data);
 	static	status_t			_LoadThread(void* data);
@@ -112,6 +111,8 @@ private:
 								fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
+
+			bigtime_t			fLastSaveTime;
 };
 
 

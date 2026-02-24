@@ -35,6 +35,7 @@ local sources =
 	CredentialsStorage.cpp
 	DownloadProgressView.cpp
 	DownloadWindow.cpp
+	SettingsFile.cpp
 	SettingsKeys.cpp
 	SettingsWindow.cpp
 	URLInputGroup.cpp
@@ -94,3 +95,4 @@ for architectureObject in [ MultiArchSubDirSetup ] {
 }
 
 SubInclude HAIKU_TOP src apps webpositive support tests ;
+SubInclude HAIKU_TOP src apps webpositive tests ;

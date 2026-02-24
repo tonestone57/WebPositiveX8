@@ -31,40 +31,13 @@
 #include "IconButton.h"
 #include "IconUtils.h"
 #include "TextViewCompleter.h"
+#include "URLChoice.h"
 #include "WebView.h"
 #include "WebWindow.h"
 
 
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "URL Bar"
-
-
-class URLChoice : public BAutoCompleter::Choice {
-public:
-	URLChoice(const BString& choiceText, const BString& displayText,
-			int32 matchPos, int32 matchLen, int32 priority)
-		:
-		BAutoCompleter::Choice(choiceText, displayText, matchPos, matchLen),
-		fPriority(priority)
-	{
-	}
-
-	bool operator<(const URLChoice& other) const
-	{
-		if (fPriority > other.fPriority)
-			return true;
-		return DisplayText() < other.DisplayText();
-	}
-
-	bool operator==(const URLChoice& other) const
-	{
-		return fPriority == other.fPriority
-			&& DisplayText() < other.DisplayText();
-	}
-
-private:
-	int32 fPriority;
-};
 
 
 class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {

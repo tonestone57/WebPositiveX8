@@ -58,6 +58,7 @@
 #include <MessageRunner.h>
 #include <NodeInfo.h>
 #include <NodeMonitor.h>
+#include <OS.h>
 #include <Path.h>
 #include <Roster.h>
 #include <Screen.h>
@@ -69,8 +70,9 @@
 #include <TextControl.h>
 #include <UnicodeChar.h>
 #include <Url.h>
-
 #include <map>
+#include <memory>
+#include <new>
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -1734,31 +1736,75 @@ BrowserWindow::ResizeRequested(float width, float height, BWebView* view)
 void
 BrowserWindow::SetToolBarsVisible(bool flag, BWebView* view)
 {
-	// TODO
-	// TODO: Ignore request when there is more than one BWebView embedded!
+	if (view != CurrentWebView())
+		return;
+
+	// Ignore request when there is more than one BWebView embedded!
+	if (fTabManager->CountTabs() > 1)
+		return;
+
+	if (flag)
+		fVisibleInterfaceElements |= INTERFACE_ELEMENT_NAVIGATION;
+	else
+		fVisibleInterfaceElements &= ~INTERFACE_ELEMENT_NAVIGATION;
+
+	if (fInterfaceVisible)
+		fNavigationGroup->SetVisible(flag);
 }
 
 
 void
 BrowserWindow::SetStatusBarVisible(bool flag, BWebView* view)
 {
-	// TODO
-	// TODO: Ignore request when there is more than one BWebView embedded!
+	if (view != CurrentWebView())
+		return;
+
+	// Ignore request when there is more than one BWebView embedded!
+	if (fTabManager->CountTabs() > 1)
+		return;
+
+	if (flag)
+		fVisibleInterfaceElements |= INTERFACE_ELEMENT_STATUS;
+	else
+		fVisibleInterfaceElements &= ~INTERFACE_ELEMENT_STATUS;
+
+	if (fInterfaceVisible)
+		fStatusGroup->SetVisible(flag);
 }
 
 
 void
 BrowserWindow::SetMenuBarVisible(bool flag, BWebView* view)
 {
-	// TODO
-	// TODO: Ignore request when there is more than one BWebView embedded!
+	if (view != CurrentWebView())
+		return;
+
+	// Ignore request when there is more than one BWebView embedded!
+	if (fTabManager->CountTabs() > 1)
+		return;
+
+	if (flag)
+		fVisibleInterfaceElements |= INTERFACE_ELEMENT_MENU;
+	else
+		fVisibleInterfaceElements &= ~INTERFACE_ELEMENT_MENU;
+
+	if (fInterfaceVisible) {
+#if !INTEGRATE_MENU_INTO_TAB_BAR
+		fMenuGroup->SetVisible(flag);
+#endif
+	}
 }
 
 
 void
 BrowserWindow::SetResizable(bool flag, BWebView* view)
 {
-	// TODO: Ignore request when there is more than one BWebView embedded!
+	if (view != CurrentWebView())
+		return;
+
+	// Ignore request when there is more than one BWebView embedded!
+	if (fTabManager->CountTabs() > 1)
+		return;
 
 	if (flag)
 		SetFlags(Flags() & ~B_NOT_RESIZABLE);
@@ -1934,7 +1980,7 @@ BrowserWindow::_BookmarkPath(BPath& path) const
 	if (ret != B_OK)
 		return ret;
 
-	return create_directory(path.Path(), 0777);
+	return create_directory(path.Path(), S_IRWXU);
 }
 
 /*! If fileName is an empty BString, a valid file name will be derived from title.
@@ -2740,12 +2786,12 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 }
 
 
-void
-BrowserWindow::_HandlePageSourceResult(const BMessage* message)
+status_t
+BrowserWindow::_HandlePageSourceThread(void* data)
 {
-	// TODO: This should be done in an extra thread perhaps. Doing it in
-	// the application thread is not much better, since it actually draws
-	// the pages...
+	if (data == NULL)
+		return B_BAD_VALUE;
+	std::unique_ptr<BMessage> message(static_cast<BMessage*>(data));
 
 	BPath pathToPageSource;
 
@@ -2814,6 +2860,27 @@ BrowserWindow::_HandlePageSourceResult(const BMessage* message)
 		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 		alert->Go(NULL);
 	}
+
+	return B_OK;
+}
+
+
+void
+BrowserWindow::_HandlePageSourceResult(const BMessage* message)
+{
+	if (message == NULL)
+		return;
+
+	BMessage* messageCopy = new(std::nothrow) BMessage(*message);
+	if (messageCopy == NULL)
+		return;
+
+	thread_id thread = spawn_thread(_HandlePageSourceThread,
+		"page source worker", B_LOW_PRIORITY, messageCopy);
+	if (thread < 0)
+		delete messageCopy;
+	else
+		resume_thread(thread);
 }
 
 

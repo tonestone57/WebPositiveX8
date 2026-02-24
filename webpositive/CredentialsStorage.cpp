@@ -18,6 +18,7 @@
 #include <Path.h>
 
 #include "BrowserApp.h"
+#include "SettingsFile.h"
 
 
 Credentials::Credentials()
@@ -213,7 +214,7 @@ CredentialsStorage::_LoadSettings()
 	fSettingsLoaded = true;
 
 	BFile settingsFile;
-	if (_OpenSettingsFile(settingsFile, B_READ_ONLY)) {
+	if (OpenSettingsFile(settingsFile, "CredentialsStorage", B_READ_ONLY) == B_OK) {
 		BMessage settingsArchive;
 		settingsArchive.Unflatten(&settingsFile);
 		BMessage credentialsArchive;
@@ -283,8 +284,8 @@ CredentialsStorage::_SaveThread(void* data)
 
 		if (messageToSave) {
 			BFile settingsFile;
-			if (self->_OpenSettingsFile(settingsFile,
-					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY)) {
+			if (OpenSettingsFile(settingsFile, "CredentialsStorage",
+					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
 				messageToSave->Flatten(&settingsFile);
 			}
 		}
@@ -296,19 +297,4 @@ CredentialsStorage::_SaveThread(void* data)
 }
 
 
-bool
-CredentialsStorage::_OpenSettingsFile(BFile& file, uint32 mode) const
-{
-	BPath path;
-	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path) != B_OK
-		|| path.Append(kApplicationName) != B_OK
-		|| path.Append("CredentialsStorage") != B_OK) {
-		return false;
-	}
-	if (file.SetTo(path.Path(), mode) != B_OK)
-		return false;
-	if ((mode & B_CREATE_FILE) != 0)
-		file.SetPermissions(S_IRUSR | S_IWUSR);
-	return true;
-}
 

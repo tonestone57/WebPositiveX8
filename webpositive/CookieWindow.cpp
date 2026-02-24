@@ -293,49 +293,51 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		parent = (BStringItem*)fDomains->FullListItemAt(0);
 	}
 
-	BListItem* existing;
-	int i = 0;
+	int siblingCount = fDomains->CountItemsUnder(parent, true);
+	int low = 0;
+	int high = siblingCount - 1;
+	int insertIndex = siblingCount;
+
 	// check that we aren't already there
-	while ((existing = fDomains->ItemUnderAt(parent, true, i++)) != NULL) {
-		DomainItem* stringItem = (DomainItem*)existing;
-		if (stringItem->Text() == domain) {
+	while (low <= high) {
+		int mid = (low + high) / 2;
+		BStringItem* midItem = (BStringItem*)fDomains->ItemUnderAt(parent,
+			true, mid);
+		int cmp = strcmp(midItem->Text(), domain.String());
+		if (cmp == 0) {
+			DomainItem* stringItem = (DomainItem*)midItem;
 			if (fake == false)
 				stringItem->fEmpty = false;
 			return stringItem;
+		} else if (cmp < 0) {
+			low = mid + 1;
+		} else {
+			insertIndex = mid;
+			high = mid - 1;
 		}
 	}
-
-#if 0
-	puts("==============================");
-	for (i = 0; i < fDomains->FullListCountItems(); i++) {
-		BStringItem* t = (BStringItem*)fDomains->FullListItemAt(i);
-		for (unsigned j = 0; j < t->OutlineLevel(); j++)
-			printf("  ");
-		printf("%s\n", t->Text());
-	}
-#endif
 
 	// Insert the new item, keeping the list alphabetically sorted
 	BStringItem* domainItem = new DomainItem(domain, fake);
 	domainItem->SetOutlineLevel(parent->OutlineLevel() + 1);
-	BStringItem* sibling = NULL;
-	int siblingCount = fDomains->CountItemsUnder(parent, true);
-	for (i = 0; i < siblingCount; i++) {
-		sibling = (BStringItem*)fDomains->ItemUnderAt(parent, true, i);
-		if (strcmp(sibling->Text(), domainItem->Text()) > 0) {
-			fDomains->AddItem(domainItem, fDomains->FullListIndexOf(sibling));
-			return domainItem;
-		}
-	}
 
-	if (sibling) {
-		// There were siblings, but all smaller than what we try to insert.
-		// Insert after the last one (and its subitems)
-		fDomains->AddItem(domainItem, fDomains->FullListIndexOf(sibling)
-			+ fDomains->CountItemsUnder(sibling, false) + 1);
+	if (insertIndex < siblingCount) {
+		BListItem* nextSibling = fDomains->ItemUnderAt(parent, true,
+			insertIndex);
+		fDomains->AddItem(domainItem, fDomains->FullListIndexOf(nextSibling));
 	} else {
-		// There were no siblings, insert right after the parent
-		fDomains->AddItem(domainItem, fDomains->FullListIndexOf(parent) + 1);
+		if (siblingCount > 0) {
+			// There were siblings, but all smaller than what we try to insert.
+			// Insert after the last one (and its subitems)
+			BListItem* lastSibling = fDomains->ItemUnderAt(parent, true,
+				siblingCount - 1);
+			fDomains->AddItem(domainItem,
+				fDomains->FullListIndexOf(lastSibling)
+				+ fDomains->CountItemsUnder(lastSibling, false) + 1);
+		} else {
+			// There were no siblings, insert right after the parent
+			fDomains->AddItem(domainItem, fDomains->FullListIndexOf(parent) + 1);
+		}
 	}
 
 	return domainItem;
