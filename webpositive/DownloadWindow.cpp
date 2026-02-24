@@ -269,6 +269,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 			if (message->FindPointer("download", reinterpret_cast<void**>(
 					&download)) == B_OK) {
 				_DownloadStarted(download);
+				be_app->PostMessage(message);
 			}
 			break;
 		}
