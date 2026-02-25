@@ -34,11 +34,13 @@ class MockChoiceModel : public BAutoCompleter::ChoiceModel {
 public:
     MockChoiceModel() {}
     virtual ~MockChoiceModel() {
-        for (auto choice : fChoices)
-            delete choice;
+        for (std::vector<BAutoCompleter::Choice*>::iterator it = fChoices.begin();
+                it != fChoices.end(); ++it) {
+            delete *it;
+        }
     }
     virtual void FetchChoicesFor(const BString& pattern) {}
-    virtual int32 CountChoices() const { return fChoices.size(); }
+    virtual int32 CountChoices() const { return (int32)fChoices.size(); }
     virtual const BAutoCompleter::Choice* ChoiceAt(int32 index) const {
         if (index >= 0 && index < (int32)fChoices.size())
             return fChoices[index];
@@ -49,15 +51,24 @@ public:
         fChoices.push_back(new BAutoCompleter::Choice(text, text, 0, 0));
     }
 
+    void ClearChoices() {
+        for (std::vector<BAutoCompleter::Choice*>::iterator it = fChoices.begin();
+                it != fChoices.end(); ++it) {
+            delete *it;
+        }
+        fChoices.clear();
+    }
+
 private:
     std::vector<BAutoCompleter::Choice*> fChoices;
 };
 
 class MockChoiceView : public BAutoCompleter::ChoiceView {
 public:
-    MockChoiceView() : fSelectedIndex(-1) {}
+    MockChoiceView() : fSelectedIndex(-1), fSelectChoiceAtCalled(0) {}
     virtual void SelectChoiceAt(int32 index) {
         fSelectedIndex = index;
+        fSelectChoiceAtCalled++;
     }
     virtual void ShowChoices(BAutoCompleter::CompletionStyle* completer) {}
     virtual void HideChoices() {}
@@ -65,6 +76,7 @@ public:
     virtual int32 CountVisibleChoices() const { return 0; }
 
     int32 fSelectedIndex;
+    int32 fSelectChoiceAtCalled;
 };
 
 class MockPatternSelector : public BAutoCompleter::PatternSelector {
@@ -92,33 +104,46 @@ void testSelectPrevious() {
 
     // Test case 2: Initial state (-1), wrap=false
     style.Select(-1);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectPrevious(false), "SelectPrevious(false) from -1 should return true");
     assert_int32(0, style.SelectedChoiceIndex(), "SelectPrevious(false) from -1 should select 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should select 0");
+    assert_int32(1, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt should be called once");
 
     // Test case 3: Initial state (-1), wrap=true
     style.Select(-1);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectPrevious(true), "SelectPrevious(true) from -1 should return true");
     assert_int32(2, style.SelectedChoiceIndex(), "SelectPrevious(true) from -1 should select 2 (last item)");
+    assert_int32(2, choiceView->fSelectedIndex, "ChoiceView should select 2");
+    assert_int32(1, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt should be called once");
 
     // Test case 4: From middle (index 1)
     style.Select(1);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectPrevious(false), "SelectPrevious from 1 should return true");
     assert_int32(0, style.SelectedChoiceIndex(), "SelectPrevious from 1 should select 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should select 0");
 
     // Test case 5: From 0, wrap=false
     style.Select(0);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(false, style.SelectPrevious(false), "SelectPrevious(false) from 0 should return false (already at 0)");
     assert_int32(0, style.SelectedChoiceIndex(), "SelectPrevious(false) from 0 should stay at 0");
+    assert_int32(0, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt should NOT be called");
 
     // Test case 6: From 0, wrap=true
     style.Select(0);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectPrevious(true), "SelectPrevious(true) from 0 should return true (wraps)");
     assert_int32(2, style.SelectedChoiceIndex(), "SelectPrevious(true) from 0 should wrap to 2");
+    assert_int32(2, choiceView->fSelectedIndex, "ChoiceView should wrap to 2");
 }
 
 void testSelectNext() {
     printf("Testing BDefaultCompletionStyle::SelectNext...\n");
 
+    // CompletionStyle takes ownership and deletes these in its destructor
     MockEditView* editView = new MockEditView();
     MockChoiceModel* choiceModel = new MockChoiceModel();
     MockChoiceView* choiceView = new MockChoiceView();
@@ -135,33 +160,46 @@ void testSelectNext() {
 
     // Test case 2: Initial state (-1), wrap=false
     style.Select(-1);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectNext(false), "SelectNext(false) from -1 should return true");
     assert_int32(0, style.SelectedChoiceIndex(), "SelectNext(false) from -1 should select 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should select 0");
+    assert_int32(1, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt should be called once");
 
     // Test case 3: Initial state (-1), wrap=true
     style.Select(-1);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectNext(true), "SelectNext(true) from -1 should return true");
     assert_int32(0, style.SelectedChoiceIndex(), "SelectNext(true) from -1 should select 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should select 0");
+    assert_int32(1, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt should be called once");
 
     // Test case 4: From middle (index 1)
     style.Select(1);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectNext(false), "SelectNext from 1 should return true");
     assert_int32(2, style.SelectedChoiceIndex(), "SelectNext from 1 should select 2");
+    assert_int32(2, choiceView->fSelectedIndex, "ChoiceView should select 2");
 
     // Test case 5: From last (index 2), wrap=false
     style.Select(2);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(false, style.SelectNext(false), "SelectNext(false) from 2 should return false (already at last)");
     assert_int32(2, style.SelectedChoiceIndex(), "SelectNext(false) from 2 should stay at 2");
+    assert_int32(0, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt should NOT be called");
 
     // Test case 6: From last (index 2), wrap=true
     style.Select(2);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectNext(true), "SelectNext(true) from 2 should return true (wraps)");
     assert_int32(0, style.SelectedChoiceIndex(), "SelectNext(true) from 2 should wrap to 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should wrap to 0");
 }
 
 void testSingleChoice() {
     printf("Testing BDefaultCompletionStyle with single choice...\n");
 
+    // CompletionStyle takes ownership and deletes these in its destructor
     MockEditView* editView = new MockEditView();
     MockChoiceModel* choiceModel = new MockChoiceModel();
     MockChoiceView* choiceView = new MockChoiceView();
@@ -172,25 +210,110 @@ void testSingleChoice() {
 
     // SelectNext
     style.Select(-1);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectNext(false), "SelectNext(false) from -1 with single choice should return true");
     assert_int32(0, style.SelectedChoiceIndex(), "SelectNext(false) from -1 with single choice should select 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should select 0");
 
     assert_bool(false, style.SelectNext(false), "SelectNext(false) from 0 with single choice should return false");
     assert_bool(false, style.SelectNext(true), "SelectNext(true) from 0 with single choice should return false");
 
     // SelectPrevious
     style.Select(-1);
+    choiceView->fSelectChoiceAtCalled = 0;
     assert_bool(true, style.SelectPrevious(false), "SelectPrevious(false) from -1 with single choice should return true");
     assert_int32(0, style.SelectedChoiceIndex(), "SelectPrevious(false) from -1 with single choice should select 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should select 0");
 
     assert_bool(false, style.SelectPrevious(false), "SelectPrevious(false) from 0 with single choice should return false");
     assert_bool(false, style.SelectPrevious(true), "SelectPrevious(true) from 0 with single choice should return false");
+}
+
+void testEdgeCases() {
+    printf("Testing BDefaultCompletionStyle edge cases...\n");
+
+    // NULL ChoiceModel
+    {
+        // CompletionStyle takes ownership and deletes these in its destructor
+        MockEditView* editView = new MockEditView();
+        MockChoiceView* choiceView = new MockChoiceView();
+        MockPatternSelector* patternSelector = new MockPatternSelector();
+        BDefaultCompletionStyle style(editView, NULL, choiceView, patternSelector);
+        assert_bool(false, style.SelectNext(), "SelectNext should return false when ChoiceModel is NULL");
+        assert_bool(false, style.SelectPrevious(), "SelectPrevious should return false when ChoiceModel is NULL");
+    }
+
+    // NULL ChoiceView
+    {
+        // CompletionStyle takes ownership and deletes these in its destructor
+        MockEditView* editView = new MockEditView();
+        MockChoiceModel* choiceModel = new MockChoiceModel();
+        MockPatternSelector* patternSelector = new MockPatternSelector();
+        BDefaultCompletionStyle style(editView, choiceModel, NULL, patternSelector);
+        choiceModel->AddChoice("choice1");
+        assert_bool(false, style.SelectNext(), "SelectNext should return false when ChoiceView is NULL");
+        assert_bool(false, style.SelectPrevious(), "SelectPrevious should return false when ChoiceView is NULL");
+    }
+
+    // Model changes (CountChoices changes)
+    {
+        // CompletionStyle takes ownership and deletes these in its destructor
+        MockEditView* editView = new MockEditView();
+        MockChoiceModel* choiceModel = new MockChoiceModel();
+        MockChoiceView* choiceView = new MockChoiceView();
+        MockPatternSelector* patternSelector = new MockPatternSelector();
+        BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+
+        choiceModel->AddChoice("choice1");
+        choiceModel->AddChoice("choice2");
+
+        style.Select(1); // Select last
+        assert_int32(1, style.SelectedChoiceIndex(), "Initially at index 1");
+
+        // Model grows
+        choiceModel->AddChoice("choice3");
+        assert_bool(true, style.SelectNext(false), "SelectNext should return true now that model grew");
+        assert_int32(2, style.SelectedChoiceIndex(), "Should select index 2");
+
+        // Model shrinks below current selection
+        choiceModel->ClearChoices();
+        choiceModel->AddChoice("only");
+        // style.fSelectedIndex is still 2, but CountChoices() is now 1.
+        assert_bool(false, style.SelectNext(false), "SelectNext should return false when current index is out of bounds");
+        assert_int32(2, style.SelectedChoiceIndex(), "Index should remain 2 (though invalid)");
+    }
+
+    // SetChoiceModel
+    {
+        // CompletionStyle takes ownership and deletes these in its destructor
+        MockEditView* editView = new MockEditView();
+        MockChoiceModel* choiceModel1 = new MockChoiceModel();
+        MockChoiceView* choiceView = new MockChoiceView();
+        MockPatternSelector* patternSelector = new MockPatternSelector();
+        BDefaultCompletionStyle style(editView, choiceModel1, choiceView, patternSelector);
+
+        choiceModel1->AddChoice("c1_1");
+        style.Select(0);
+
+        MockChoiceModel* choiceModel2 = new MockChoiceModel();
+        choiceModel2->AddChoice("c2_1");
+        choiceModel2->AddChoice("c2_2");
+
+        // SetChoiceModel takes ownership of choiceModel2 and deletes choiceModel1
+        style.SetChoiceModel(choiceModel2);
+        // Note: style.fSelectedIndex is still 0.
+        assert_int32(0, style.SelectedChoiceIndex(), "Index remains 0 after SetChoiceModel");
+
+        assert_bool(true, style.SelectNext(false), "SelectNext works with new model");
+        assert_int32(1, style.SelectedChoiceIndex(), "Should select index 1 of new model");
+    }
 }
 
 int main() {
     testSelectPrevious();
     testSelectNext();
     testSingleChoice();
+    testEdgeCases();
 
     if (gTestFailures > 0) {
         printf("\nFinished running tests: %d failures\n", gTestFailures);
