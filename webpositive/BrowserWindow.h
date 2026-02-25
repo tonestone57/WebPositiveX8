@@ -96,6 +96,8 @@ enum {
 };
 
 
+class BookmarkWorker;
+
 class BrowserWindow : public BWebWindow {
 public:
 								BrowserWindow(BRect frame, SettingsMessage* appSettings,
@@ -186,11 +188,11 @@ private:
 			void				_CreateBookmark(BMessage* message);
 			void				_CreateBookmark();
 			void				_ShowBookmarks();
-			bool				_CheckBookmarkExists(BDirectory& directory,
+	static	bool				_CheckBookmarkExists(BDirectory& directory,
 									const BString& fileName,
-									const BString& url) const;
-			bool				_ReadURLAttr(BFile& bookmarkFile,
-									BString& url) const;
+									const BString& url);
+	static	bool				_ReadURLAttr(BFile& bookmarkFile,
+									BString& url);
 			void				_AddBookmarkURLsRecursively(
 									BDirectory& directory,
 									BMessage* message,
@@ -290,6 +292,8 @@ private:
 
 			bool				fIsDownloadOnly;
 			BUrl				fInitialURL;
+
+	friend	class				BookmarkWorker;
 };
 
 

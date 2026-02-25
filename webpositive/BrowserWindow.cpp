@@ -32,6 +32,7 @@
 #include "BrowserWindow.h"
 
 #include <Alert.h>
+#include <Autolock.h>
 #include <Application.h>
 #include <Bitmap.h>
 #include <Button.h>
@@ -51,6 +52,8 @@
 #include <IconMenuItem.h>
 #include <Keymap.h>
 #include <LayoutBuilder.h>
+#include <Locker.h>
+#include <Looper.h>
 #include <Locale.h>
 #include <ObjectList.h>
 #include <MenuBar.h>
@@ -137,7 +140,234 @@ enum {
 
 	SELECT_TAB									= 'sltb',
 	CYCLE_TABS									= 'ctab',
+
+	MSG_CREATE_BOOKMARK							= 'mcbm',
 };
+
+
+class BookmarkWorker : public BLooper {
+public:
+	BookmarkWorker()
+		:
+		BLooper("Bookmark worker")
+	{
+		Run();
+	}
+
+	virtual void MessageReceived(BMessage* message)
+	{
+		switch (message->what) {
+			case MSG_CREATE_BOOKMARK:
+			{
+				BString pathString;
+				BString fileName;
+				BString title;
+				BString url;
+				if (message->FindString("path", &pathString) != B_OK
+					|| message->FindString("fileName", &fileName) != B_OK
+					|| message->FindString("title", &title) != B_OK
+					|| message->FindString("url", &url) != B_OK)
+					break;
+
+				BBitmap* miniIcon = NULL;
+				BBitmap* largeIcon = NULL;
+
+				BMessage miniIconMsg;
+				if (message->FindMessage("miniIcon", &miniIconMsg) == B_OK) {
+					miniIcon = new(std::nothrow) BBitmap(&miniIconMsg);
+					if (miniIcon != NULL && miniIcon->InitCheck() != B_OK) {
+						delete miniIcon;
+						miniIcon = NULL;
+					}
+				}
+
+				BMessage largeIconMsg;
+				if (message->FindMessage("largeIcon", &largeIconMsg) == B_OK) {
+					largeIcon = new(std::nothrow) BBitmap(&largeIconMsg);
+					if (largeIcon != NULL && largeIcon->InitCheck() != B_OK) {
+						delete largeIcon;
+						largeIcon = NULL;
+					}
+				}
+
+				BPath path(pathString.String());
+				if (path.InitCheck() == B_OK)
+					_DoCreateBookmark(path, fileName, title, url, miniIcon, largeIcon);
+
+				delete miniIcon;
+				delete largeIcon;
+				break;
+			}
+			default:
+				BLooper::MessageReceived(message);
+				break;
+		}
+	}
+
+private:
+	void _DoCreateBookmark(const BPath& path, BString fileName, const BString& title,
+		const BString& url, const BBitmap* miniIcon, const BBitmap* largeIcon)
+	{
+		// Determine the file name if one was not provided
+		bool presetFileName = true;
+		if (fileName.IsEmpty() == true) {
+			presetFileName = false;
+			fileName = title;
+			if (fileName.Length() == 0) {
+				fileName = url;
+				int32 leafPos = fileName.FindLast('/');
+				if (leafPos >= 0)
+					fileName.Remove(0, leafPos + 1);
+			}
+			fileName.ReplaceAll('/', '-');
+			fileName.Truncate(B_FILE_NAME_LENGTH - 1);
+		}
+
+		BPath entryPath(path);
+		status_t status = entryPath.Append(fileName);
+		BEntry entry;
+		if (status == B_OK)
+			status = entry.SetTo(entryPath.Path(), true);
+
+		// There are several reasons why an entry matching the path argument could already exist.
+		if (status == B_OK && entry.Exists() == true) {
+			off_t size;
+			entry.GetSize(&size);
+			char attrName[B_ATTR_NAME_LENGTH];
+			BNode node(&entry);
+			status_t attrStatus = node.GetNextAttrName(attrName);
+			if (strcmp(attrName, "_trk/pinfo_le") == 0)
+				attrStatus = node.GetNextAttrName(attrName);
+
+			if (presetFileName == true && size == 0 && attrStatus == B_ENTRY_NOT_FOUND) {
+				// Tracker's drag-and-drop routine created an empty entry for us to fill in.
+				// Go ahead and write to the existing entry.
+			} else {
+				BDirectory directory(path.Path());
+				if (BrowserWindow::_CheckBookmarkExists(directory, fileName, url) == true) {
+					// The existing entry is a bookmark with the same URL.  No further action needed.
+					return;
+				} else {
+					// Find a unique name for the bookmark.
+					int32 tries = 1;
+					while (entry.Exists()) {
+						fileName << " " << tries++;
+						entryPath = path;
+						status = entryPath.Append(fileName);
+						if (status == B_OK)
+							status = entry.SetTo(entryPath.Path(), true);
+						if (status != B_OK)
+							break;
+					}
+				}
+			}
+		}
+
+		BFile bookmarkFile;
+		if (status == B_OK) {
+			status = bookmarkFile.SetTo(&entry,
+				B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY);
+		}
+
+		// Write bookmark meta data
+		if (status == B_OK)
+			status = bookmarkFile.WriteAttrString("META:url", &url);
+		if (status == B_OK) {
+			bookmarkFile.WriteAttrString("META:title", &title);
+		}
+
+		BNodeInfo nodeInfo(&bookmarkFile);
+		if (status == B_OK) {
+			status = nodeInfo.SetType("application/x-vnd.Be-bookmark");
+			// Replace the standard Be-bookmark file icons with the argument icons,
+			// if any were provided.
+			if (status == B_OK) {
+				status_t ret = B_OK;
+				if (miniIcon != NULL) {
+					ret = nodeInfo.SetIcon(miniIcon, B_MINI_ICON);
+					if (ret != B_OK) {
+						fprintf(stderr, "Failed to store mini icon for bookmark: "
+							"%s\n", strerror(ret));
+					}
+				}
+				if (largeIcon != NULL && ret == B_OK)
+					ret = nodeInfo.SetIcon(largeIcon, B_LARGE_ICON);
+				else if (largeIcon == NULL && miniIcon != NULL && ret == B_OK) {
+					// If largeIcon is not available but miniIcon is, use a magnified miniIcon instead.
+					BBitmap substituteLargeIcon(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK,
+						B_CMAP8);
+					const uint8* src = (const uint8*)miniIcon->Bits();
+					uint32 srcBPR = miniIcon->BytesPerRow();
+					uint8* dst = (uint8*)substituteLargeIcon.Bits();
+					uint32 dstBPR = substituteLargeIcon.BytesPerRow();
+					for (uint32 y = 0; y < 16; y++) {
+						const uint8* s = src;
+						uint8* d = dst;
+						for (uint32 x = 0; x < 16; x++) {
+							*d++ = *s;
+							*d++ = *s++;
+						}
+						dst += dstBPR;
+						s = src;
+						for (uint32 x = 0; x < 16; x++) {
+							*d++ = *s;
+							*d++ = *s++;
+						}
+						dst += dstBPR;
+						src += srcBPR;
+					}
+					ret = nodeInfo.SetIcon(&substituteLargeIcon, B_LARGE_ICON);
+				} else
+					ret = B_OK;
+				if (ret != B_OK) {
+					fprintf(stderr, "Failed to store large icon for bookmark: "
+						"%s\n", strerror(ret));
+				}
+			}
+		}
+
+		if (status != B_OK) {
+			BString message(B_TRANSLATE_COMMENT("There was an error creating the "
+				"bookmark file.\n\nError: %error", "Don't translate variable "
+				"%error"));
+			message.ReplaceFirst("%error", strerror(status));
+			BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
+				message.String(), B_TRANSLATE("OK"), NULL, NULL,
+				B_WIDTH_AS_USUAL, B_STOP_ALERT);
+			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+			alert->Go();
+			return;
+		}
+	}
+};
+
+
+static BookmarkWorker* sBookmarkWorker = NULL;
+static BLocker sBookmarkWorkerLock("BookmarkWorker lock");
+
+
+class BookmarkWorkerCleanup {
+public:
+	~BookmarkWorkerCleanup()
+	{
+		BAutolock _(sBookmarkWorkerLock);
+		if (sBookmarkWorker != NULL) {
+			sBookmarkWorker->PostMessage(B_QUIT_REQUESTED);
+			sBookmarkWorker = NULL;
+		}
+	}
+};
+static BookmarkWorkerCleanup sBookmarkWorkerCleanup;
+
+
+static BookmarkWorker*
+GetBookmarkWorker()
+{
+	BAutolock _(sBookmarkWorkerLock);
+	if (sBookmarkWorker == NULL)
+		sBookmarkWorker = new BookmarkWorker();
+	return sBookmarkWorker;
+}
 
 
 static const int32 kModifiers = B_SHIFT_KEY | B_COMMAND_KEY
@@ -2046,136 +2276,23 @@ void
 BrowserWindow::_CreateBookmark(const BPath& path, BString fileName, const BString& title,
 	const BString& url, const BBitmap* miniIcon, const BBitmap* largeIcon)
 {
-	// Determine the file name if one was not provided
-	bool presetFileName = true;
-	if (fileName.IsEmpty() == true) {
-		presetFileName = false;
-		fileName = title;
-		if (fileName.Length() == 0) {
-			fileName = url;
-			int32 leafPos = fileName.FindLast('/');
-			if (leafPos >= 0)
-				fileName.Remove(0, leafPos + 1);
-		}
-		fileName.ReplaceAll('/', '-');
-		fileName.Truncate(B_FILE_NAME_LENGTH - 1);
+	BMessage* message = new BMessage(MSG_CREATE_BOOKMARK);
+	message->AddString("path", path.Path());
+	message->AddString("fileName", fileName);
+	message->AddString("title", title);
+	message->AddString("url", url);
+	if (miniIcon != NULL) {
+		BMessage archive;
+		if (miniIcon->Archive(&archive) == B_OK)
+			message->AddMessage("miniIcon", &archive);
 	}
-
-	BPath entryPath(path);
-	status_t status = entryPath.Append(fileName);
-	BEntry entry;
-	if (status == B_OK)
-		status = entry.SetTo(entryPath.Path(), true);
-
-	// There are several reasons why an entry matching the path argument could already exist.
-	if (status == B_OK && entry.Exists() == true) {
-		off_t size;
-		entry.GetSize(&size);
-		char attrName[B_ATTR_NAME_LENGTH];
-		BNode node(&entry);
-		status_t attrStatus = node.GetNextAttrName(attrName);
-		if (strcmp(attrName, "_trk/pinfo_le") == 0)
-			attrStatus = node.GetNextAttrName(attrName);
-
-		if (presetFileName == true && size == 0 && attrStatus == B_ENTRY_NOT_FOUND) {
-			// Tracker's drag-and-drop routine created an empty entry for us to fill in.
-			// Go ahead and write to the existing entry.
-		} else {
-			BDirectory directory(path.Path());
-			if (_CheckBookmarkExists(directory, fileName, url) == true) {
-				// The existing entry is a bookmark with the same URL.  No further action needed.
-				return;
-			} else {
-				// Find a unique name for the bookmark.
-				int32 tries = 1;
-				while (entry.Exists()) {
-					fileName << " " << tries++;
-					entryPath = path;
-					status = entryPath.Append(fileName);
-					if (status == B_OK)
-						status = entry.SetTo(entryPath.Path(), true);
-					if (status != B_OK)
-						break;
-				}
-			}
-		}
+	if (largeIcon != NULL) {
+		BMessage archive;
+		if (largeIcon->Archive(&archive) == B_OK)
+			message->AddMessage("largeIcon", &archive);
 	}
-
-	BFile bookmarkFile;
-	if (status == B_OK) {
-		status = bookmarkFile.SetTo(&entry,
-			B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY);
-	}
-
-	// Write bookmark meta data
-	if (status == B_OK)
-		status = bookmarkFile.WriteAttrString("META:url", &url);
-	if (status == B_OK) {
-		bookmarkFile.WriteAttrString("META:title", &title);
-	}
-
-	BNodeInfo nodeInfo(&bookmarkFile);
-	if (status == B_OK) {
-		status = nodeInfo.SetType("application/x-vnd.Be-bookmark");
-		// Replace the standard Be-bookmark file icons with the argument icons,
-		// if any were provided.
-		if (status == B_OK) {
-			status_t ret = B_OK;
-			if (miniIcon != NULL) {
-				ret = nodeInfo.SetIcon(miniIcon, B_MINI_ICON);
-				if (ret != B_OK) {
-					fprintf(stderr, "Failed to store mini icon for bookmark: "
-						"%s\n", strerror(ret));
-				}
-			}
-			if (largeIcon != NULL && ret == B_OK)
-				ret = nodeInfo.SetIcon(largeIcon, B_LARGE_ICON);
-			else if (largeIcon == NULL && miniIcon != NULL && ret == B_OK) {
-				// If largeIcon is not available but miniIcon is, use a magnified miniIcon instead.
-				BBitmap substituteLargeIcon(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK,
-					B_CMAP8);
-				const uint8* src = (const uint8*)miniIcon->Bits();
-				uint32 srcBPR = miniIcon->BytesPerRow();
-				uint8* dst = (uint8*)substituteLargeIcon.Bits();
-				uint32 dstBPR = substituteLargeIcon.BytesPerRow();
-				for (uint32 y = 0; y < 16; y++) {
-					const uint8* s = src;
-					uint8* d = dst;
-					for (uint32 x = 0; x < 16; x++) {
-						*d++ = *s;
-						*d++ = *s++;
-					}
-					dst += dstBPR;
-					s = src;
-					for (uint32 x = 0; x < 16; x++) {
-						*d++ = *s;
-						*d++ = *s++;
-					}
-					dst += dstBPR;
-					src += srcBPR;
-				}
-				ret = nodeInfo.SetIcon(&substituteLargeIcon, B_LARGE_ICON);
-			} else
-				ret = B_OK;
-			if (ret != B_OK) {
-				fprintf(stderr, "Failed to store large icon for bookmark: "
-					"%s\n", strerror(ret));
-			}
-		}
-	}
-
-	if (status != B_OK) {
-		BString message(B_TRANSLATE_COMMENT("There was an error creating the "
-			"bookmark file.\n\nError: %error", "Don't translate variable "
-			"%error"));
-		message.ReplaceFirst("%error", strerror(status));
-		BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-			message.String(), B_TRANSLATE("OK"), NULL, NULL,
-			B_WIDTH_AS_USUAL, B_STOP_ALERT);
-		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-		alert->Go();
-		return;
-	}
+	if (GetBookmarkWorker()->PostMessage(message) != B_OK)
+		delete message;
 }
 
 
@@ -2311,7 +2428,7 @@ BrowserWindow::_ShowBookmarks()
 
 
 bool BrowserWindow::_CheckBookmarkExists(BDirectory& directory,
-	const BString& bookmarkName, const BString& url) const
+	const BString& bookmarkName, const BString& url)
 {
 	BEntry entry;
 	while (directory.GetNextEntry(&entry) == B_OK) {
@@ -2331,7 +2448,7 @@ bool BrowserWindow::_CheckBookmarkExists(BDirectory& directory,
 
 
 bool
-BrowserWindow::_ReadURLAttr(BFile& bookmarkFile, BString& url) const
+BrowserWindow::_ReadURLAttr(BFile& bookmarkFile, BString& url)
 {
 	return bookmarkFile.InitCheck() == B_OK
 		&& bookmarkFile.ReadAttrString("META:url", &url) == B_OK;
