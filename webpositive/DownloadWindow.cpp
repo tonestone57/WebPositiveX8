@@ -453,43 +453,34 @@ DownloadWindow::_DownloadFinished(BWebDownload* download)
 void
 DownloadWindow::_RemoveFinishedDownloads()
 {
-	int32 missingCount = 0;
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
-		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
-		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
-			item->View());
-		if (!view)
-			continue;
-		if (view->IsFinished()) {
-			delete fDownloadViewsLayout->RemoveItem(i);
-			delete view;
-		} else if (view->IsMissing())
-			missingCount++;
-	}
-	fRemoveFinishedButton->SetEnabled(false);
-	fRemoveMissingButton->SetEnabled(missingCount > 0);
-	_SaveSettings();
+	_RemoveDownloads(true, false);
 }
 
 
 void
 DownloadWindow::_RemoveMissingDownloads()
 {
-	int32 finishedCount = 0;
+	_RemoveDownloads(false, true);
+}
+
+
+void
+DownloadWindow::_RemoveDownloads(bool finished, bool missing)
+{
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
 		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
 			item->View());
 		if (!view)
 			continue;
-		if (view->IsMissing()) {
+
+		if ((finished && view->IsFinished()) || (missing && view->IsMissing())) {
 			delete fDownloadViewsLayout->RemoveItem(i);
 			delete view;
-		} else if (view->IsFinished())
-			finishedCount++;
+		}
 	}
-	fRemoveMissingButton->SetEnabled(false);
-	fRemoveFinishedButton->SetEnabled(finishedCount > 0);
+
+	_ValidateButtonStatus();
 	_SaveSettings();
 }
 
