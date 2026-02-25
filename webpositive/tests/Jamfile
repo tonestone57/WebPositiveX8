@@ -3,11 +3,34 @@ SubDir HAIKU_TOP src apps webpositive tests ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive autocompletion ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive support ] ;
+SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive tabview ] ;
+
+SimpleTest TabManagerTest :
+	TabManagerTest.cpp
+	TabManager.cpp
+	TabContainerView.cpp
+	TabView.cpp
+	:
+	be
+;
+
+SubDirHdrs [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
 
 SimpleTest URLChoiceTest :
 	URLChoiceTest.cpp
 	:
 	be
+;
+
+SimpleTest DownloadSpeedCalculatorTest :
+	DownloadSpeedCalculatorTest.cpp
+	DownloadSpeedCalculator.cpp
+	:
+	be
+SimpleTest CookieWindowTest :
+	CookieWindowTest.cpp
+	:
+	be network [ MultiArchDefaultGristFiles libcolumnlistview.a ]
 ;
 
 SimpleTest SettingsFileTest :

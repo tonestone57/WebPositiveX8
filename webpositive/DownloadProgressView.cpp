@@ -292,15 +292,8 @@ DownloadProgressView::Init(BMessage* archive)
 	fCurrentSize = 0;
 	fExpectedSize = 0;
 	fLastUpdateTime = 0;
-	fBytesPerSecond = 0.0;
-	for (size_t i = 0; i < kBytesPerSecondSlots; i++)
-		fBytesPerSecondSlot[i] = 0.0;
-	fCurrentBytesPerSecondSlot = 0;
-	fLastSpeedReferenceSize = 0;
-	fEstimatedFinishReferenceSize = 0;
 
-	fProcessStartTime = fLastSpeedReferenceTime
-		= fEstimatedFinishReferenceTime	= system_time();
+	fSpeedCalculator.Reset(0, system_time());
 
 	SetViewUIColor(B_LIST_BACKGROUND_COLOR);
 	SetFlags(Flags() | B_FULL_UPDATE_ON_RESIZE | B_WILL_DRAW);
@@ -459,9 +452,8 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			// Immediately switch to speed display whenever a new download
 			// starts.
 			sShowSpeed = true;
-			sLastEstimatedFinishSpeedToggleTime
-				= fProcessStartTime = fLastSpeedReferenceTime
-				= fEstimatedFinishReferenceTime = system_time();
+			sLastEstimatedFinishSpeedToggleTime = system_time();
+			fSpeedCalculator.Reset(0, sLastEstimatedFinishSpeedToggleTime);
 			break;
 		}
 		case B_DOWNLOAD_PROGRESS:
@@ -843,26 +835,7 @@ DownloadProgressView::_UpdateStatus(off_t currentSize, off_t expectedSize)
 	if ((currentTime - fLastUpdateTime) > kMaxUpdateInterval) {
 		fLastUpdateTime = currentTime;
 
-		if (currentTime >= fLastSpeedReferenceTime + kSpeedReferenceInterval) {
-			// update current speed every kSpeedReferenceInterval
-			fCurrentBytesPerSecondSlot
-				= (fCurrentBytesPerSecondSlot + 1) % kBytesPerSecondSlots;
-			fBytesPerSecondSlot[fCurrentBytesPerSecondSlot]
-				= (double)(currentSize - fLastSpeedReferenceSize)
-					* 1000000LL / (currentTime - fLastSpeedReferenceTime);
-			fLastSpeedReferenceSize = currentSize;
-			fLastSpeedReferenceTime = currentTime;
-			fBytesPerSecond = 0.0;
-			size_t count = 0;
-			for (size_t i = 0; i < kBytesPerSecondSlots; i++) {
-				if (fBytesPerSecondSlot[i] != 0.0) {
-					fBytesPerSecond += fBytesPerSecondSlot[i];
-					count++;
-				}
-			}
-			if (count > 0)
-				fBytesPerSecond /= count;
-		}
+		fSpeedCalculator.Update(currentSize, currentTime);
 		_UpdateStatusText();
 	}
 }
@@ -886,7 +859,7 @@ DownloadProgressView::_UpdateStatusText()
 {
 	fInfoView->SetText("");
 	BString buffer;
-	if (sShowSpeed && fBytesPerSecond != 0.0) {
+	if (sShowSpeed && fSpeedCalculator.CurrentSpeed() != 0.0) {
 		// Draw speed info
 		char sizeBuffer[128];
 		// Get strings for current and expected size and remove the unit
@@ -907,7 +880,8 @@ DownloadProgressView::_UpdateStatusText()
 		buffer = B_TRANSLATE("(%currentSize% of %expectedSize%, %rate%/s)");
 		buffer.ReplaceFirst("%currentSize%", currentSize);
 		buffer.ReplaceFirst("%expectedSize%", expectedSize);
-		buffer.ReplaceFirst("%rate%", string_for_size(fBytesPerSecond,
+		buffer.ReplaceFirst("%rate%", string_for_size(
+				fSpeedCalculator.CurrentSpeed(),
 				sizeBuffer, sizeof(sizeBuffer)));
 
 		float stringWidth = fInfoView->StringWidth(buffer.String());
@@ -915,17 +889,16 @@ DownloadProgressView::_UpdateStatusText()
 			fInfoView->SetText(buffer.String());
 		else {
 			// complete string too wide, try with shorter version
-			buffer = string_for_size(fBytesPerSecond, sizeBuffer,
-				sizeof(sizeBuffer));
+			buffer = string_for_size(fSpeedCalculator.CurrentSpeed(),
+				sizeBuffer, sizeof(sizeBuffer));
 			buffer << B_TRANSLATE_COMMENT("/s)", "...as in 'per second'");
 			stringWidth = fInfoView->StringWidth(buffer.String());
 			if (stringWidth < fInfoView->Bounds().Width())
 				fInfoView->SetText(buffer.String());
 		}
 	} else if (!sShowSpeed && fCurrentSize < fExpectedSize) {
-		double totalBytesPerSecond = (double)(fCurrentSize
-				- fEstimatedFinishReferenceSize)
-			* 1000000LL / (system_time() - fEstimatedFinishReferenceTime);
+		double totalBytesPerSecond = fSpeedCalculator.AverageSpeed(
+				fCurrentSize, system_time());
 		double secondsRemaining = (fExpectedSize - fCurrentSize)
 			/ totalBytesPerSecond;
 		time_t now = (time_t)real_time_clock();
