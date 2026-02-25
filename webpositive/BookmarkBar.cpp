@@ -7,12 +7,15 @@
 #include "BookmarkBar.h"
 
 #include <Alert.h>
+#include <Bitmap.h>
 #include <Catalog.h>
+#include <ControlLook.h>
 #include <Directory.h>
 #include <Entry.h>
 #include <GroupLayout.h>
 #include <IconMenuItem.h>
 #include <MessageRunner.h>
+#include <NodeInfo.h>
 #include <Messenger.h>
 #include <PopUpMenu.h>
 #include <PromptWindow.h>
@@ -144,8 +147,17 @@ BookmarkBar::MessageReceived(BMessage* message)
 			entry_ref ref;
 			if (message->FindInt64("node", &inode) == B_OK
 				&& message->FindRef("ref", &ref) == B_OK) {
-				BEntry entry(&ref);
-				_AddItem(inode, &entry);
+				const char* name = message->FindString("name");
+				bool isDirectory;
+				if (name != nullptr
+					&& message->FindBool("isDirectory", &isDirectory) == B_OK) {
+					BBitmap* icon = nullptr;
+					message->FindPointer("icon", (void**)&icon);
+					_AddItem(inode, &ref, name, isDirectory, icon);
+				} else {
+					BEntry entry(&ref);
+					_AddItem(inode, &entry);
+				}
 			}
 			break;
 		}
@@ -461,35 +473,55 @@ BookmarkBar::MinSize()
 void
 BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 {
-	char name[B_FILE_NAME_LENGTH];
-	entry->GetName(name);
-
-	// make sure the item doesn't already exists
-	if (fItemsMap[inode] != nullptr)
+	// make sure the item doesn't already exist
+	if (fItemsMap.find(inode) != fItemsMap.end())
 		return;
 
 	entry_ref ref;
 	entry->GetRef(&ref);
 
-	// In case it's a symlink, follow link to get the right icon,
-	// but add the symlink's entry_ref for the IconMenuItem so it gets renamed/deleted/etc.
-	BEntry followedLink(&ref, true); // traverse link
+	char name[B_FILE_NAME_LENGTH];
+	entry->GetName(name);
+
+	BEntry followedLink(&ref, true);
+	bool isDirectory = followedLink.IsDirectory();
+
+	_AddItem(inode, &ref, name, isDirectory, nullptr);
+}
+
+
+void
+BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
+	bool isDirectory, BBitmap* icon)
+{
+	// make sure the item doesn't already exist
+	if (fItemsMap.find(inode) != fItemsMap.end()) {
+		delete icon;
+		return;
+	}
 
 	IconMenuItem* item = nullptr;
 
-	if (followedLink.IsDirectory()) {
+	if (isDirectory) {
+		delete icon;
 		BNavMenu* menu = new BNavMenu(name, B_REFS_RECEIVED, Window());
-		menu->SetNavDir(&ref);
+		menu->SetNavDir(ref);
 		BMessage* message = new BMessage(kFolderMsg);
-		message->AddRef("refs", &ref);
+		message->AddRef("refs", ref);
 		item = new IconMenuItem(menu, message, "application/x-vnd.Be-directory", B_MINI_ICON);
 
 	} else {
-		BNode node(&followedLink);
-		BNodeInfo info(&node);
 		BMessage* message = new BMessage(B_REFS_RECEIVED);
-		message->AddRef("refs", &ref);
-		item = new IconMenuItem(name, message, &info, B_MINI_ICON);
+		message->AddRef("refs", ref);
+
+		if (icon != nullptr) {
+			item = new IconMenuItem(name, message, icon, B_MINI_ICON);
+		} else {
+			BEntry followedLink(ref, true);
+			BNode node(&followedLink);
+			BNodeInfo info(&node);
+			item = new IconMenuItem(name, message, &info, B_MINI_ICON);
+		}
 	}
 
 	int32 count = CountItems();
@@ -512,13 +544,37 @@ BookmarkBar::_LoaderThread(void* data)
 	BDirectory dir(&args->nodeRef);
 	BEntry bookmark;
 	while (dir.GetNextEntry(&bookmark, false) == B_OK) {
-		node_ref ref;
-		if (bookmark.GetNodeRef(&ref) == B_OK) {
+		node_ref nref;
+		if (bookmark.GetNodeRef(&nref) == B_OK) {
 			BMessage message(kAddBookmarkMsg);
-			message.AddInt64("node", ref.node);
+			message.AddInt64("node", nref.node);
 			entry_ref eref;
 			if (bookmark.GetRef(&eref) == B_OK) {
 				message.AddRef("ref", &eref);
+
+				char name[B_FILE_NAME_LENGTH];
+				bookmark.GetName(name);
+				message.AddString("name", name);
+
+				BEntry followedLink(&eref, true);
+				bool isDirectory = followedLink.IsDirectory();
+				message.AddBool("isDirectory", isDirectory);
+
+				if (!isDirectory) {
+					BNode node(&followedLink);
+					BNodeInfo info(&node);
+					BBitmap* icon = new(std::nothrow) BBitmap(
+						BRect(BPoint(0, 0),
+							be_control_look->ComposeIconSize(B_MINI_ICON)),
+						B_RGBA32);
+					if (icon != nullptr) {
+						if (info.GetTrackerIcon(icon, (icon_size)-1) == B_OK)
+							message.AddPointer("icon", icon);
+						else
+							delete icon;
+					}
+				}
+
 				args->messenger.SendMessage(&message);
 			}
 		}
