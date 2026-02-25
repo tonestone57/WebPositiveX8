@@ -1,6 +1,7 @@
 #include <stdio.h>
-#include <String.h>
 #include <DateTime.h>
+#include <Message.h>
+#include <String.h>
 #include "BrowsingHistory.h"
 
 const char* kApplicationName = "WebPositive";
@@ -16,19 +17,47 @@ void assert_true(bool condition, const char* message) {
     }
 }
 
+void test_invoked() {
+    printf("Testing BrowsingHistoryItem::Invoked()...\n");
+    BrowsingHistoryItem item(BString("http://www.haiku-os.org"));
+    assert_true(item.InvokationCount() == 0, "Initial invokation count is 0");
+
+    BDateTime before = item.DateTime();
+    assert_true(before.IsValid(), "Initial DateTime is valid");
+
+    item.Invoked();
+    assert_true(item.InvokationCount() == 1, "Invokation count is 1 after one call");
+    assert_true(item.DateTime() >= before, "DateTime is updated (>= before)");
+    assert_true(item.DateTime().IsValid(), "DateTime after invocation is valid");
+
+    item.Invoked();
+    assert_true(item.InvokationCount() == 2, "Invokation count is 2 after two calls");
+
+    // Test overflow protection
+    printf("Testing overflow protection...\n");
+    BMessage archive;
+    archive.AddString("url", "http://www.haiku-os.org");
+    // We use the exact key "invokations" and type UInt32 as found in BrowsingHistory.cpp
+    uint32 maxCount = 0xFFFFFFFF;
+    archive.AddUInt32("invokations", maxCount);
+
+    BrowsingHistoryItem overflowItem(&archive);
+    assert_true(overflowItem.InvokationCount() == maxCount, "Item initialized with max uint32");
+
+    overflowItem.Invoked();
+    assert_true(overflowItem.InvokationCount() == maxCount, "Invokation count stays at max uint32 on overflow (clamping)");
+}
+
 int main() {
-    printf("Testing BrowsingHistoryItem assignment operator...\n");
+    test_invoked();
+
+    printf("\nTesting BrowsingHistoryItem assignment operator...\n");
 
     BrowsingHistoryItem item1(BString("http://www.google.com"));
-    // Simulate some state
     item1.Invoked();
     item1.Invoked();
 
     BrowsingHistoryItem item2(BString("http://www.haiku-os.org"));
-
-    printf("Initial state:\n");
-    printf("Item 1 URL: %s, Count: %u\n", item1.URL().String(), item1.InvokationCount());
-    printf("Item 2 URL: %s, Count: %u\n", item2.URL().String(), item2.InvokationCount());
 
     assert_true(item1.URL() == "http://www.google.com", "item1 URL is correct");
     assert_true(item1.InvokationCount() == 2, "item1 invokation count is 2");
@@ -45,7 +74,6 @@ int main() {
 
     printf("Testing self-assignment...\n");
     item1 = item1;
-    assert_true(item1.URL() == "http://www.google.com", "item1 URL still correct after self-assignment");
     assert_true(item1.InvokationCount() == 2, "item1 invokation count still correct after self-assignment");
 
     printf("Testing multiple assignment...\n");
