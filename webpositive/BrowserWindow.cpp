@@ -2935,15 +2935,15 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		if (ret == B_OK)
 			ret = pathToPageSource.Append(fileName.String());
 
+		int fd = -1;
 		if (ret == B_OK) {
 			char* path = strdup(pathToPageSource.Path());
 			if (path == NULL) {
 				ret = B_NO_MEMORY;
 			} else {
-				int fd = mkstemps(path, extension.Length() + 1);
+				fd = mkstemps(path, extension.Length() + 1);
 				if (fd != -1) {
-					close(fd);
-					pathToPageSource.SetTo(path);
+					ret = pathToPageSource.SetTo(path);
 				} else {
 					ret = B_ERROR;
 				}
@@ -2951,11 +2951,7 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 			}
 		}
 
-		BFile pageSourceFile;
-		if (ret == B_OK) {
-			ret = pageSourceFile.SetTo(pathToPageSource.Path(),
-				B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY);
-		}
+		BFile pageSourceFile(fd);
 		if (ret == B_OK)
 			ret = pageSourceFile.InitCheck();
 		if (ret == B_OK)
