@@ -113,15 +113,10 @@ BrowserApp::BrowserApp()
 	if (GetSettingsPath(curlCookies, kSettingsFileNameCookieJar) == B_OK)
 		setenv("CURL_COOKIE_JAR_PATH", curlCookies.Path(), 0);
 
-	BPath sessionStorePath;
-	if (GetSettingsPath(sessionStorePath, kSettingsFileNameSession) == B_OK) {
-		fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-			BPath(kApplicationName).Append(kSettingsFileNameSession).Path());
-	} else {
-		BString path(kApplicationName);
-		path << "/" << kSettingsFileNameSession;
-		fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY, path.String());
-	}
+	BString sessionStoreSubPath(kApplicationName);
+	sessionStoreSubPath << "/" << kSettingsFileNameSession;
+	fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+		sessionStoreSubPath.String());
 }
 
 
@@ -211,15 +206,10 @@ BrowserApp::ReadyToRun()
 		BWebSettings::SetPersistentStoragePath(path.Path());
 	}
 
-	BPath mainSettingsPath;
-	if (GetSettingsPath(mainSettingsPath, kSettingsFileNameApplication) == B_OK) {
-		fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-			BPath(kApplicationName).Append(kSettingsFileNameApplication).Path());
-	} else {
-		BString path(kApplicationName);
-		path << "/" << kSettingsFileNameApplication;
-		fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY, path.String());
-	}
+	BString mainSettingsSubPath(kApplicationName);
+	mainSettingsSubPath << "/" << kSettingsFileNameApplication;
+	fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+		mainSettingsSubPath.String());
 
 	fLastWindowFrame = fSettings->GetValue("window frame", fLastWindowFrame);
 	BRect defaultDownloadWindowFrame(-10, -10, 365, 265);
