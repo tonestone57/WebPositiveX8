@@ -2770,8 +2770,8 @@ BrowserWindow::_VisitSearchEngine(const BString& search)
 }
 
 
-inline bool
-BrowserWindow::_IsValidDomainChar(char ch)
+bool
+BrowserWindow::_IsValidDomainChar(char ch) const
 {
 	// Filter characters based on the IDNA 2008 standard.
 	// We allow alphanumeric characters, hyphens, and colons (for ports).
@@ -2850,8 +2850,8 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 			_VisitURL(url);
 		else {
 			// In all other cases we try to detect a valid domain name. There
-			// must be at least one dot and no spaces until the first / in the
-			// URL.
+			// must be at least one dot and only valid domain characters until
+			// the first /, ?, or # in the URL.
 			bool isURL = false;
 
 			for (int32 i = 0; i < url.Length(); i++) {
