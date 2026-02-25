@@ -498,6 +498,58 @@ void testCancelChoiceEdgeCases() {
     }
 }
 
+void testSelect() {
+    printf("Testing BDefaultCompletionStyle::Select...\n");
+
+    MockEditView* editView = new MockEditView();
+    MockChoiceModel* choiceModel = new MockChoiceModel();
+    MockChoiceView* choiceView = new MockChoiceView();
+    MockPatternSelector* patternSelector = new MockPatternSelector();
+
+    BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+
+    choiceModel->AddChoice("c1");
+    choiceModel->AddChoice("c2");
+
+    // Success case: select 0
+    assert_bool(true, style.Select(0), "Select(0) should return true");
+    assert_int32(0, style.SelectedChoiceIndex(), "Selected index should be 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should be at 0");
+
+    // Already selected case
+    assert_bool(false, style.Select(0), "Select(0) again should return false");
+
+    // Success case: select 1
+    assert_bool(true, style.Select(1), "Select(1) should return true");
+    assert_int32(1, style.SelectedChoiceIndex(), "Selected index should be 1");
+
+    // Success case: select -1 (deselect)
+    assert_bool(true, style.Select(-1), "Select(-1) should return true");
+    assert_int32(-1, style.SelectedChoiceIndex(), "Selected index should be -1");
+
+    // Out of bounds: too small
+    assert_bool(false, style.Select(-2), "Select(-2) should return false");
+
+    // Out of bounds: too large
+    assert_bool(false, style.Select(2), "Select(2) should return false (count is 2)");
+
+    // NULL ChoiceModel
+    {
+        // CompletionStyle takes ownership and deletes these
+        BDefaultCompletionStyle styleNullModel(new MockEditView(), NULL, new MockChoiceView(), new MockPatternSelector());
+        assert_bool(false, styleNullModel.Select(0), "Select(0) should return false if ChoiceModel is NULL");
+    }
+
+    // NULL ChoiceView
+    {
+        MockChoiceModel* model = new MockChoiceModel();
+        model->AddChoice("c1");
+        // CompletionStyle takes ownership and deletes these
+        BDefaultCompletionStyle styleNullView(new MockEditView(), model, NULL, new MockPatternSelector());
+        assert_bool(false, styleNullView.Select(0), "Select(0) should return false if ChoiceView is NULL");
+    }
+}
+
 void testSelectNextExhaustive() {
     printf("Testing BDefaultCompletionStyle::SelectNext exhaustive...\n");
 
@@ -659,6 +711,7 @@ void testEditViewStateChanged() {
 }
 
 int main() {
+    testSelect();
     testSelectPrevious();
     testSelectNext();
     testSelectNextExhaustive();
