@@ -14,7 +14,9 @@
 #include <Entry.h>
 #include <File.h>
 #include <FindDirectory.h>
+#include <KeyStore.h>
 #include <Message.h>
+#include <OS.h>
 #include <Path.h>
 
 #include "BrowserApp.h"
@@ -25,7 +27,8 @@
 Credentials::Credentials()
 	:
 	fUsername(),
-	fPassword()
+	fPassword(),
+	fIsSecure(false)
 {
 }
 
@@ -33,23 +36,28 @@ Credentials::Credentials()
 Credentials::Credentials(const BString& username, const BString& password)
 	:
 	fUsername(username),
-	fPassword(password)
+	fPassword(password),
+	fIsSecure(false)
 {
 }
 
 
 Credentials::Credentials(const Credentials& other)
+	:
+	fUsername(other.fUsername),
+	fPassword(other.fPassword),
+	fIsSecure(other.fIsSecure)
 {
-	*this = other;
 }
 
 
 Credentials::Credentials(const BMessage* archive)
+	:
+	fIsSecure(false)
 {
 	if (archive == NULL)
 		return;
 	archive->FindString("username", &fUsername);
-	archive->FindString("password", &fPassword);
 }
 
 
@@ -64,7 +72,7 @@ Credentials::Archive(BMessage* archive) const
 	if (archive == NULL)
 		return B_BAD_VALUE;
 	status_t status = archive->AddString("username", fUsername);
-	if (status == B_OK)
+	if (status == B_OK && !fIsSecure && fPassword.Length() > 0)
 		status = archive->AddString("password", fPassword);
 	return status;
 }
@@ -78,6 +86,7 @@ Credentials::operator=(const Credentials& other)
 
 	fUsername = other.fUsername;
 	fPassword = other.fPassword;
+	fIsSecure = other.fIsSecure;
 
 	return *this;
 }
@@ -89,7 +98,8 @@ Credentials::operator==(const Credentials& other) const
 	if (this == &other)
 		return true;
 
-	return fUsername == other.fUsername && fPassword == other.fPassword;
+	return fUsername == other.fUsername && fPassword == other.fPassword
+		&& fIsSecure == other.fIsSecure;
 }
 
 
@@ -114,6 +124,20 @@ Credentials::Password() const
 }
 
 
+bool
+Credentials::IsSecure() const
+{
+	return fIsSecure;
+}
+
+
+void
+Credentials::SetSecure(bool secure)
+{
+	fIsSecure = secure;
+}
+
+
 // #pragma mark - CredentialsStorage
 
 
@@ -131,6 +155,7 @@ CredentialsStorage::CredentialsStorage(bool persistent)
 		: "credential storage"),
 	fCredentialMap(),
 	fSettingsLoaded(false),
+	fIsLoading(false),
 	fPersistent(persistent),
 	fQuitting(false),
 	fPendingSaveMessage(nullptr),
@@ -167,10 +192,7 @@ CredentialsStorage::SessionInstance()
 /*static*/ CredentialsStorage*
 CredentialsStorage::PersistentInstance()
 {
-	if (sPersistentInstance.Lock()) {
-		sPersistentInstance._LoadSettings();
-		sPersistentInstance.Unlock();
-	}
+	sPersistentInstance._EnsureSettingsLoaded();
 	return &sPersistentInstance;
 }
 
@@ -188,9 +210,79 @@ status_t
 CredentialsStorage::PutCredentials(const HashString& key,
 	const Credentials& credentials)
 {
+	Credentials updatedCredentials(credentials);
+
+	if (fPersistent) {
+		BKeyStore keyStore;
+		BString oldUsername;
+		bool hadOld = false;
+
+		if (Lock()) {
+			if (fCredentialMap.ContainsKey(key)) {
+				oldUsername = fCredentialMap.Get(key).Username();
+				hadOld = true;
+			}
+			Unlock();
+		}
+
+		if (hadOld) {
+			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
+				oldUsername.String());
+		}
+
+		if (!hadOld || oldUsername != credentials.Username()) {
+			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
+				credentials.Username().String());
+		}
+
+		BPasswordKey passwordKey(credentials.Password().String(),
+			B_KEY_PURPOSE_WEB, key.String(), credentials.Username().String());
+
+		if (keyStore.AddKey(passwordKey) == B_OK)
+			updatedCredentials.SetSecure(true);
+	}
+
 	BAutolock _(this);
 
-	return fCredentialMap.Put(key, credentials);
+	status_t status = fCredentialMap.Put(key, updatedCredentials);
+	if (status == B_OK)
+		_SaveSettings();
+
+	return status;
+}
+
+
+status_t
+CredentialsStorage::RemoveCredentials(const HashString& key)
+{
+	if (fPersistent) {
+		BKeyStore keyStore;
+		BString oldUsername;
+		bool hadOld = false;
+
+		if (Lock()) {
+			if (fCredentialMap.ContainsKey(key)) {
+				oldUsername = fCredentialMap.Get(key).Username();
+				hadOld = true;
+			}
+			Unlock();
+		}
+
+		if (hadOld) {
+			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
+				oldUsername.String());
+		}
+	}
+
+	BAutolock _(this);
+
+	if (!fCredentialMap.ContainsKey(key))
+		return B_NAME_NOT_FOUND;
+
+	fCredentialMap.Remove(key);
+	_SaveSettings();
+
+	return B_OK;
 }
 
 
@@ -207,28 +299,94 @@ CredentialsStorage::GetCredentials(const HashString& key)
 
 
 void
-CredentialsStorage::_LoadSettings()
+CredentialsStorage::_EnsureSettingsLoaded()
 {
 	if (!fPersistent || fSettingsLoaded)
 		return;
 
-	fSettingsLoaded = true;
+	Lock();
+	if (fSettingsLoaded) {
+		Unlock();
+		return;
+	}
 
+	if (fIsLoading) {
+		// Wait until loading is finished by another thread
+		while (fIsLoading) {
+			Unlock();
+			snooze(10000);
+			Lock();
+			if (fSettingsLoaded) {
+				Unlock();
+				return;
+			}
+		}
+	}
+
+	fIsLoading = true;
+	_LoadSettings();
+	fIsLoading = false;
+	fSettingsLoaded = true;
+	Unlock();
+}
+
+
+void
+CredentialsStorage::_LoadSettings()
+{
+	// Called with lock held
 	BFile settingsFile;
+	BMessage settingsArchive;
 	if (OpenSettingsFile(settingsFile, kSettingsFileNameCredentialsStorage,
 			B_READ_ONLY) == B_OK) {
-		BMessage settingsArchive;
 		settingsArchive.Unflatten(&settingsFile);
-		BMessage credentialsArchive;
-		for (int32 i = 0; settingsArchive.FindMessage("credentials", i,
-				&credentialsArchive) == B_OK; i++) {
-			BString key;
-			if (credentialsArchive.FindString("key", &key) == B_OK) {
-				Credentials credentials(&credentialsArchive);
+	}
+
+	// Unlock while doing potentially slow IPC to BKeyStore
+	Unlock();
+
+	BKeyStore keyStore;
+	bool migrationOccurred = false;
+	BMessage credentialsArchive;
+	for (int32 i = 0; settingsArchive.FindMessage("credentials", i,
+			&credentialsArchive) == B_OK; i++) {
+		BString key;
+		if (credentialsArchive.FindString("key", &key) == B_OK) {
+			BString passwordInArchive;
+			credentialsArchive.FindString("password", &passwordInArchive);
+
+			Credentials credentials(&credentialsArchive);
+
+			BPasswordKey passwordKey;
+			if (keyStore.GetKey(B_KEY_PURPOSE_WEB, key.String(),
+					credentials.Username().String(), true, passwordKey)
+						== B_OK) {
+				credentials = Credentials(credentials.Username(),
+					passwordKey.Password());
+				credentials.SetSecure(true);
+			} else if (passwordInArchive.Length() > 0) {
+				// Migration: Save to KeyStore
+				BPasswordKey newKey(passwordInArchive.String(),
+					B_KEY_PURPOSE_WEB, key.String(),
+					credentials.Username().String());
+				credentials = Credentials(credentials.Username(),
+					passwordInArchive);
+				if (keyStore.AddKey(newKey) == B_OK) {
+					credentials.SetSecure(true);
+					migrationOccurred = true;
+				}
+			}
+
+			if (credentials.Password().Length() > 0) {
+				BAutolock _(this);
 				fCredentialMap.Put(key.String(), credentials);
 			}
 		}
 	}
+
+	Lock();
+	if (migrationOccurred)
+		_SaveSettings();
 }
 
 
@@ -249,7 +407,7 @@ CredentialsStorage::_SaveSettings()
 		const CredentialMap::Entry& entry = iterator.Next();
 		if (entry.value.Archive(&credentialsArchive) != B_OK
 			|| credentialsArchive.AddString("key",
-				entry.key.GetString()) != B_OK) {
+				entry.key.String()) != B_OK) {
 			break;
 		}
 		if (newMessage->AddMessage("credentials",

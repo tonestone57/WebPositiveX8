@@ -64,9 +64,11 @@ main()
 	// Copy constructor
 	{
 		Credentials c1("user", "pass");
+		c1.SetSecure(true);
 		Credentials c2(c1);
 		assert_true(c2.Username() == "user", "Copy username matches");
 		assert_true(c2.Password() == "pass", "Copy password matches");
+		assert_true(c2.IsSecure() == true, "Copy is secure");
 		assert_true(c2 == c1, "Copy is equal to original");
 	}
 
@@ -77,7 +79,7 @@ main()
 		archive.AddString("password", "pass");
 		Credentials c(&archive);
 		assert_true(c.Username() == "user", "Unarchived username matches");
-		assert_true(c.Password() == "pass", "Unarchived password matches");
+		assert_true(c.Password() == "", "Unarchived password is empty");
 	}
 
 	// BMessage constructor with NULL
@@ -87,20 +89,36 @@ main()
 		assert_true(c.Password() == "", "Password from NULL archive is empty");
 	}
 
-	// Archive
+	// Archive (insecure)
 	{
 		Credentials c("user", "pass");
 		BMessage archive;
-		assert_status(B_OK, c.Archive(&archive), "Archive returns B_OK");
+		assert_status(B_OK, c.Archive(&archive), "Archive (insecure) returns B_OK");
 
 		BString username;
 		BString password;
 		assert_status(B_OK, archive.FindString("username", &username),
 			"Archive contains username");
 		assert_status(B_OK, archive.FindString("password", &password),
-			"Archive contains password");
+			"Archive (insecure) contains password");
 		assert_true(username == "user", "Archived username matches");
 		assert_true(password == "pass", "Archived password matches");
+	}
+
+	// Archive (secure)
+	{
+		Credentials c("user", "pass");
+		c.SetSecure(true);
+		BMessage archive;
+		assert_status(B_OK, c.Archive(&archive), "Archive (secure) returns B_OK");
+
+		BString username;
+		assert_status(B_OK, archive.FindString("username", &username),
+			"Archive contains username");
+		BString password;
+		assert_status(B_NAME_NOT_FOUND, archive.FindString("password", &password),
+			"Archive (secure) does NOT contain password");
+		assert_true(username == "user", "Archived username matches");
 	}
 
 	// Archive with NULL
@@ -133,11 +151,14 @@ main()
 		Credentials c2("user", "pass");
 		Credentials c3("other", "pass");
 		Credentials c4("user", "other");
+		Credentials c5("user", "pass");
+		c5.SetSecure(true);
 
 		assert_true(c1 == c2, "c1 == c2");
 		assert_true(!(c1 != c2), "!(c1 != c2)");
 		assert_true(c1 != c3, "c1 != c3 (different username)");
 		assert_true(c1 != c4, "c1 != c4 (different password)");
+		assert_true(c1 != c5, "c1 != c5 (different security state)");
 		assert_true(!(c1 == c3), "!(c1 == c3)");
 	}
 

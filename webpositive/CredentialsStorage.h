@@ -41,9 +41,13 @@ public:
 			const BString&		Username() const;
 			const BString&		Password() const;
 
+			bool				IsSecure() const;
+			void				SetSecure(bool secure);
+
 private:
 			BString				fUsername;
 			BString				fPassword;
+			bool				fIsSecure;
 };
 
 
@@ -55,12 +59,14 @@ public:
 			bool				Contains(const BPrivate::HashString& key);
 			status_t			PutCredentials(const HashString& key,
 									const Credentials& credentials);
+			status_t			RemoveCredentials(const HashString& key);
 			Credentials			GetCredentials(const HashString& key);
 
 private:
 								CredentialsStorage(bool persistent);
 	virtual						~CredentialsStorage();
 
+			void				_EnsureSettingsLoaded();
 			void				_LoadSettings();
 			void				_SaveSettings();
 	static	status_t			_SaveThread(void* data);
@@ -72,6 +78,7 @@ private:
 	static	CredentialsStorage	sPersistentInstance;
 	static	CredentialsStorage	sSessionInstance;
 			bool				fSettingsLoaded;
+			bool				fIsLoading;
 			bool				fPersistent;
 
 			thread_id			fSaveThread;
