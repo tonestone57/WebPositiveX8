@@ -10,6 +10,12 @@ SimpleTest URLChoiceTest :
 	be
 ;
 
+SimpleTest SettingsFileTest :
+	SettingsFileTest.cpp
+	:
+	be
+;
+
 SimpleTest CompletionStyleTest :
 	CompletionStyleTest.cpp
 	AutoCompleterDefaultImpl.cpp
