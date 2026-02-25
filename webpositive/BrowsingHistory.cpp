@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <new>
+#include <string_view>
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -153,6 +154,15 @@ BrowsingHistoryItem::Invoked()
 }
 
 
+// #pragma mark - BStringHash
+
+size_t
+BStringHash::operator()(const BString& s) const
+{
+	return std::hash<std::string_view>{}({s.String(), (size_t)s.Length()});
+}
+
+
 // #pragma mark - BrowsingHistory
 
 
@@ -242,7 +252,7 @@ bool
 BrowsingHistory::RemoveItem(const BString& url)
 {
 	BAutolock _(this);
-	auto it = fHistoryMap.find(url.String());
+	auto it = fHistoryMap.find(url);
 	if (it == fHistoryMap.end())
 		return false;
 
@@ -330,7 +340,7 @@ BrowsingHistory::_Clear()
 bool
 BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 {
-	auto it = fHistoryMap.find(item.URL().String());
+	auto it = fHistoryMap.find(item.URL());
 	if (it != fHistoryMap.end()) {
 		if (!internal) {
 			BrowsingHistoryItemPtr existingItem = it->second;
@@ -346,7 +356,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 			BrowsingHistoryItemPtr itemToStore = newItem;
 			int32 insertionIndex = _InsertionIndex(itemToStore.get());
 			fHistoryItems.insert(fHistoryItems.begin() + insertionIndex, itemToStore);
-			fHistoryMap[itemToStore->URL().String()] = itemToStore;
+			fHistoryMap[itemToStore->URL()] = itemToStore;
 
 			_SaveSettings();
 		}
@@ -365,7 +375,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 
 	fHistoryItems.insert(fHistoryItems.begin() + insertionIndex, itemToStore);
 
-	fHistoryMap[itemToStore->URL().String()] = itemToStore;
+	fHistoryMap[itemToStore->URL()] = itemToStore;
 
 	if (!internal)
 		_SaveSettings();
