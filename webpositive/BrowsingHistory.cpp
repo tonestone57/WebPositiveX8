@@ -419,26 +419,6 @@ BrowsingHistory::_FindIndex(const BrowsingHistoryItem& item) const
 }
 
 
-int32
-BrowsingHistory::_InsertionIndex(const BrowsingHistoryItem& item) const
-{
-	int32 count = fHistoryItems.CountItems();
-	int32 low = 0;
-	int32 high = count - 1;
-	int32 insertionIndex = count;
-	while (low <= high) {
-		int32 mid = (low + high) / 2;
-		if (item < *fHistoryItems.ItemAt(mid)) {
-			insertionIndex = mid;
-			high = mid - 1;
-		} else {
-			low = mid + 1;
-		}
-	}
-	return insertionIndex;
-}
-
-
 void
 BrowsingHistory::_LoadSettings()
 {
