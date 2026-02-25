@@ -77,7 +77,7 @@ main()
 		archive.AddString("password", "pass");
 		Credentials c(&archive);
 		assert_true(c.Username() == "user", "Unarchived username matches");
-		assert_true(c.Password() == "pass", "Unarchived password matches");
+		assert_true(c.Password() == "", "Unarchived password is empty");
 	}
 
 	// BMessage constructor with NULL
@@ -96,7 +96,8 @@ main()
 		BString username;
 		assert_status(B_OK, archive.FindString("username", &username),
 			"Archive contains username");
-		assert_status(B_NAME_NOT_FOUND, archive.FindString("password"),
+		BString password;
+		assert_status(B_NAME_NOT_FOUND, archive.FindString("password", &password),
 			"Archive does NOT contain password");
 		assert_true(username == "user", "Archived username matches");
 	}

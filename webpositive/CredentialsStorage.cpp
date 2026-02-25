@@ -51,7 +51,6 @@ Credentials::Credentials(const BMessage* archive)
 	if (archive == NULL)
 		return;
 	archive->FindString("username", &fUsername);
-	archive->FindString("password", &fPassword);
 }
 
 
@@ -199,17 +198,17 @@ CredentialsStorage::PutCredentials(const HashString& key,
 		}
 
 		if (hadOld && oldUsername != credentials.Username()) {
-			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.GetString(),
-				oldUsername);
+			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
+				oldUsername.String());
 		}
 
-		BPasswordKey passwordKey(credentials.Password(), B_KEY_PURPOSE_WEB,
-			key.GetString(), credentials.Username());
+		BPasswordKey passwordKey(credentials.Password().String(),
+			B_KEY_PURPOSE_WEB, key.String(), credentials.Username().String());
 
 		// Always try to remove the key with the current username to handle
 		// password updates, as AddKey() would fail with B_NAME_IN_USE.
-		keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.GetString(),
-			credentials.Username());
+		keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
+			credentials.Username().String());
 		keyStore.AddKey(passwordKey);
 	}
 
@@ -240,8 +239,8 @@ CredentialsStorage::RemoveCredentials(const HashString& key)
 		}
 
 		if (hadOld) {
-			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.GetString(),
-				oldUsername);
+			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
+				oldUsername.String());
 		}
 	}
 
@@ -323,19 +322,25 @@ CredentialsStorage::_LoadSettings()
 			&credentialsArchive) == B_OK; i++) {
 		BString key;
 		if (credentialsArchive.FindString("key", &key) == B_OK) {
+			BString passwordInArchive;
+			credentialsArchive.FindString("password", &passwordInArchive);
+
 			Credentials credentials(&credentialsArchive);
-			BString passwordInArchive = credentials.Password();
 
 			BPasswordKey passwordKey;
-			if (keyStore.GetKey(B_KEY_PURPOSE_WEB, key, credentials.Username(),
-					false, passwordKey) == B_OK) {
+			if (keyStore.GetKey(B_KEY_PURPOSE_WEB, key.String(),
+					credentials.Username().String(), true, passwordKey)
+						== B_OK) {
 				credentials = Credentials(credentials.Username(),
 					passwordKey.Password());
 			} else if (passwordInArchive.Length() > 0) {
 				// Migration: Save to KeyStore
-				BPasswordKey newKey(passwordInArchive, B_KEY_PURPOSE_WEB,
-					key, credentials.Username());
+				BPasswordKey newKey(passwordInArchive.String(),
+					B_KEY_PURPOSE_WEB, key.String(),
+					credentials.Username().String());
 				keyStore.AddKey(newKey);
+				credentials = Credentials(credentials.Username(),
+					passwordInArchive);
 				migrationOccurred = true;
 			}
 
@@ -369,7 +374,7 @@ CredentialsStorage::_SaveSettings()
 		const CredentialMap::Entry& entry = iterator.Next();
 		if (entry.value.Archive(&credentialsArchive) != B_OK
 			|| credentialsArchive.AddString("key",
-				entry.key.GetString()) != B_OK) {
+				entry.key.String()) != B_OK) {
 			break;
 		}
 		if (newMessage->AddMessage("credentials",
