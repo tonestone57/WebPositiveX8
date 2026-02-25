@@ -6,8 +6,6 @@
 
 #include "BrowsingHistory.h"
 
-#include <String.h>
-
 #include <algorithm>
 #include <new>
 #include <string_view>

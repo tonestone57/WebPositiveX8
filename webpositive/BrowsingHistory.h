@@ -18,7 +18,6 @@
 #include <String.h>
 
 class BFile;
-class BString;
 
 
 class BrowsingHistoryItem;
