@@ -2725,7 +2725,8 @@ BrowserWindow::_EncodeURIComponent(const BString& search)
 
 	for (int32 i = 0; i < result.Length(); i++) {
 		if (escCharList.FindFirst(result[i]) != B_ERROR) {
-			sprintf(hexcode, "%02X", (unsigned int)result[i]);
+			snprintf(hexcode, sizeof(hexcode), "%02X",
+				(unsigned int)(unsigned char)result[i]);
 			result.SetByteAt(i, '%');
 			result.Insert(hexcode, i + 1);
 			i += 2;
