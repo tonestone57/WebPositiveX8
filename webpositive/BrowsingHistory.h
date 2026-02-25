@@ -88,8 +88,6 @@ private:
 			void				_Clear();
 			bool				_AddItem(const BrowsingHistoryItem& item,
 									bool invoke);
-			int32				_FindIndex(
-									const BrowsingHistoryItem& item) const;
 
 			void				_LoadSettings();
 			void				_SaveSettings(bool force = false);
