@@ -143,21 +143,26 @@ BookmarkBar::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case kAddBookmarkMsg:
 		{
+			BBitmap* icon = nullptr;
+			message->FindPointer("icon", (void**)&icon);
+
 			ino_t inode;
 			entry_ref ref;
 			if (message->FindInt64("node", &inode) == B_OK
 				&& message->FindRef("ref", &ref) == B_OK) {
 				const char* name = message->FindString("name");
 				bool isDirectory;
+
 				if (name != nullptr
 					&& message->FindBool("isDirectory", &isDirectory) == B_OK) {
-					BBitmap* icon = nullptr;
-					message->FindPointer("icon", (void**)&icon);
 					_AddItem(inode, &ref, name, isDirectory, icon);
 				} else {
+					delete icon;
 					BEntry entry(&ref);
 					_AddItem(inode, &entry);
 				}
+			} else {
+				delete icon;
 			}
 			break;
 		}
@@ -516,6 +521,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 
 		if (icon != nullptr) {
 			item = new IconMenuItem(name, message, icon, B_MINI_ICON);
+			delete icon;
 		} else {
 			BEntry followedLink(ref, true);
 			BNode node(&followedLink);
@@ -563,12 +569,11 @@ BookmarkBar::_LoaderThread(void* data)
 				if (!isDirectory) {
 					BNode node(&followedLink);
 					BNodeInfo info(&node);
+					float iconSize = be_control_look->ComposeIconSize(B_MINI_ICON);
 					BBitmap* icon = new(std::nothrow) BBitmap(
-						BRect(BPoint(0, 0),
-							be_control_look->ComposeIconSize(B_MINI_ICON)),
-						B_RGBA32);
+						BRect(0, 0, iconSize - 1, iconSize - 1), B_RGBA32);
 					if (icon != nullptr) {
-						if (info.GetTrackerIcon(icon, (icon_size)-1) == B_OK)
+						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK)
 							message.AddPointer("icon", icon);
 						else
 							delete icon;
