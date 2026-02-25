@@ -402,28 +402,9 @@ DownloadWindow::_DownloadStarted(BWebDownload* download)
 	download->SetProgressListener(BMessenger(this));
 	download->Start(BPath(fDownloadPath.String()));
 
-	int32 finishedCount = 0;
-	int32 missingCount = 0;
-	int32 index = 0;
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
-		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
-		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
-			item->View());
-		if (!view)
-			continue;
-		if (view->URL() == download->URL()) {
-			index = i;
-			delete fDownloadViewsLayout->RemoveItem(i);
-			delete view;
-			continue;
-		}
-		if (view->IsFinished())
-			finishedCount++;
-		if (view->IsMissing())
-			missingCount++;
-	}
-	fRemoveFinishedButton->SetEnabled(finishedCount > 0);
-	fRemoveMissingButton->SetEnabled(missingCount > 0);
+	int32 index = _RemoveExistingDownload(download->URL());
+	_ValidateButtonStatus();
+
 	DownloadProgressView* view = new DownloadProgressView(download);
 	if (!view->Init()) {
 		delete view;
@@ -431,22 +412,7 @@ DownloadWindow::_DownloadStarted(BWebDownload* download)
 	}
 	fDownloadViewsLayout->AddView(index, view);
 
-	// Scroll new download into view
-	if (BScrollBar* scrollBar = fDownloadsScrollView->ScrollBar(B_VERTICAL)) {
-		float min;
-		float max;
-		scrollBar->GetRange(&min, &max);
-		float viewHeight = view->MinSize().height + 1;
-		float scrollOffset = min + index * viewHeight;
-		float scrollBarHeight = scrollBar->Bounds().Height() - 1;
-		float value = scrollBar->Value();
-		if (scrollOffset < value)
-			scrollBar->SetValue(scrollOffset);
-		else if (scrollOffset + viewHeight > value + scrollBarHeight) {
-			float diff = scrollOffset + viewHeight - (value + scrollBarHeight);
-			scrollBar->SetValue(value + diff);
-		}
-	}
+	_ScrollToView(view, index);
 
 	_SaveSettings();
 
@@ -629,6 +595,46 @@ DownloadWindow::_LoadSettings()
 		if (!view->Init(&downloadArchive))
 			continue;
 		fDownloadViewsLayout->AddView(0, view);
+	}
+}
+
+
+int32
+DownloadWindow::_RemoveExistingDownload(const BString& url)
+{
+	int32 index = 0;
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+		BLayoutItem* item = fDownloadViewsLayout->ItemAt(i);
+		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
+			item->View());
+		if (view == nullptr || view->URL() != url)
+			continue;
+
+		index = i;
+		delete fDownloadViewsLayout->RemoveItem(i);
+		delete view;
+	}
+	return index;
+}
+
+
+void
+DownloadWindow::_ScrollToView(DownloadProgressView* view, int32 index)
+{
+	if (BScrollBar* scrollBar = fDownloadsScrollView->ScrollBar(B_VERTICAL)) {
+		float min;
+		float max;
+		scrollBar->GetRange(&min, &max);
+		float viewHeight = view->MinSize().height + 1;
+		float scrollOffset = min + index * viewHeight;
+		float scrollBarHeight = scrollBar->Bounds().Height() - 1;
+		float value = scrollBar->Value();
+		if (scrollOffset < value)
+			scrollBar->SetValue(scrollOffset);
+		else if (scrollOffset + viewHeight > value + scrollBarHeight) {
+			float diff = scrollOffset + viewHeight - (value + scrollBarHeight);
+			scrollBar->SetValue(value + diff);
+		}
 	}
 }
 

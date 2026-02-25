@@ -20,6 +20,7 @@ class BMessage;
 class BGroupLayout;
 class BScrollView;
 class BWebDownload;
+class DownloadProgressView;
 class SettingsMessage;
 
 
@@ -46,6 +47,10 @@ private:
 			void				_ValidateButtonStatus();
 			void				_SaveSettings();
 			void				_LoadSettings();
+
+			int32				_RemoveExistingDownload(const BString& url);
+			void				_ScrollToView(DownloadProgressView* view,
+									int32 index);
 
 			DownloadProgressView*
 								_FindView(BWebDownload* download);
