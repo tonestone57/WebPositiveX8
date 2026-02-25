@@ -134,7 +134,7 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 	// load settings from disk
 	_RevertSettings();
 	// apply to WebKit
-	_ApplySettings(true);
+	_ApplySettings(true, false);
 
 	// Start hidden
 	Hide();
@@ -676,7 +676,7 @@ SettingsWindow::_CanApplySettings() const
 
 
 void
-SettingsWindow::_ApplySettings(bool force)
+SettingsWindow::_ApplySettings(bool force, bool save)
 {
 	if (!force && !_CanApplySettings())
 		return;
@@ -777,9 +777,10 @@ SettingsWindow::_ApplySettings(bool force)
 		webkitSettingsChanged = true;
 	}
 
-	fSettings->Save();
+	if (save)
+		fSettings->Save();
 
-	if (webkitSettingsChanged)
+	if (force || webkitSettingsChanged)
 		BWebSettings::Default()->Apply();
 
 	_StoreOriginalSettings();

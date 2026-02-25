@@ -43,7 +43,8 @@ private:
 									BMessage* message);
 
 			bool				_CanApplySettings() const;
-			void				_ApplySettings(bool force = false);
+			void				_ApplySettings(bool force = false,
+									bool save = true);
 			void				_RevertSettings();
 			void				_StoreOriginalSettings();
 			void				_RestoreLiveSettings();
