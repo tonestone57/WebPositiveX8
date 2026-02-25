@@ -17,6 +17,15 @@ void assert_int_equal(int32 expected, int32 actual, const char* message) {
     }
 }
 
+void assert_uint32_equal(uint32 expected, uint32 actual, const char* message) {
+    if (expected == actual) {
+        printf("PASS: %s (%u == %u)\n", message, expected, actual);
+    } else {
+        printf("FAIL: %s (expected %u, but got %u)\n", message, expected, actual);
+        gTestFailures++;
+    }
+}
+
 void assert_true(bool condition, const char* message) {
     if (condition) {
         printf("PASS: %s\n", message);
@@ -141,7 +150,7 @@ private:
         assert_int_equal(initialCount, history.CountItems(), "Count should NOT increase for existing URL");
 
         uint32 newInvokations = history.HistoryItemAt(0).InvokationCount();
-        assert_int_equal(initialInvokations + 1, (int32)newInvokations, "Invokation count should increase");
+        assert_uint32_equal(initialInvokations + 1, newInvokations, "Invokation count should increase");
     }
 };
 
