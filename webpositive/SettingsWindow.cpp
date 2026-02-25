@@ -76,6 +76,8 @@ enum {
 
 	MSG_CHOOSE_DOWNLOAD_FOLDER					= 'swop',
 	MSG_HANDLE_DOWNLOAD_FOLDER					= 'oprs',
+
+	MSG_SETTINGS_MODIFIED						= 'stmo',
 };
 
 static const int32 kDefaultFontSize = 14;
@@ -242,6 +244,7 @@ SettingsWindow::MessageReceived(BMessage* message)
 		case MSG_USE_PROXY_AUTH_CHANGED:
 		case MSG_PROXY_USERNAME_CHANGED:
 		case MSG_PROXY_PASSWORD_CHANGED:
+		case MSG_SETTINGS_MODIFIED:
 			_ValidateControlsEnabledStatus();
 			break;
 
@@ -280,14 +283,14 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	fStartPageControl = new BTextControl("start page",
 		B_TRANSLATE("Start page:"), "", new BMessage(MSG_START_PAGE_CHANGED));
 	fStartPageControl->SetModificationMessage(
-		new BMessage(MSG_START_PAGE_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fStartPageControl->SetText(
 		fSettings->GetValue(kSettingsKeyStartPageURL, kDefaultStartPageURL));
 
 	fSearchPageControl = new BTextControl("search page", "", "",
 		new BMessage(MSG_SEARCH_PAGE_CHANGED));
 	fSearchPageControl->SetModificationMessage(
-		new BMessage(MSG_SEARCH_PAGE_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	BString searchURL = fSettings->GetValue(kSettingsKeySearchPageURL,
 		kDefaultSearchPageURL);
 	fSearchPageControl->SetText(searchURL);
@@ -296,7 +299,7 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 		B_TRANSLATE("Download folder:"), "",
 		new BMessage(MSG_DOWNLOAD_FOLDER_CHANGED));
 	fDownloadFolderControl->SetModificationMessage(
-		new BMessage(MSG_DOWNLOAD_FOLDER_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fDownloadFolderControl->SetText(
 		fSettings->GetValue(kSettingsKeyDownloadPath, kDefaultDownloadPath));
 
@@ -513,7 +516,7 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		B_TRANSLATE("Proxy server address:"), "",
 		new BMessage(MSG_PROXY_ADDRESS_CHANGED));
 	fProxyAddressControl->SetModificationMessage(
-		new BMessage(MSG_PROXY_ADDRESS_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fProxyAddressControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyAddress, ""));
 
@@ -521,7 +524,7 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		B_TRANSLATE("Proxy server port:"), "",
 		new BMessage(MSG_PROXY_PORT_CHANGED));
 	fProxyPortControl->SetModificationMessage(
-		new BMessage(MSG_PROXY_PORT_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fProxyPortControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyPort, ""));
 
@@ -534,7 +537,7 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		B_TRANSLATE("Proxy username:"), "",
 		new BMessage(MSG_PROXY_USERNAME_CHANGED));
 	fProxyUsernameControl->SetModificationMessage(
-		new BMessage(MSG_PROXY_USERNAME_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fProxyUsernameControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyUsername, ""));
 
@@ -542,7 +545,7 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		B_TRANSLATE("Proxy password:"), "",
 		new BMessage(MSG_PROXY_PASSWORD_CHANGED));
 	fProxyPasswordControl->SetModificationMessage(
-		new BMessage(MSG_PROXY_PASSWORD_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fProxyPasswordControl->TextView()->HideTyping(true);
 	fProxyPasswordControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyPassword, ""));
@@ -618,8 +621,9 @@ SettingsWindow::_CanApplySettings() const
 	canApply = canApply || ((fShowHomeButton->Value() == B_CONTROL_ON)
 		!= boolValue);
 
-	canApply = canApply || (fDaysInHistory->Value()
-		!= BrowsingHistory::DefaultInstance()->MaxHistoryItemAge());
+	int32 intValue;
+	fOriginalSettings.FindInt32("max history item age", &intValue);
+	canApply = canApply || (fDaysInHistory->Value() != intValue);
 
 	uint32 uintValue;
 	fOriginalSettings.FindUInt32(kSettingsKeyStartUpPolicy, &uintValue);
@@ -812,6 +816,11 @@ SettingsWindow::_StoreOriginalSettings()
 		fSettings->GetValue(kSettingsKeyNewWindowPolicy, (uint32)OpenStartPage));
 	fOriginalSettings.AddUInt32(kSettingsKeyNewTabPolicy,
 		fSettings->GetValue(kSettingsKeyNewTabPolicy, (uint32)OpenBlankPage));
+
+
+	// Store non-live History settings for dirty checking
+	fOriginalSettings.AddInt32("max history item age",
+		BrowsingHistory::DefaultInstance()->MaxHistoryItemAge());
 
 	// Store non-live Proxy settings for dirty checking
 	fOriginalSettings.AddBool(kSettingsKeyUseProxy,
