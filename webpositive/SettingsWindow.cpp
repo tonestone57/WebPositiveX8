@@ -134,9 +134,7 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 	// load settings from disk
 	_RevertSettings();
 	// apply to WebKit
-	_ApplySettings();
-
-	_StoreOriginalSettings();
+	_ApplySettings(true);
 
 	// Start hidden
 	Hide();
@@ -214,58 +212,22 @@ SettingsWindow::MessageReceived(BMessage* message)
 			if (message->FindPointer("source", (void**)&source) == B_OK)
 				source->SetMarked(true);
 
-			fSettings->SetValue(kSettingsKeySearchPageURL,
-				fSearchPageControl->Text());
+			_UpdateLiveSettings();
 			_ValidateControlsEnabledStatus();
 			break;
 		}
 
 		case MSG_START_PAGE_CHANGED:
-			fSettings->SetValue(kSettingsKeyStartPageURL,
-				fStartPageControl->Text());
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_SEARCH_PAGE_CHANGED:
-			fSettings->SetValue(kSettingsKeySearchPageURL,
-				fSearchPageControl->Text());
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_DOWNLOAD_FOLDER_CHANGED:
-			fSettings->SetValue(kSettingsKeyDownloadPath,
-				fDownloadFolderControl->Text());
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_START_UP_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyStartUpPolicy, _StartUpPolicy());
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_NEW_WINDOWS_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyNewWindowPolicy,
-				_NewWindowPolicy());
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_NEW_TABS_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyNewTabPolicy, _NewTabPolicy());
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_TAB_DISPLAY_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen,
-				fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON);
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
-				fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON);
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyAutoHidePointer,
-				fAutoHidePointer->Value() == B_CONTROL_ON);
-			_ValidateControlsEnabledStatus();
-			break;
 		case MSG_SHOW_HOME_BUTTON_CHANGED:
-			fSettings->SetValue(kSettingsKeyShowHomeButton,
-				fShowHomeButton->Value() == B_CONTROL_ON);
+			_UpdateLiveSettings();
 			_ValidateControlsEnabledStatus();
 			break;
 
@@ -712,9 +674,9 @@ SettingsWindow::_CanApplySettings() const
 
 
 void
-SettingsWindow::_ApplySettings()
+SettingsWindow::_ApplySettings(bool force)
 {
-	if (!_CanApplySettings())
+	if (!force && !_CanApplySettings())
 		return;
 
 	bool webkitSettingsChanged = false;
@@ -726,7 +688,9 @@ SettingsWindow::_ApplySettings()
 	}
 
 	// Note that live settings (StartPageURL, Policies, etc.) are already in
-	// fSettings.
+	// fSettings, but we update them again just to be sure (e.g. if called
+	// with force=true).
+	_UpdateLiveSettings();
 
 	// Store font settings
 	BFont font = fStandardFontView->Font();
@@ -885,6 +849,28 @@ SettingsWindow::_RestoreLiveSettings()
 
 
 void
+SettingsWindow::_UpdateLiveSettings()
+{
+	fSettings->SetValue(kSettingsKeyStartPageURL, fStartPageControl->Text());
+	fSettings->SetValue(kSettingsKeySearchPageURL, fSearchPageControl->Text());
+	fSettings->SetValue(kSettingsKeyDownloadPath,
+		fDownloadFolderControl->Text());
+	fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen,
+		fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON);
+	fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
+		fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON);
+	fSettings->SetValue(kSettingsKeyAutoHidePointer,
+		fAutoHidePointer->Value() == B_CONTROL_ON);
+	fSettings->SetValue(kSettingsKeyShowHomeButton,
+		fShowHomeButton->Value() == B_CONTROL_ON);
+
+	fSettings->SetValue(kSettingsKeyStartUpPolicy, _StartUpPolicy());
+	fSettings->SetValue(kSettingsKeyNewWindowPolicy, _NewWindowPolicy());
+	fSettings->SetValue(kSettingsKeyNewTabPolicy, _NewTabPolicy());
+}
+
+
+void
 SettingsWindow::_RevertSettings()
 {
 	_RestoreLiveSettings();
@@ -1037,7 +1023,7 @@ SettingsWindow:: _HandleDownloadPanelResult(BFilePanel* panel,
 	{
 		BPath path(&ref);
 		fDownloadFolderControl->SetText(path.Path());
-		fSettings->SetValue(kSettingsKeyDownloadPath, path.Path());
+		_UpdateLiveSettings();
 		_ValidateControlsEnabledStatus();
 	}
 }

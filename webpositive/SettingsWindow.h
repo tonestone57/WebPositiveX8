@@ -43,10 +43,11 @@ private:
 									BMessage* message);
 
 			bool				_CanApplySettings() const;
-			void				_ApplySettings();
+			void				_ApplySettings(bool force = false);
 			void				_RevertSettings();
 			void				_StoreOriginalSettings();
 			void				_RestoreLiveSettings();
+			void				_UpdateLiveSettings();
 			void 				_ChooseDownloadFolder(const BMessage* message);
 
 			void				_HandleDownloadPanelResult(BFilePanel* panel,
