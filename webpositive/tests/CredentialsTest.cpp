@@ -94,13 +94,11 @@ main()
 		assert_status(B_OK, c.Archive(&archive), "Archive returns B_OK");
 
 		BString username;
-		BString password;
 		assert_status(B_OK, archive.FindString("username", &username),
 			"Archive contains username");
-		assert_status(B_OK, archive.FindString("password", &password),
-			"Archive contains password");
+		assert_status(B_NAME_NOT_FOUND, archive.FindString("password"),
+			"Archive does NOT contain password");
 		assert_true(username == "user", "Archived username matches");
-		assert_true(password == "pass", "Archived password matches");
 	}
 
 	// Archive with NULL

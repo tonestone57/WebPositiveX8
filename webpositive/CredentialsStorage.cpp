@@ -14,7 +14,9 @@
 #include <Entry.h>
 #include <File.h>
 #include <FindDirectory.h>
+#include <KeyStore.h>
 #include <Message.h>
+#include <OS.h>
 #include <Path.h>
 
 #include "BrowserApp.h"
@@ -63,10 +65,7 @@ Credentials::Archive(BMessage* archive) const
 {
 	if (archive == NULL)
 		return B_BAD_VALUE;
-	status_t status = archive->AddString("username", fUsername);
-	if (status == B_OK)
-		status = archive->AddString("password", fPassword);
-	return status;
+	return archive->AddString("username", fUsername);
 }
 
 
@@ -131,6 +130,7 @@ CredentialsStorage::CredentialsStorage(bool persistent)
 		: "credential storage"),
 	fCredentialMap(),
 	fSettingsLoaded(false),
+	fIsLoading(false),
 	fPersistent(persistent),
 	fQuitting(false),
 	fPendingSaveMessage(nullptr),
@@ -167,10 +167,7 @@ CredentialsStorage::SessionInstance()
 /*static*/ CredentialsStorage*
 CredentialsStorage::PersistentInstance()
 {
-	if (sPersistentInstance.Lock()) {
-		sPersistentInstance._LoadSettings();
-		sPersistentInstance.Unlock();
-	}
+	sPersistentInstance._EnsureSettingsLoaded();
 	return &sPersistentInstance;
 }
 
@@ -188,9 +185,75 @@ status_t
 CredentialsStorage::PutCredentials(const HashString& key,
 	const Credentials& credentials)
 {
+	if (fPersistent) {
+		BKeyStore keyStore;
+		BString oldUsername;
+		bool hadOld = false;
+
+		if (Lock()) {
+			if (fCredentialMap.ContainsKey(key)) {
+				oldUsername = fCredentialMap.Get(key).Username();
+				hadOld = true;
+			}
+			Unlock();
+		}
+
+		if (hadOld && oldUsername != credentials.Username()) {
+			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.GetString(),
+				oldUsername);
+		}
+
+		BPasswordKey passwordKey(credentials.Password(), B_KEY_PURPOSE_WEB,
+			key.GetString(), credentials.Username());
+
+		// Always try to remove the key with the current username to handle
+		// password updates, as AddKey() would fail with B_NAME_IN_USE.
+		keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.GetString(),
+			credentials.Username());
+		keyStore.AddKey(passwordKey);
+	}
+
 	BAutolock _(this);
 
-	return fCredentialMap.Put(key, credentials);
+	status_t status = fCredentialMap.Put(key, credentials);
+	if (status == B_OK)
+		_SaveSettings();
+
+	return status;
+}
+
+
+status_t
+CredentialsStorage::RemoveCredentials(const HashString& key)
+{
+	if (fPersistent) {
+		BKeyStore keyStore;
+		BString oldUsername;
+		bool hadOld = false;
+
+		if (Lock()) {
+			if (fCredentialMap.ContainsKey(key)) {
+				oldUsername = fCredentialMap.Get(key).Username();
+				hadOld = true;
+			}
+			Unlock();
+		}
+
+		if (hadOld) {
+			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.GetString(),
+				oldUsername);
+		}
+	}
+
+	BAutolock _(this);
+
+	if (!fCredentialMap.ContainsKey(key))
+		return B_NAME_NOT_FOUND;
+
+	fCredentialMap.Remove(key);
+	_SaveSettings();
+
+	return B_OK;
 }
 
 
@@ -207,28 +270,85 @@ CredentialsStorage::GetCredentials(const HashString& key)
 
 
 void
-CredentialsStorage::_LoadSettings()
+CredentialsStorage::_EnsureSettingsLoaded()
 {
 	if (!fPersistent || fSettingsLoaded)
 		return;
 
-	fSettingsLoaded = true;
+	Lock();
+	if (fSettingsLoaded) {
+		Unlock();
+		return;
+	}
 
+	if (fIsLoading) {
+		// Wait until loading is finished by another thread
+		while (fIsLoading) {
+			Unlock();
+			snooze(10000);
+			Lock();
+			if (fSettingsLoaded) {
+				Unlock();
+				return;
+			}
+		}
+	}
+
+	fIsLoading = true;
+	_LoadSettings();
+	fIsLoading = false;
+	fSettingsLoaded = true;
+	Unlock();
+}
+
+
+void
+CredentialsStorage::_LoadSettings()
+{
+	// Called with lock held
 	BFile settingsFile;
+	BMessage settingsArchive;
 	if (OpenSettingsFile(settingsFile, kSettingsFileNameCredentialsStorage,
 			B_READ_ONLY) == B_OK) {
-		BMessage settingsArchive;
 		settingsArchive.Unflatten(&settingsFile);
-		BMessage credentialsArchive;
-		for (int32 i = 0; settingsArchive.FindMessage("credentials", i,
-				&credentialsArchive) == B_OK; i++) {
-			BString key;
-			if (credentialsArchive.FindString("key", &key) == B_OK) {
-				Credentials credentials(&credentialsArchive);
+	}
+
+	// Unlock while doing potentially slow IPC to BKeyStore
+	Unlock();
+
+	BKeyStore keyStore;
+	bool migrationOccurred = false;
+	BMessage credentialsArchive;
+	for (int32 i = 0; settingsArchive.FindMessage("credentials", i,
+			&credentialsArchive) == B_OK; i++) {
+		BString key;
+		if (credentialsArchive.FindString("key", &key) == B_OK) {
+			Credentials credentials(&credentialsArchive);
+			BString passwordInArchive = credentials.Password();
+
+			BPasswordKey passwordKey;
+			if (keyStore.GetKey(B_KEY_PURPOSE_WEB, key, credentials.Username(),
+					false, passwordKey) == B_OK) {
+				credentials = Credentials(credentials.Username(),
+					passwordKey.Password());
+			} else if (passwordInArchive.Length() > 0) {
+				// Migration: Save to KeyStore
+				BPasswordKey newKey(passwordInArchive, B_KEY_PURPOSE_WEB,
+					key, credentials.Username());
+				keyStore.AddKey(newKey);
+				migrationOccurred = true;
+			}
+
+			if (credentials.Password().Length() > 0) {
+				BAutolock _(this);
 				fCredentialMap.Put(key.String(), credentials);
 			}
 		}
 	}
+
+	Lock();
+	if (migrationOccurred)
+		_SaveSettings();
 }
 
 
