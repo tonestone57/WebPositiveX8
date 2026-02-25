@@ -14,6 +14,7 @@
 #include <Entry.h>
 #include <File.h>
 #include <FindDirectory.h>
+#include <KeyStore.h>
 #include <Message.h>
 #include <Path.h>
 
@@ -63,10 +64,7 @@ Credentials::Archive(BMessage* archive) const
 {
 	if (archive == NULL)
 		return B_BAD_VALUE;
-	status_t status = archive->AddString("username", fUsername);
-	if (status == B_OK)
-		status = archive->AddString("password", fPassword);
-	return status;
+	return archive->AddString("username", fUsername);
 }
 
 
@@ -111,6 +109,13 @@ const BString&
 Credentials::Password() const
 {
 	return fPassword;
+}
+
+
+void
+Credentials::SetPassword(const BString& password)
+{
+	fPassword = password;
 }
 
 
@@ -220,11 +225,22 @@ CredentialsStorage::_LoadSettings()
 		BMessage settingsArchive;
 		settingsArchive.Unflatten(&settingsFile);
 		BMessage credentialsArchive;
+		BKeyStore keyStore;
 		for (int32 i = 0; settingsArchive.FindMessage("credentials", i,
 				&credentialsArchive) == B_OK; i++) {
 			BString key;
 			if (credentialsArchive.FindString("key", &key) == B_OK) {
 				Credentials credentials(&credentialsArchive);
+
+				if (credentials.Password().IsEmpty()) {
+					BPasswordKey passwordKey;
+					if (keyStore.GetKey(B_KEY_TYPE_PASSWORD, key.String(),
+							credentials.Username().String(),
+							passwordKey) == B_OK) {
+						credentials.SetPassword(passwordKey.Password());
+					}
+				}
+
 				fCredentialMap.Put(key.String(), credentials);
 			}
 		}
@@ -243,10 +259,20 @@ CredentialsStorage::_SaveSettings()
 	if (!newMessage)
 		return;
 
-	BMessage credentialsArchive;
 	CredentialMap::Iterator iterator = fCredentialMap.GetIterator();
+	BKeyStore keyStore;
 	while (iterator.HasNext()) {
 		const CredentialMap::Entry& entry = iterator.Next();
+
+		if (!entry.value.Password().IsEmpty()) {
+			BPasswordKey passwordKey(entry.value.Password().String(),
+				B_KEY_PURPOSE_WEB, entry.key.GetString(),
+				entry.value.Username().String());
+			keyStore.RemoveKey(passwordKey);
+			keyStore.AddKey(passwordKey);
+		}
+
+		BMessage credentialsArchive;
 		if (entry.value.Archive(&credentialsArchive) != B_OK
 			|| credentialsArchive.AddString("key",
 				entry.key.GetString()) != B_OK) {
@@ -256,7 +282,6 @@ CredentialsStorage::_SaveSettings()
 				&credentialsArchive) != B_OK) {
 			break;
 		}
-		credentialsArchive.MakeEmpty();
 	}
 
 	fSaveLock.Lock();

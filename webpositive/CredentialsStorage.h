@@ -40,6 +40,7 @@ public:
 
 			const BString&		Username() const;
 			const BString&		Password() const;
+			void				SetPassword(const BString& password);
 
 private:
 			BString				fUsername;
