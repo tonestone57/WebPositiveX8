@@ -80,6 +80,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		release_sem(m_exitSemaphore);
 		break;
 	case kHidePassword:
+		// Toggle password visibility using the BTextView workaround.
 		_UpdatePasswordVisibility();
 		break;
 	case kMsgJitter: {
@@ -122,8 +123,10 @@ AuthenticationPanel::_UpdatePasswordVisibility()
 		return;
 
 	// BTextView::HideTyping() is destructive when enabling, as it deletes
-	// the current text. We work around this by saving the text and
-	// selection, and restoring it after toggling.
+	// the current text content in the underlying BTextView. To toggle
+	// password visibility without losing user input, we must save the
+	// current text and selection range, then restore them after toggling
+	// the hiding mode.
 	BString text = m_passwordTextControl->Text();
 	int32 selectionStart = 0;
 	int32 selectionEnd = 0;
@@ -153,11 +156,14 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	textView->MakeSelectable(false);
 
 	m_usernameTextControl->SetText(previousUser.String());
-	m_passwordTextControl->TextView()->HideTyping(true);
 	// Ignore the previous password, if it didn't work.
 	if (!badPassword)
 		m_passwordTextControl->SetText(previousPass.String());
+	else
+		m_passwordTextControl->SetText("");
+
 	m_hidePasswordCheckBox->SetValue(B_CONTROL_ON);
+	_UpdatePasswordVisibility();
 	m_rememberCredentialsCheckBox->SetValue(previousRememberCredentials);
 
 	// create layout
