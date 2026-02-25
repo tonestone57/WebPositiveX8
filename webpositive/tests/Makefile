@@ -10,7 +10,7 @@ all: $(TESTS)
 CompletionStyleTest: CompletionStyleTest.cpp ../autocompletion/AutoCompleterDefaultImpl.cpp ../autocompletion/AutoCompleter.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-BrowsingHistoryTest: BrowsingHistoryTest.cpp ../SettingsKeys.cpp SettingsFile.cpp
+BrowsingHistoryTest: BrowsingHistoryTest.cpp ../BrowsingHistory.cpp ../SettingsKeys.cpp SettingsFile.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 run: $(TESTS)

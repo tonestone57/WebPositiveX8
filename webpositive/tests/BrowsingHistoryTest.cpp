@@ -2,12 +2,7 @@
 #include <DateTime.h>
 #include <Message.h>
 #include <String.h>
-
-#define private public
-#define protected public
-#include "BrowsingHistory.cpp"
-#undef private
-#undef protected
+#include "BrowsingHistory.h"
 
 const char* kApplicationName = "WebPositive";
 

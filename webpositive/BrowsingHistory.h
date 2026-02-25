@@ -74,6 +74,7 @@ struct BStringHash {
 
 
 class BrowsingHistory : public BLocker {
+	friend class BrowsingHistoryTest;
 public:
 	static	BrowsingHistory*	DefaultInstance();
 
