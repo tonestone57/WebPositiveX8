@@ -14,10 +14,18 @@ SimpleTest TabManagerTest :
 	be
 ;
 
+SubDirHdrs [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
+
 SimpleTest URLChoiceTest :
 	URLChoiceTest.cpp
 	:
 	be
+;
+
+SimpleTest CookieWindowTest :
+	CookieWindowTest.cpp
+	:
+	be network [ MultiArchDefaultGristFiles libcolumnlistview.a ]
 ;
 
 SimpleTest SettingsFileTest :
