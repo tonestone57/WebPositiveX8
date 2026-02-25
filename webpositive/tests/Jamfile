@@ -10,6 +10,13 @@ SimpleTest URLChoiceTest :
 	be
 ;
 
+SimpleTest DownloadSpeedCalculatorTest :
+	DownloadSpeedCalculatorTest.cpp
+	DownloadSpeedCalculator.cpp
+	:
+	be
+;
+
 SimpleTest SettingsFileTest :
 	SettingsFileTest.cpp
 	:
