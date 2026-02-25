@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 
 #include <Alert.h>
+#include <Autolock.h>
 #include <Application.h>
 #include <Bitmap.h>
 #include <Button.h>
@@ -21,6 +22,7 @@
 #include <Entry.h>
 #include <FindDirectory.h>
 #include <GroupLayoutBuilder.h>
+#include <Locker.h>
 #include <Locale.h>
 #include <MenuItem.h>
 #include <Node.h>
@@ -50,7 +52,96 @@ enum {
 	REMOVE_DOWNLOAD			= 'rmdn',
 	COPY_URL_TO_CLIPBOARD	= 'curl',
 	OPEN_CONTAINING_FOLDER	= 'opfd',
+	MSG_DO_ASYNC_INIT		= 'doai',
+	MSG_ASYNC_INIT_DONE		= 'asid',
 };
+
+
+class AsyncWorker : public BLooper {
+public:
+	AsyncWorker()
+		:
+		BLooper("DownloadProgressView worker")
+	{
+		Run();
+	}
+
+	virtual void MessageReceived(BMessage* message)
+	{
+		switch (message->what) {
+			case MSG_DO_ASYNC_INIT:
+			{
+				BString path;
+				BMessenger replyTo;
+				if (message->FindString("path", &path) == B_OK
+					&& message->FindMessenger("reply_to", &replyTo) == B_OK) {
+
+					BEntry entry(path.String());
+					bool exists = entry.Exists();
+					node_ref nref;
+					BBitmap* icon = NULL;
+
+					if (exists) {
+						if (entry.GetNodeRef(&nref) != B_OK)
+							exists = false;
+						else {
+							icon = new BBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32);
+							BNode node(&entry);
+							BNodeInfo info(&node);
+							if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
+								delete icon;
+								icon = NULL;
+							}
+						}
+					}
+
+					BMessage reply(MSG_ASYNC_INIT_DONE);
+					reply.AddString("path", path);
+					reply.AddBool("exists", exists);
+					if (exists) {
+						reply.AddData("node_ref", B_RAW_TYPE, &nref,
+							sizeof(node_ref));
+						if (icon) {
+							reply.AddData("icon_bits", B_RAW_TYPE,
+								icon->Bits(), icon->BitsLength());
+							delete icon;
+						}
+					}
+					replyTo.SendMessage(&reply);
+				}
+				break;
+			}
+			default:
+				BLooper::MessageReceived(message);
+				break;
+		}
+	}
+};
+
+static AsyncWorker* sAsyncWorker = NULL;
+static BLocker sAsyncWorkerLock("AsyncWorker lock");
+
+class AsyncWorkerCleanup {
+public:
+	~AsyncWorkerCleanup()
+	{
+		BAutolock _(sAsyncWorkerLock);
+		if (sAsyncWorker != NULL) {
+			sAsyncWorker->PostMessage(B_QUIT_REQUESTED);
+			sAsyncWorker = NULL;
+		}
+	}
+};
+static AsyncWorkerCleanup sAsyncWorkerCleanup;
+
+static AsyncWorker*
+GetAsyncWorker()
+{
+	BAutolock _(sAsyncWorkerLock);
+	if (sAsyncWorker == NULL)
+		sAsyncWorker = new AsyncWorker();
+	return sAsyncWorker;
+}
 
 const bigtime_t kMaxUpdateInterval = 100000LL;
 const bigtime_t kSpeedReferenceInterval = 500000LL;
@@ -65,16 +156,6 @@ static const time_t kSecondsPerHour = 60 * 60;
 
 class IconView : public BView {
 public:
-	IconView(const BEntry& entry)
-		:
-		BView("Download icon", B_WILL_DRAW),
-		fIconBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32),
-		fDimmedIcon(false)
-	{
-		SetDrawingMode(B_OP_OVER);
-		SetTo(entry);
-	}
-
 	IconView()
 		:
 		BView("Download icon", B_WILL_DRAW),
@@ -94,18 +175,18 @@ public:
 		SetDrawingMode(B_OP_OVER);
 	}
 
-	void SetTo(const BEntry& entry)
-	{
-		BNode node(&entry);
-		BNodeInfo info(&node);
-		info.GetTrackerIcon(&fIconBitmap, B_LARGE_ICON);
-		Invalidate();
-	}
-
 	void SetIconDimmed(bool iconDimmed)
 	{
 		if (fDimmedIcon != iconDimmed) {
 			fDimmedIcon = iconDimmed;
+			Invalidate();
+		}
+	}
+
+	void SetIconBits(const void* bits, ssize_t size)
+	{
+		if (bits != NULL && size == fIconBitmap.BitsLength()) {
+			memcpy(fIconBitmap.Bits(), bits, size);
 			Invalidate();
 		}
 	}
@@ -234,18 +315,12 @@ DownloadProgressView::Init(BMessage* archive)
 	fStatusBar->SetMaxValue(100);
 	fStatusBar->SetBarHeight(12);
 
-	// fPath is only valid when constructed from archive (fDownload == NULL)
-	BEntry entry(fPath.Path());
-
-	if (archive) {
-		if (!entry.Exists())
-			fIconView = new IconView(archive);
-		else
-			fIconView = new IconView(entry);
-	} else
+	if (archive)
+		fIconView = new IconView(archive);
+	else
 		fIconView = new IconView();
 
-	if (!fDownload && (fStatusBar->CurrentValue() < 100 || !entry.Exists())) {
+	if (!fDownload && fStatusBar->CurrentValue() < 100) {
 		fTopButton = new SmallButton(B_TRANSLATE("Restart"),
 			new BMessage(RESTART_DOWNLOAD));
 	} else {
@@ -326,9 +401,7 @@ DownloadProgressView::AttachedToWindow()
 		// Will start node monitor upon receiving the B_DOWNLOAD_STARTED
 		// message.
 	} else {
-		BEntry entry(fPath.Path());
-		if (entry.Exists())
-			_StartNodeMonitor(entry);
+		_StartAsyncInit();
 	}
 
 	fTopButton->SetTarget(this);
@@ -380,10 +453,8 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			if (message->FindString("path", &path) != B_OK)
 				break;
 			fPath.SetTo(path);
-			BEntry entry(fPath.Path());
-			fIconView->SetTo(entry);
 			fStatusBar->Reset(fPath.Leaf());
-			_StartNodeMonitor(entry);
+			_StartAsyncInit();
 
 			// Immediately switch to speed display whenever a new download
 			// starts.
@@ -470,6 +541,41 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			CancelDownload();
 			break;
 
+		case MSG_ASYNC_INIT_DONE:
+		{
+			BString path;
+			if (message->FindString("path", &path) != B_OK
+				|| path != fPath.Path()) {
+				break;
+			}
+
+			bool exists;
+			if (message->FindBool("exists", &exists) == B_OK && exists) {
+				node_ref nref;
+				const void* data;
+				ssize_t dataSize;
+				if (message->FindData("node_ref", B_RAW_TYPE, &data, &dataSize)
+					== B_OK) {
+					memcpy(&nref, data, sizeof(node_ref));
+					watch_node(&nref, B_WATCH_ALL, this);
+				}
+				const void* bits;
+				ssize_t bitsSize;
+				if (message->FindData("icon_bits", B_RAW_TYPE, &bits, &bitsSize)
+					== B_OK) {
+					fIconView->SetIconBits(bits, bitsSize);
+				}
+				fIconView->SetIconDimmed(false);
+			} else {
+				fIconView->SetIconDimmed(true);
+				if (fStatusBar->CurrentValue() == 100) {
+					fTopButton->SetLabel(B_TRANSLATE("Restart"));
+					fTopButton->SetMessage(new BMessage(RESTART_DOWNLOAD));
+				}
+			}
+			break;
+		}
+
 		case REMOVE_DOWNLOAD:
 		{
 			Window()->PostMessage(SAVE_SETTINGS);
@@ -541,9 +647,8 @@ DownloadProgressView::MessageReceived(BMessage* message)
 				}
 				case B_ATTR_CHANGED:
 				{
-					BEntry entry(fPath.Path());
 					fIconView->SetIconDimmed(false);
-					fIconView->SetTo(entry);
+					_StartAsyncInit();
 					break;
 				}
 			}
@@ -764,6 +869,19 @@ DownloadProgressView::_UpdateStatus(off_t currentSize, off_t expectedSize)
 
 
 void
+DownloadProgressView::_StartAsyncInit()
+{
+	if (fPath.InitCheck() != B_OK)
+		return;
+
+	BMessage message(MSG_DO_ASYNC_INIT);
+	message.AddString("path", fPath.Path());
+	message.AddMessenger("reply_to", BMessenger(this));
+	GetAsyncWorker()->PostMessage(&message);
+}
+
+
+void
 DownloadProgressView::_UpdateStatusText()
 {
 	fInfoView->SetText("");
@@ -851,13 +969,6 @@ DownloadProgressView::_UpdateStatusText()
 }
 
 
-void
-DownloadProgressView::_StartNodeMonitor(const BEntry& entry)
-{
-	node_ref nref;
-	if (entry.GetNodeRef(&nref) == B_OK)
-		watch_node(&nref, B_WATCH_ALL, this);
-}
 
 
 void

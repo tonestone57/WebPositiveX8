@@ -56,7 +56,7 @@ private:
 			void				_UpdateStatus(off_t currentSize,
 									off_t expectedSize);
 			void				_UpdateStatusText();
-			void				_StartNodeMonitor(const BEntry& entry);
+			void				_StartAsyncInit();
 			void				_StopNodeMonitor();
 
 private:
