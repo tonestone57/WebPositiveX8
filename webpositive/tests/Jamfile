@@ -3,11 +3,27 @@ SubDir HAIKU_TOP src apps webpositive tests ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive autocompletion ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive support ] ;
+SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive tabview ] ;
+
+SubDirHdrs $(HAIKU_TOP) src apps webpositive ;
+SubDirHdrs $(HAIKU_TOP) src apps webpositive autocompletion ;
+SubDirHdrs $(HAIKU_TOP) src apps webpositive support ;
+SubDirHdrs $(HAIKU_TOP) src apps webpositive tabview ;
+
+UseLibraryHeaders icon ;
+UsePrivateHeaders interface netservices shared tracker ;
+SubDirHdrs $(HAIKU_TOP) src kits tracker ;
 
 SimpleTest URLChoiceTest :
 	URLChoiceTest.cpp
 	:
 	be
+;
+
+SimpleTest BookmarkBarTest :
+	BookmarkBarTest.cpp
+	:
+	be tracker network translation
 ;
 
 SimpleTest SettingsFileTest :
