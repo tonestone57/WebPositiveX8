@@ -24,6 +24,12 @@ SimpleTest TabManagerTest :
 	be
 ;
 
+SimpleTest ConsoleWindowTest :
+	ConsoleWindowTest.cpp
+	:
+	be localestub
+;
+
 SubDirHdrs [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
 
 SimpleTest URLChoiceTest :
