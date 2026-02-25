@@ -11,6 +11,8 @@
 #include <Path.h>
 #include <String.h>
 
+#include "DownloadSpeedCalculator.h"
+
 class BEntry;
 class BStatusBar;
 class BStringView;
@@ -71,17 +73,10 @@ private:
 
 			off_t				fCurrentSize;
 			off_t				fExpectedSize;
-			off_t				fLastSpeedReferenceSize;
-			off_t				fEstimatedFinishReferenceSize;
+
+			DownloadSpeedCalculator fSpeedCalculator;
+
 			bigtime_t			fLastUpdateTime;
-			bigtime_t			fLastSpeedReferenceTime;
-			bigtime_t			fProcessStartTime;
-			bigtime_t			fLastSpeedUpdateTime;
-			bigtime_t			fEstimatedFinishReferenceTime;
-	static	const size_t		kBytesPerSecondSlots = 10;
-			size_t				fCurrentBytesPerSecondSlot;
-			double				fBytesPerSecondSlot[kBytesPerSecondSlots];
-			double				fBytesPerSecond;
 
 	static	bigtime_t			sLastEstimatedFinishSpeedToggleTime;
 	static	bool				sShowSpeed;

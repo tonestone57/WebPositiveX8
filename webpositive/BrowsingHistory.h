@@ -7,23 +7,22 @@
 #define BROWSING_HISTORY_H
 
 #include <memory>
-#include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <String.h>
 
 #include "DateTime.h"
 #include <Locker.h>
 #include <ObjectList.h>
 #include <OS.h>
 
+#include <String.h>
+
 class BFile;
-class BString;
 
 
 class BrowsingHistoryItem;
 typedef std::shared_ptr<const BrowsingHistoryItem> BrowsingHistoryItemPtr;
+
 
 class BrowsingHistoryItem {
 public:
@@ -63,6 +62,11 @@ private:
 };
 
 
+struct BStringHash {
+	size_t operator()(const BString& s) const;
+};
+
+
 class BrowsingHistory : public BLocker {
 public:
 	static	BrowsingHistory*	DefaultInstance();
@@ -90,6 +94,7 @@ protected:
 
 private:
 			void				_Clear();
+			void				_EnsureUniqueVector();
 			bool				_AddItem(const BrowsingHistoryItem& item,
 									bool invoke);
 			int32				_InsertionIndex(
@@ -102,7 +107,10 @@ private:
 	static	status_t			_LoadThread(void* data);
 
 private:
-			std::vector<BrowsingHistoryItemPtr> fHistoryItems;
+			typedef std::vector<BrowsingHistoryItemPtr> HistoryVector;
+			typedef std::shared_ptr<HistoryVector> HistoryVectorPtr;
+
+			HistoryVectorPtr	fHistoryItems;
 			std::unordered_map<std::string, BrowsingHistoryItemPtr>
 								fHistoryMap;
 			int32				fMaxHistoryItemAge;
@@ -114,8 +122,7 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			std::unique_ptr<std::vector<BrowsingHistoryItemPtr>>
-								fPendingSaveItems;
+			HistoryVectorPtr	fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 
