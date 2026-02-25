@@ -28,6 +28,8 @@ public:
 		bool* rememberCredentials);
 
 private:
+	void _UpdatePasswordVisibility();
+
 	BRect m_parentWindowFrame;
 	BTextControl* m_usernameTextControl;
 	BTextControl* m_passwordTextControl;
