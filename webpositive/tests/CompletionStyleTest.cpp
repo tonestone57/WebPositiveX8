@@ -59,14 +59,17 @@ public:
 
 class MockChoiceModel : public BAutoCompleter::ChoiceModel {
 public:
-    MockChoiceModel() {}
+    MockChoiceModel() : fFetchChoicesForCalled(0) {}
     virtual ~MockChoiceModel() {
         for (std::vector<BAutoCompleter::Choice*>::iterator it = fChoices.begin();
                 it != fChoices.end(); ++it) {
             delete *it;
         }
     }
-    virtual void FetchChoicesFor(const BString& pattern) {}
+    virtual void FetchChoicesFor(const BString& pattern) {
+        fFetchChoicesForCalled++;
+        fLastPattern = pattern;
+    }
     virtual int32 CountChoices() const { return (int32)fChoices.size(); }
     virtual const BAutoCompleter::Choice* ChoiceAt(int32 index) const {
         if (index >= 0 && index < (int32)fChoices.size())
@@ -86,6 +89,9 @@ public:
         fChoices.clear();
     }
 
+    int32 fFetchChoicesForCalled;
+    BString fLastPattern;
+
 private:
     std::vector<BAutoCompleter::Choice*> fChoices;
 };
@@ -93,12 +99,13 @@ private:
 class MockChoiceView : public BAutoCompleter::ChoiceView {
 public:
     MockChoiceView() : fSelectedIndex(-1), fSelectChoiceAtCalled(0),
-        fHideChoicesCalled(0), fChoicesAreShown(false) {}
+        fShowChoicesCalled(0), fHideChoicesCalled(0), fChoicesAreShown(false) {}
     virtual void SelectChoiceAt(int32 index) {
         fSelectedIndex = index;
         fSelectChoiceAtCalled++;
     }
     virtual void ShowChoices(BAutoCompleter::CompletionStyle* completer) {
+        fShowChoicesCalled++;
         fChoicesAreShown = true;
     }
     virtual void HideChoices() {
@@ -110,6 +117,7 @@ public:
 
     int32 fSelectedIndex;
     int32 fSelectChoiceAtCalled;
+    int32 fShowChoicesCalled;
     int32 fHideChoicesCalled;
     bool fChoicesAreShown;
 };
@@ -547,6 +555,100 @@ void testSelectNextExhaustive() {
     assert_int32(0, style.SelectedChoiceIndex(), "Index should be 0");
 }
 
+void testEditViewStateChanged() {
+    printf("Testing BDefaultCompletionStyle::EditViewStateChanged...\n");
+
+    MockEditView* editView = new MockEditView();
+    MockChoiceModel* choiceModel = new MockChoiceModel();
+    MockChoiceView* choiceView = new MockChoiceView();
+    MockPatternSelector* patternSelector = new MockPatternSelector();
+
+    BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+
+    // Test case 1: No change in text
+    editView->fText = "initial";
+    style.EditViewStateChanged(true); // first call sets fFullEnteredText
+
+    choiceView->fShowChoicesCalled = 0;
+    choiceView->fHideChoicesCalled = 0;
+    choiceModel->fFetchChoicesForCalled = 0;
+
+    style.EditViewStateChanged(true);
+    assert_int32(0, choiceModel->fFetchChoicesForCalled, "Should return early if text has not changed");
+
+    // Test case 2: updateChoices = false
+    editView->fText = "changed";
+    style.EditViewStateChanged(false);
+    assert_int32(0, choiceModel->fFetchChoicesForCalled, "Should not fetch choices if updateChoices is false");
+    // But fFullEnteredText should be updated, so a subsequent call with same text returns early
+    style.EditViewStateChanged(true);
+    assert_int32(0, choiceModel->fFetchChoicesForCalled, "Should return early even if updateChoices=true if text was updated in previous call");
+
+    // Test case 3: updateChoices = true, multiple choices
+    editView->fText = "multiple";
+    editView->fCaretPos = 8;
+    patternSelector->fStart = 0;
+    patternSelector->fLength = 8;
+    choiceModel->ClearChoices();
+    choiceModel->AddChoice("multiple1");
+    choiceModel->AddChoice("multiple2");
+
+    choiceView->fShowChoicesCalled = 0;
+    choiceView->fSelectChoiceAtCalled = 0;
+    style.Select(1); // Set some selection to see if it gets reset
+
+    style.EditViewStateChanged(true);
+
+    assert_int32(1, choiceModel->fFetchChoicesForCalled, "Should fetch choices");
+    assert_string_equal("multiple", choiceModel->fLastPattern.String(), "Should fetch choices for correct pattern");
+    assert_int32(-1, style.SelectedChoiceIndex(), "Selection should be reset to -1");
+    assert_int32(1, choiceView->fShowChoicesCalled, "ShowChoices should be called when > 1 choices");
+    assert_int32(-1, choiceView->fSelectedIndex, "ChoiceView should select -1");
+
+    // Test case 4: single choice, matches pattern exactly (case-insensitive)
+    editView->fText = "apple";
+    editView->fCaretPos = 5;
+    patternSelector->fStart = 0;
+    patternSelector->fLength = 5;
+    choiceModel->ClearChoices();
+    choiceModel->AddChoice("Apple"); // Exact match except case
+
+    choiceView->fHideChoicesCalled = 0;
+    choiceView->fShowChoicesCalled = 0;
+
+    style.EditViewStateChanged(true);
+
+    assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should be called when single choice matches pattern exactly");
+    assert_int32(0, choiceView->fShowChoicesCalled, "ShowChoices should NOT be called when single choice matches pattern exactly");
+
+    // Test case 5: single choice, does NOT match pattern exactly
+    editView->fText = "app";
+    editView->fCaretPos = 3;
+    patternSelector->fStart = 0;
+    patternSelector->fLength = 3;
+    choiceModel->ClearChoices();
+    choiceModel->AddChoice("apple");
+
+    choiceView->fShowChoicesCalled = 0;
+
+    style.EditViewStateChanged(true);
+
+    assert_int32(1, choiceView->fShowChoicesCalled, "ShowChoices should be called when single choice DOES NOT match pattern exactly");
+
+    // Test case 6: no choices
+    editView->fText = "nothing";
+    editView->fCaretPos = 7;
+    patternSelector->fStart = 0;
+    patternSelector->fLength = 7;
+    choiceModel->ClearChoices();
+
+    choiceView->fHideChoicesCalled = 0;
+
+    style.EditViewStateChanged(true);
+
+    assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should be called when no choices are found");
+}
+
 int main() {
     testSelectPrevious();
     testSelectNext();
@@ -557,6 +659,7 @@ int main() {
     testCancelChoice();
     testApplyChoiceEdgeCases();
     testCancelChoiceEdgeCases();
+    testEditViewStateChanged();
 
     if (gTestFailures > 0) {
         printf("\nFinished running tests: %d failures\n", gTestFailures);
