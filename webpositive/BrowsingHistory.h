@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <String.h>
 
@@ -20,6 +21,9 @@
 class BFile;
 class BString;
 
+
+class BrowsingHistoryItem;
+typedef std::shared_ptr<const BrowsingHistoryItem> BrowsingHistoryItemPtr;
 
 class BrowsingHistoryItem {
 public:
@@ -98,8 +102,8 @@ private:
 	static	status_t			_LoadThread(void* data);
 
 private:
-			BObjectList<BrowsingHistoryItem, true> fHistoryItems;
-			std::unordered_map<std::string, BrowsingHistoryItem*>
+			std::vector<BrowsingHistoryItemPtr> fHistoryItems;
+			std::unordered_map<std::string, BrowsingHistoryItemPtr>
 								fHistoryMap;
 			int32				fMaxHistoryItemAge;
 
@@ -110,7 +114,7 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			std::unique_ptr<BObjectList<BrowsingHistoryItem, true>>
+			std::unique_ptr<std::vector<BrowsingHistoryItemPtr>>
 								fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;

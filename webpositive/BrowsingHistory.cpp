@@ -170,7 +170,6 @@ BrowsingHistory::BrowsingHistory()
 BrowsingHistory::BrowsingHistory(bool startThreads)
 	:
 	BLocker("browsing history"),
-	fHistoryItems(64),
 	fMaxHistoryItemAge(7),
 	fSettingsLoaded(false),
 	fQuitting(false),
@@ -179,6 +178,7 @@ BrowsingHistory::BrowsingHistory(bool startThreads)
 	fFileLock("browsing history file lock"),
 	fLastSaveTime(0)
 {
+	fHistoryItems.reserve(64);
 	if (startThreads) {
 		fSaveSem = create_sem(0, "browsing history save sem");
 		fSaveThread = spawn_thread(_SaveThread, "browsing history saver",
@@ -246,13 +246,12 @@ BrowsingHistory::RemoveItem(const BString& url)
 	if (it == fHistoryMap.end())
 		return false;
 
-	BrowsingHistoryItem* item = it->second;
-	int32 index = fHistoryItems.IndexOf(item);
-	if (index >= 0)
-		fHistoryItems.RemoveItem(index);
+	BrowsingHistoryItemPtr item = it->second;
+	auto it_list = std::find(fHistoryItems.begin(), fHistoryItems.end(), item);
+	if (it_list != fHistoryItems.end())
+		fHistoryItems.erase(it_list);
 
 	fHistoryMap.erase(it);
-	delete item;
 
 	_SaveSettings();
 
@@ -265,7 +264,7 @@ BrowsingHistory::CountItems() const
 {
 	BAutolock _(const_cast<BrowsingHistory*>(this));
 
-	return fHistoryItems.CountItems();
+	return (int32)fHistoryItems.size();
 }
 
 
@@ -274,18 +273,19 @@ BrowsingHistory::HistoryItemAt(int32 index) const
 {
 	BAutolock _(const_cast<BrowsingHistory*>(this));
 
-	const BrowsingHistoryItem* existingItem = ItemAt(index);
-	if (!existingItem)
+	if (index < 0 || index >= (int32)fHistoryItems.size())
 		return BrowsingHistoryItem(BString());
 
-	return BrowsingHistoryItem(*existingItem);
+	return *fHistoryItems[index];
 }
 
 
 const BrowsingHistoryItem*
 BrowsingHistory::ItemAt(int32 index) const
 {
-	return fHistoryItems.ItemAt(index);
+	if (index < 0 || index >= (int32)fHistoryItems.size())
+		return nullptr;
+	return fHistoryItems[index].get();
 }
 
 
@@ -322,9 +322,7 @@ BrowsingHistory::MaxHistoryItemAge() const
 void
 BrowsingHistory::_Clear()
 {
-	while (fHistoryItems.CountItems() > 0)
-		delete fHistoryItems.RemoveItem(0);
-
+	fHistoryItems.clear();
 	fHistoryMap.clear();
 }
 
@@ -335,39 +333,39 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 	auto it = fHistoryMap.find(item.URL().String());
 	if (it != fHistoryMap.end()) {
 		if (!internal) {
-			BrowsingHistoryItem* existingItem = it->second;
-			int32 index = fHistoryItems.IndexOf(existingItem);
-			if (index >= 0)
-				fHistoryItems.RemoveItem(index);
+			BrowsingHistoryItemPtr existingItem = it->second;
+			auto it_list = std::find(fHistoryItems.begin(), fHistoryItems.end(), existingItem);
+			if (it_list != fHistoryItems.end())
+				fHistoryItems.erase(it_list);
 
-			existingItem->Invoked();
-
-			int32 insertionIndex = _InsertionIndex(existingItem);
-			if (!fHistoryItems.AddItem(existingItem, insertionIndex)) {
-				fHistoryMap.erase(it);
-				delete existingItem;
+			std::shared_ptr<BrowsingHistoryItem> newItem(new(std::nothrow) BrowsingHistoryItem(*existingItem));
+			if (!newItem)
 				return false;
-			}
+			newItem->Invoked();
+
+			BrowsingHistoryItemPtr itemToStore = newItem;
+			int32 insertionIndex = _InsertionIndex(itemToStore.get());
+			fHistoryItems.insert(fHistoryItems.begin() + insertionIndex, itemToStore);
+			fHistoryMap[itemToStore->URL().String()] = itemToStore;
+
 			_SaveSettings();
 		}
 		return true;
 	}
 
-	BrowsingHistoryItem* newItem = new(std::nothrow) BrowsingHistoryItem(item);
+	std::shared_ptr<BrowsingHistoryItem> newItem(new(std::nothrow) BrowsingHistoryItem(item));
 	if (!newItem)
 		return false;
 
 	if (!internal)
 		newItem->Invoked();
 
-	int32 insertionIndex = _InsertionIndex(newItem);
+	BrowsingHistoryItemPtr itemToStore = newItem;
+	int32 insertionIndex = _InsertionIndex(itemToStore.get());
 
-	if (!fHistoryItems.AddItem(newItem, insertionIndex)) {
-		delete newItem;
-		return false;
-	}
+	fHistoryItems.insert(fHistoryItems.begin() + insertionIndex, itemToStore);
 
-	fHistoryMap[newItem->URL().String()] = newItem;
+	fHistoryMap[itemToStore->URL().String()] = itemToStore;
 
 	if (!internal)
 		_SaveSettings();
@@ -379,17 +377,16 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 int32
 BrowsingHistory::_InsertionIndex(const BrowsingHistoryItem* item) const
 {
-	int32 count = fHistoryItems.CountItems();
-	if (count == 0 || *fHistoryItems.ItemAt(count - 1) < *item)
+	int32 count = (int32)fHistoryItems.size();
+	if (count == 0 || *fHistoryItems[count - 1] < *item)
 		return count;
 
-	BrowsingHistoryItem** items = (BrowsingHistoryItem**)fHistoryItems.Items();
-	BrowsingHistoryItem** insertIt = std::lower_bound(items, items + count,
+	auto it = std::lower_bound(fHistoryItems.begin(), fHistoryItems.end(),
 		item,
-		[](const BrowsingHistoryItem* a, const BrowsingHistoryItem* b) {
+		[](const BrowsingHistoryItemPtr& a, const BrowsingHistoryItem* b) {
 			return *a < *b;
 		});
-	return insertIt - items;
+	return (int32)std::distance(fHistoryItems.begin(), it);
 }
 
 
@@ -420,20 +417,12 @@ BrowsingHistory::_SaveSettings(bool force)
 
 	fLastSaveTime = system_time();
 
-	// Create deep copy of items to save
-	// BObjectList(..., true) owns the items and will delete them on destruction
-	std::unique_ptr<BObjectList<BrowsingHistoryItem, true>> newItems(
-		new(std::nothrow) BObjectList<BrowsingHistoryItem, true>(
-			fHistoryItems.CountItems()));
+	// Create shallow copy of items to save. This is safe because the items
+	// themselves are now immutable (using COW).
+	std::unique_ptr<std::vector<BrowsingHistoryItemPtr>> newItems(
+		new(std::nothrow) std::vector<BrowsingHistoryItemPtr>(fHistoryItems));
 	if (!newItems)
 		return;
-
-	int32 count = fHistoryItems.CountItems();
-	for (int32 i = 0; i < count; i++) {
-		const BrowsingHistoryItem* item = ItemAt(i);
-		if (item)
-			newItems->AddItem(new(std::nothrow) BrowsingHistoryItem(*item));
-	}
 
 	fSaveLock.Lock();
 	fPendingSaveItems = std::move(newItems);
@@ -452,7 +441,7 @@ BrowsingHistory::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		std::unique_ptr<BObjectList<BrowsingHistoryItem, true>> itemsToSave;
+		std::unique_ptr<std::vector<BrowsingHistoryItemPtr>> itemsToSave;
 
 		self->fSaveLock.Lock();
 		itemsToSave = std::move(self->fPendingSaveItems);
@@ -475,9 +464,9 @@ BrowsingHistory::_SaveThread(void* data)
 				settingsArchive.AddInt32("max history item age", maxAge);
 
 				BMessage historyItemArchive;
-				int32 count = itemsToSave->CountItems();
+				int32 count = (int32)itemsToSave->size();
 				for (int32 i = 0; i < count; i++) {
-					BrowsingHistoryItem* item = itemsToSave->ItemAt(i);
+					const BrowsingHistoryItemPtr& item = (*itemsToSave)[i];
 					if (item && item->Archive(&historyItemArchive) == B_OK) {
 						settingsArchive.AddMessage("history item", &historyItemArchive);
 					}
