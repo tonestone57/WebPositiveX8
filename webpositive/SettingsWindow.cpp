@@ -76,6 +76,8 @@ enum {
 
 	MSG_CHOOSE_DOWNLOAD_FOLDER					= 'swop',
 	MSG_HANDLE_DOWNLOAD_FOLDER					= 'oprs',
+
+	MSG_SETTINGS_MODIFIED						= 'stmo',
 };
 
 static const int32 kDefaultFontSize = 14;
@@ -134,7 +136,7 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 	// load settings from disk
 	_RevertSettings();
 	// apply to WebKit
-	_ApplySettings();
+	_ApplySettings(true, false);
 
 	// Start hidden
 	Hide();
@@ -212,6 +214,7 @@ SettingsWindow::MessageReceived(BMessage* message)
 			if (message->FindPointer("source", (void**)&source) == B_OK)
 				source->SetMarked(true);
 
+			_UpdateLiveSetting(message->what);
 			_ValidateControlsEnabledStatus();
 			break;
 		}
@@ -222,11 +225,15 @@ SettingsWindow::MessageReceived(BMessage* message)
 		case MSG_START_UP_BEHAVIOR_CHANGED:
 		case MSG_NEW_WINDOWS_BEHAVIOR_CHANGED:
 		case MSG_NEW_TABS_BEHAVIOR_CHANGED:
-		case MSG_HISTORY_MENU_DAYS_CHANGED:
 		case MSG_TAB_DISPLAY_BEHAVIOR_CHANGED:
 		case MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED:
 		case MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED:
 		case MSG_SHOW_HOME_BUTTON_CHANGED:
+			_UpdateLiveSetting(message->what);
+			_ValidateControlsEnabledStatus();
+			break;
+
+		case MSG_HISTORY_MENU_DAYS_CHANGED:
 		case MSG_STANDARD_FONT_CHANGED:
 		case MSG_SERIF_FONT_CHANGED:
 		case MSG_SANS_SERIF_FONT_CHANGED:
@@ -237,7 +244,7 @@ SettingsWindow::MessageReceived(BMessage* message)
 		case MSG_USE_PROXY_AUTH_CHANGED:
 		case MSG_PROXY_USERNAME_CHANGED:
 		case MSG_PROXY_PASSWORD_CHANGED:
-			// TODO: Some settings could change live, some others not?
+		case MSG_SETTINGS_MODIFIED:
 			_ValidateControlsEnabledStatus();
 			break;
 
@@ -276,14 +283,14 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	fStartPageControl = new BTextControl("start page",
 		B_TRANSLATE("Start page:"), "", new BMessage(MSG_START_PAGE_CHANGED));
 	fStartPageControl->SetModificationMessage(
-		new BMessage(MSG_START_PAGE_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fStartPageControl->SetText(
 		fSettings->GetValue(kSettingsKeyStartPageURL, kDefaultStartPageURL));
 
 	fSearchPageControl = new BTextControl("search page", "", "",
 		new BMessage(MSG_SEARCH_PAGE_CHANGED));
 	fSearchPageControl->SetModificationMessage(
-		new BMessage(MSG_SEARCH_PAGE_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	BString searchURL = fSettings->GetValue(kSettingsKeySearchPageURL,
 		kDefaultSearchPageURL);
 	fSearchPageControl->SetText(searchURL);
@@ -292,7 +299,7 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 		B_TRANSLATE("Download folder:"), "",
 		new BMessage(MSG_DOWNLOAD_FOLDER_CHANGED));
 	fDownloadFolderControl->SetModificationMessage(
-		new BMessage(MSG_DOWNLOAD_FOLDER_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fDownloadFolderControl->SetText(
 		fSettings->GetValue(kSettingsKeyDownloadPath, kDefaultDownloadPath));
 
@@ -509,7 +516,7 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		B_TRANSLATE("Proxy server address:"), "",
 		new BMessage(MSG_PROXY_ADDRESS_CHANGED));
 	fProxyAddressControl->SetModificationMessage(
-		new BMessage(MSG_PROXY_ADDRESS_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fProxyAddressControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyAddress, ""));
 
@@ -517,7 +524,7 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		B_TRANSLATE("Proxy server port:"), "",
 		new BMessage(MSG_PROXY_PORT_CHANGED));
 	fProxyPortControl->SetModificationMessage(
-		new BMessage(MSG_PROXY_PORT_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fProxyPortControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyPort, ""));
 
@@ -530,7 +537,7 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		B_TRANSLATE("Proxy username:"), "",
 		new BMessage(MSG_PROXY_USERNAME_CHANGED));
 	fProxyUsernameControl->SetModificationMessage(
-		new BMessage(MSG_PROXY_USERNAME_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fProxyUsernameControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyUsername, ""));
 
@@ -538,7 +545,7 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		B_TRANSLATE("Proxy password:"), "",
 		new BMessage(MSG_PROXY_PASSWORD_CHANGED));
 	fProxyPasswordControl->SetModificationMessage(
-		new BMessage(MSG_PROXY_PASSWORD_CHANGED));
+		new BMessage(MSG_SETTINGS_MODIFIED));
 	fProxyPasswordControl->TextView()->HideTyping(true);
 	fProxyPasswordControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyPassword, ""));
@@ -585,50 +592,48 @@ SettingsWindow::_CanApplySettings() const
 	bool canApply = false;
 
 	// General settings
-	canApply = canApply || (strcmp(fStartPageControl->Text(),
-		fSettings->GetValue(kSettingsKeyStartPageURL,
-			kDefaultStartPageURL)) != 0);
+	BString stringValue;
+	fOriginalSettings.FindString(kSettingsKeyStartPageURL, &stringValue);
+	canApply = canApply || (stringValue != fStartPageControl->Text());
 
-	canApply = canApply || (strcmp(fSearchPageControl->Text(),
-		fSettings->GetValue(kSettingsKeySearchPageURL,
-			kDefaultSearchPageURL)) != 0);
+	fOriginalSettings.FindString(kSettingsKeySearchPageURL, &stringValue);
+	canApply = canApply || (stringValue != fSearchPageControl->Text());
 
-	canApply = canApply || (strcmp(fDownloadFolderControl->Text(),
-		fSettings->GetValue(kSettingsKeyDownloadPath,
-			kDefaultDownloadPath)) != 0);
+	fOriginalSettings.FindString(kSettingsKeyDownloadPath, &stringValue);
+	canApply = canApply || (stringValue != fDownloadFolderControl->Text());
 
+	bool boolValue;
+	fOriginalSettings.FindBool(kSettingsKeyShowTabsIfSinglePageOpen, &boolValue);
 	canApply = canApply || ((fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON)
-		!= fSettings->GetValue(kSettingsKeyShowTabsIfSinglePageOpen, true));
+		!= boolValue);
 
+	fOriginalSettings.FindBool(kSettingsKeyAutoHideInterfaceInFullscreenMode,
+		&boolValue);
 	canApply = canApply || (
 		(fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON)
-		!= fSettings->GetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
-			false));
+		!= boolValue);
 
+	fOriginalSettings.FindBool(kSettingsKeyAutoHidePointer, &boolValue);
 	canApply = canApply || (
-		(fAutoHidePointer->Value() == B_CONTROL_ON)
-		!= fSettings->GetValue(kSettingsKeyAutoHidePointer, false));
+		(fAutoHidePointer->Value() == B_CONTROL_ON) != boolValue);
 
+	fOriginalSettings.FindBool(kSettingsKeyShowHomeButton, &boolValue);
 	canApply = canApply || ((fShowHomeButton->Value() == B_CONTROL_ON)
-		!= fSettings->GetValue(kSettingsKeyShowHomeButton, true));
+		!= boolValue);
 
-	canApply = canApply || (fDaysInHistory->Value()
-		!= BrowsingHistory::DefaultInstance()->MaxHistoryItemAge());
+	int32 intValue;
+	fOriginalSettings.FindInt32("max history item age", &intValue);
+	canApply = canApply || (fDaysInHistory->Value() != intValue);
 
-	// Start up policy
-	canApply = canApply || (_StartUpPolicy()
-		!= fSettings->GetValue(kSettingsKeyStartUpPolicy,
-			(uint32)ResumePriorSession));
+	uint32 uintValue;
+	fOriginalSettings.FindUInt32(kSettingsKeyStartUpPolicy, &uintValue);
+	canApply = canApply || (_StartUpPolicy() != uintValue);
 
-	// New window policy
-	canApply = canApply || (_NewWindowPolicy()
-		!= fSettings->GetValue(kSettingsKeyNewWindowPolicy,
-			(uint32)OpenStartPage));
+	fOriginalSettings.FindUInt32(kSettingsKeyNewWindowPolicy, &uintValue);
+	canApply = canApply || (_NewWindowPolicy() != uintValue);
 
-	// New tab policy
-	canApply = canApply || (_NewTabPolicy()
-		!= fSettings->GetValue(kSettingsKeyNewTabPolicy,
-			(uint32)OpenBlankPage));
+	fOriginalSettings.FindUInt32(kSettingsKeyNewTabPolicy, &uintValue);
+	canApply = canApply || (_NewTabPolicy() != uintValue);
 
 	// Font settings
 	canApply = canApply || (fStandardFontView->Font()
@@ -650,109 +655,293 @@ SettingsWindow::_CanApplySettings() const
 		!= fSettings->GetValue("fixed font size", kDefaultFontSize));
 
 	// Proxy settings
+	fOriginalSettings.FindBool(kSettingsKeyUseProxy, &boolValue);
 	canApply = canApply || ((fUseProxyCheckBox->Value() == B_CONTROL_ON)
-		!= fSettings->GetValue(kSettingsKeyUseProxy, false));
+		!= boolValue);
 
-	canApply = canApply || (strcmp(fProxyAddressControl->Text(),
-		fSettings->GetValue(kSettingsKeyProxyAddress, "")) != 0);
+	fOriginalSettings.FindString(kSettingsKeyProxyAddress, &stringValue);
+	canApply = canApply || (stringValue != fProxyAddressControl->Text());
 
-	canApply = canApply || (_ProxyPort()
-		!= fSettings->GetValue(kSettingsKeyProxyPort, (uint32)0));
+	fOriginalSettings.FindUInt32(kSettingsKeyProxyPort, &uintValue);
+	canApply = canApply || (_ProxyPort() != uintValue);
 
+	fOriginalSettings.FindBool(kSettingsKeyUseProxyAuth, &boolValue);
 	canApply = canApply || ((fUseProxyAuthCheckBox->Value() == B_CONTROL_ON)
-		!= fSettings->GetValue(kSettingsKeyUseProxyAuth, false));
+		!= boolValue);
 
-	canApply = canApply || (strcmp(fProxyUsernameControl->Text(),
-		fSettings->GetValue(kSettingsKeyProxyUsername, "")) != 0);
+	fOriginalSettings.FindString(kSettingsKeyProxyUsername, &stringValue);
+	canApply = canApply || (stringValue != fProxyUsernameControl->Text());
 
-	canApply = canApply || (strcmp(fProxyPasswordControl->Text(),
-		fSettings->GetValue(kSettingsKeyProxyPassword, "")) != 0);
+	fOriginalSettings.FindString(kSettingsKeyProxyPassword, &stringValue);
+	canApply = canApply || (stringValue != fProxyPasswordControl->Text());
 
 	return canApply;
 }
 
 
 void
-SettingsWindow::_ApplySettings()
+SettingsWindow::_ApplySettings(bool force, bool save)
 {
-	// Store general settings
-	BrowsingHistory::DefaultInstance()->SetMaxHistoryItemAge(
-		(uint32)fDaysInHistory->Value());
-	fSettings->SetValue(kSettingsKeyStartPageURL, fStartPageControl->Text());
-	fSettings->SetValue(kSettingsKeySearchPageURL, fSearchPageControl->Text());
-	fSettings->SetValue(kSettingsKeyDownloadPath, fDownloadFolderControl->Text());
-	fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen,
-		fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON);
-	fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
-		fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON);
-	fSettings->SetValue(kSettingsKeyAutoHidePointer,
-		fAutoHidePointer->Value() == B_CONTROL_ON);
-	fSettings->SetValue(kSettingsKeyShowHomeButton,
-		fShowHomeButton->Value() == B_CONTROL_ON);
+	if (!force && !_CanApplySettings())
+		return;
 
-	// New page policies
-	fSettings->SetValue(kSettingsKeyStartUpPolicy, _StartUpPolicy());
-	fSettings->SetValue(kSettingsKeyNewWindowPolicy, _NewWindowPolicy());
-	fSettings->SetValue(kSettingsKeyNewTabPolicy, _NewTabPolicy());
+	bool webkitSettingsChanged = false;
+
+	// Store non-live settings
+	int32 historyAge = fDaysInHistory->Value();
+	if (historyAge != BrowsingHistory::DefaultInstance()->MaxHistoryItemAge()) {
+		BrowsingHistory::DefaultInstance()->SetMaxHistoryItemAge(historyAge);
+	}
+
+	// Note that live settings (StartPageURL, Policies, etc.) are already in
+	// fSettings, but we update them again just to be sure (e.g. if called
+	// with force=true).
+	_UpdateLiveSettings();
 
 	// Store font settings
-	fSettings->SetValue("standard font", fStandardFontView->Font());
-	fSettings->SetValue("serif font", fSerifFontView->Font());
-	fSettings->SetValue("sans serif font", fSansSerifFontView->Font());
-	fSettings->SetValue("fixed font", fFixedFontView->Font());
+	BFont font = fStandardFontView->Font();
+	if (font != fSettings->GetValue("standard font", *be_plain_font)) {
+		fSettings->SetValue("standard font", font);
+		BWebSettings::Default()->SetStandardFont(font);
+		webkitSettingsChanged = true;
+	}
+	font = fSerifFontView->Font();
+	if (font != fSettings->GetValue("serif font", _FindDefaultSerifFont())) {
+		fSettings->SetValue("serif font", font);
+		BWebSettings::Default()->SetSerifFont(font);
+		webkitSettingsChanged = true;
+	}
+	font = fSansSerifFontView->Font();
+	if (font != fSettings->GetValue("sans serif font", *be_plain_font)) {
+		fSettings->SetValue("sans serif font", font);
+		BWebSettings::Default()->SetSansSerifFont(font);
+		webkitSettingsChanged = true;
+	}
+	font = fFixedFontView->Font();
+	if (font != fSettings->GetValue("fixed font", *be_fixed_font)) {
+		fSettings->SetValue("fixed font", font);
+		BWebSettings::Default()->SetFixedFont(font);
+		webkitSettingsChanged = true;
+	}
+
 	int32 standardFontSize = fStandardSizesSpinner->Value();
+	if (standardFontSize != fSettings->GetValue("standard font size",
+			kDefaultFontSize)) {
+		fSettings->SetValue("standard font size", standardFontSize);
+		BWebSettings::Default()->SetDefaultStandardFontSize(standardFontSize);
+		webkitSettingsChanged = true;
+	}
 	int32 fixedFontSize = fFixedSizesSpinner->Value();
-	fSettings->SetValue("standard font size", standardFontSize);
-	fSettings->SetValue("fixed font size", fixedFontSize);
+	if (fixedFontSize != fSettings->GetValue("fixed font size",
+			kDefaultFontSize)) {
+		fSettings->SetValue("fixed font size", fixedFontSize);
+		BWebSettings::Default()->SetDefaultFixedFontSize(fixedFontSize);
+		webkitSettingsChanged = true;
+	}
 
 	// Store proxy settings
-
-	fSettings->SetValue(kSettingsKeyUseProxy,
-		fUseProxyCheckBox->Value() == B_CONTROL_ON);
-	fSettings->SetValue(kSettingsKeyProxyAddress,
-		fProxyAddressControl->Text());
+	bool useProxy = fUseProxyCheckBox->Value() == B_CONTROL_ON;
 	uint32 proxyPort = _ProxyPort();
-	fSettings->SetValue(kSettingsKeyProxyPort, proxyPort);
-	fSettings->SetValue(kSettingsKeyUseProxyAuth,
-		fUseProxyAuthCheckBox->Value() == B_CONTROL_ON);
-	fSettings->SetValue(kSettingsKeyProxyUsername,
-		fProxyUsernameControl->Text());
-	fSettings->SetValue(kSettingsKeyProxyPassword,
-		fProxyPasswordControl->Text());
+	bool useProxyAuth = fUseProxyAuthCheckBox->Value() == B_CONTROL_ON;
 
-	fSettings->Save();
+	if (useProxy != fSettings->GetValue(kSettingsKeyUseProxy, false)
+		|| strcmp(fProxyAddressControl->Text(),
+			fSettings->GetValue(kSettingsKeyProxyAddress, "")) != 0
+		|| proxyPort != fSettings->GetValue(kSettingsKeyProxyPort, (uint32)0)
+		|| useProxyAuth != fSettings->GetValue(kSettingsKeyUseProxyAuth, false)
+		|| strcmp(fProxyUsernameControl->Text(),
+			fSettings->GetValue(kSettingsKeyProxyUsername, "")) != 0
+		|| strcmp(fProxyPasswordControl->Text(),
+			fSettings->GetValue(kSettingsKeyProxyPassword, "")) != 0) {
 
-	// Apply settings to default web page settings.
-	BWebSettings::Default()->SetStandardFont(fStandardFontView->Font());
-	BWebSettings::Default()->SetSerifFont(fSerifFontView->Font());
-	BWebSettings::Default()->SetSansSerifFont(fSansSerifFontView->Font());
-	BWebSettings::Default()->SetFixedFont(fFixedFontView->Font());
-	BWebSettings::Default()->SetDefaultStandardFontSize(standardFontSize);
-	BWebSettings::Default()->SetDefaultFixedFontSize(fixedFontSize);
+		fSettings->SetValue(kSettingsKeyUseProxy, useProxy);
+		fSettings->SetValue(kSettingsKeyProxyAddress,
+			fProxyAddressControl->Text());
+		fSettings->SetValue(kSettingsKeyProxyPort, proxyPort);
+		fSettings->SetValue(kSettingsKeyUseProxyAuth, useProxyAuth);
+		fSettings->SetValue(kSettingsKeyProxyUsername,
+			fProxyUsernameControl->Text());
+		fSettings->SetValue(kSettingsKeyProxyPassword,
+			fProxyPasswordControl->Text());
 
-	if (fUseProxyCheckBox->Value() == B_CONTROL_ON) {
-		if (fUseProxyAuthCheckBox->Value() == B_CONTROL_ON) {
-			BWebSettings::Default()->SetProxyInfo(fProxyAddressControl->Text(),
-				proxyPort, B_PROXY_TYPE_HTTP, fProxyUsernameControl->Text(),
-				fProxyPasswordControl->Text());
-		} else {
-			BWebSettings::Default()->SetProxyInfo(fProxyAddressControl->Text(),
-				proxyPort, B_PROXY_TYPE_HTTP, "", "");
-		}
-	} else
-		BWebSettings::Default()->SetProxyInfo();
+		if (useProxy) {
+			if (useProxyAuth) {
+				BWebSettings::Default()->SetProxyInfo(
+					fProxyAddressControl->Text(), proxyPort, B_PROXY_TYPE_HTTP,
+					fProxyUsernameControl->Text(),
+					fProxyPasswordControl->Text());
+			} else {
+				BWebSettings::Default()->SetProxyInfo(
+					fProxyAddressControl->Text(), proxyPort, B_PROXY_TYPE_HTTP,
+					"", "");
+			}
+		} else
+			BWebSettings::Default()->SetProxyInfo();
 
-	// This will find all currently instantiated page settings and apply
-	// the default values, unless the page settings have local overrides.
-	BWebSettings::Default()->Apply();
+		webkitSettingsChanged = true;
+	}
 
+	if (save)
+		fSettings->Save();
+
+	if (force || webkitSettingsChanged)
+		BWebSettings::Default()->Apply();
+
+	_StoreOriginalSettings();
 	_ValidateControlsEnabledStatus();
+}
+
+
+void
+SettingsWindow::_StoreOriginalSettings()
+{
+	fOriginalSettings.MakeEmpty();
+	fOriginalSettings.AddString(kSettingsKeyStartPageURL,
+		fSettings->GetValue(kSettingsKeyStartPageURL, kDefaultStartPageURL));
+	fOriginalSettings.AddString(kSettingsKeySearchPageURL,
+		fSettings->GetValue(kSettingsKeySearchPageURL, kDefaultSearchPageURL));
+	fOriginalSettings.AddString(kSettingsKeyDownloadPath,
+		fSettings->GetValue(kSettingsKeyDownloadPath, kDefaultDownloadPath));
+	fOriginalSettings.AddBool(kSettingsKeyShowTabsIfSinglePageOpen,
+		fSettings->GetValue(kSettingsKeyShowTabsIfSinglePageOpen, true));
+	fOriginalSettings.AddBool(kSettingsKeyAutoHideInterfaceInFullscreenMode,
+		fSettings->GetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode, false));
+	fOriginalSettings.AddBool(kSettingsKeyAutoHidePointer,
+		fSettings->GetValue(kSettingsKeyAutoHidePointer, false));
+	fOriginalSettings.AddBool(kSettingsKeyShowHomeButton,
+		fSettings->GetValue(kSettingsKeyShowHomeButton, true));
+	fOriginalSettings.AddUInt32(kSettingsKeyStartUpPolicy,
+		fSettings->GetValue(kSettingsKeyStartUpPolicy, (uint32)ResumePriorSession));
+	fOriginalSettings.AddUInt32(kSettingsKeyNewWindowPolicy,
+		fSettings->GetValue(kSettingsKeyNewWindowPolicy, (uint32)OpenStartPage));
+	fOriginalSettings.AddUInt32(kSettingsKeyNewTabPolicy,
+		fSettings->GetValue(kSettingsKeyNewTabPolicy, (uint32)OpenBlankPage));
+
+
+	// Store non-live History settings for dirty checking
+	fOriginalSettings.AddInt32("max history item age",
+		BrowsingHistory::DefaultInstance()->MaxHistoryItemAge());
+
+	// Store non-live Proxy settings for dirty checking
+	fOriginalSettings.AddBool(kSettingsKeyUseProxy,
+		fSettings->GetValue(kSettingsKeyUseProxy, false));
+	fOriginalSettings.AddString(kSettingsKeyProxyAddress,
+		fSettings->GetValue(kSettingsKeyProxyAddress, ""));
+	fOriginalSettings.AddUInt32(kSettingsKeyProxyPort,
+		fSettings->GetValue(kSettingsKeyProxyPort, (uint32)0));
+	fOriginalSettings.AddBool(kSettingsKeyUseProxyAuth,
+		fSettings->GetValue(kSettingsKeyUseProxyAuth, false));
+	fOriginalSettings.AddString(kSettingsKeyProxyUsername,
+		fSettings->GetValue(kSettingsKeyProxyUsername, ""));
+	fOriginalSettings.AddString(kSettingsKeyProxyPassword,
+		fSettings->GetValue(kSettingsKeyProxyPassword, ""));
+}
+
+
+void
+SettingsWindow::_RestoreLiveSettings()
+{
+	BString string;
+	if (fOriginalSettings.FindString(kSettingsKeyStartPageURL, &string) == B_OK)
+		fSettings->SetValue(kSettingsKeyStartPageURL, string);
+	if (fOriginalSettings.FindString(kSettingsKeySearchPageURL, &string) == B_OK)
+		fSettings->SetValue(kSettingsKeySearchPageURL, string);
+	if (fOriginalSettings.FindString(kSettingsKeyDownloadPath, &string) == B_OK)
+		fSettings->SetValue(kSettingsKeyDownloadPath, string);
+
+	bool flag;
+	if (fOriginalSettings.FindBool(kSettingsKeyShowTabsIfSinglePageOpen, &flag)
+		== B_OK) {
+		fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen, flag);
+	}
+	if (fOriginalSettings.FindBool(
+			kSettingsKeyAutoHideInterfaceInFullscreenMode, &flag) == B_OK) {
+		fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
+			flag);
+	}
+	if (fOriginalSettings.FindBool(kSettingsKeyAutoHidePointer, &flag) == B_OK)
+		fSettings->SetValue(kSettingsKeyAutoHidePointer, flag);
+	if (fOriginalSettings.FindBool(kSettingsKeyShowHomeButton, &flag) == B_OK)
+		fSettings->SetValue(kSettingsKeyShowHomeButton, flag);
+
+	uint32 value;
+	if (fOriginalSettings.FindUInt32(kSettingsKeyStartUpPolicy, &value) == B_OK)
+		fSettings->SetValue(kSettingsKeyStartUpPolicy, value);
+	if (fOriginalSettings.FindUInt32(kSettingsKeyNewWindowPolicy, &value) == B_OK)
+		fSettings->SetValue(kSettingsKeyNewWindowPolicy, value);
+	if (fOriginalSettings.FindUInt32(kSettingsKeyNewTabPolicy, &value) == B_OK)
+		fSettings->SetValue(kSettingsKeyNewTabPolicy, value);
+}
+
+
+void
+SettingsWindow::_UpdateLiveSettings()
+{
+	_UpdateLiveSetting(MSG_START_PAGE_CHANGED);
+	_UpdateLiveSetting(MSG_SEARCH_PAGE_CHANGED);
+	_UpdateLiveSetting(MSG_DOWNLOAD_FOLDER_CHANGED);
+	_UpdateLiveSetting(MSG_START_UP_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_NEW_TABS_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_TAB_DISPLAY_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_SHOW_HOME_BUTTON_CHANGED);
+}
+
+
+void
+SettingsWindow::_UpdateLiveSetting(uint32 what)
+{
+	switch (what) {
+		case MSG_START_PAGE_CHANGED:
+			fSettings->SetValue(kSettingsKeyStartPageURL,
+				fStartPageControl->Text());
+			break;
+		case MSG_SEARCH_PAGE_CHANGED:
+		case MSG_SEARCH_PAGE_CHANGED_MENU:
+			fSettings->SetValue(kSettingsKeySearchPageURL,
+				fSearchPageControl->Text());
+			break;
+		case MSG_DOWNLOAD_FOLDER_CHANGED:
+			fSettings->SetValue(kSettingsKeyDownloadPath,
+				fDownloadFolderControl->Text());
+			break;
+		case MSG_START_UP_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyStartUpPolicy, _StartUpPolicy());
+			break;
+		case MSG_NEW_WINDOWS_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyNewWindowPolicy,
+				_NewWindowPolicy());
+			break;
+		case MSG_NEW_TABS_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyNewTabPolicy, _NewTabPolicy());
+			break;
+		case MSG_TAB_DISPLAY_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen,
+				fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON);
+			break;
+		case MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
+				fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON);
+			break;
+		case MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyAutoHidePointer,
+				fAutoHidePointer->Value() == B_CONTROL_ON);
+			break;
+		case MSG_SHOW_HOME_BUTTON_CHANGED:
+			fSettings->SetValue(kSettingsKeyShowHomeButton,
+				fShowHomeButton->Value() == B_CONTROL_ON);
+			break;
+	}
 }
 
 
 void
 SettingsWindow::_RevertSettings()
 {
+	_RestoreLiveSettings();
+
 	fStartPageControl->SetText(
 		fSettings->GetValue(kSettingsKeyStartPageURL, kDefaultStartPageURL));
 
@@ -901,6 +1090,8 @@ SettingsWindow:: _HandleDownloadPanelResult(BFilePanel* panel,
 	{
 		BPath path(&ref);
 		fDownloadFolderControl->SetText(path.Path());
+		_UpdateLiveSetting(MSG_DOWNLOAD_FOLDER_CHANGED);
+		_ValidateControlsEnabledStatus();
 	}
 }
 

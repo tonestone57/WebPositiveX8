@@ -6,6 +6,7 @@
 #ifndef SETTINGS_WINDOW_H
 #define SETTINGS_WINDOW_H
 
+#include <Message.h>
 #include <Window.h>
 
 
@@ -42,8 +43,13 @@ private:
 									BMessage* message);
 
 			bool				_CanApplySettings() const;
-			void				_ApplySettings();
+			void				_ApplySettings(bool force = false,
+									bool save = true);
 			void				_RevertSettings();
+			void				_StoreOriginalSettings();
+			void				_RestoreLiveSettings();
+			void				_UpdateLiveSettings();
+			void				_UpdateLiveSetting(uint32 what);
 			void 				_ChooseDownloadFolder(const BMessage* message);
 
 			void				_HandleDownloadPanelResult(BFilePanel* panel,
@@ -60,6 +66,7 @@ private:
 
 private:
 			SettingsMessage*	fSettings;
+			BMessage			fOriginalSettings;
 
 			BTextControl*		fStartPageControl;
 			BTextControl*		fSearchPageControl;
