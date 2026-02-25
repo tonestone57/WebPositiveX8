@@ -200,7 +200,9 @@ BookmarkBar::MessageReceived(BMessage* message)
 					BEntry entry(&ref);
 					BEntry followedEntry(&ref, true); // traverse in case it's a symlink
 
-					if (fItemsMap[inode] == nullptr) {
+					std::map<ino_t, BPrivate::IconMenuItem*>::iterator it
+						= fItemsMap.find(inode);
+					if (it == fItemsMap.end()) {
 						_AddItem(inode, &entry);
 						break;
 					} else {
@@ -212,12 +214,12 @@ BookmarkBar::MessageReceived(BMessage* message)
 						if (from == to) {
 							const char* name;
 							if (message->FindString("name", &name) == B_OK)
-								fItemsMap[inode]->SetLabel(name);
+								it->second->SetLabel(name);
 
 							BMessage* itemMessage = new BMessage(
 								followedEntry.IsDirectory() ? kFolderMsg : B_REFS_RECEIVED);
 							itemMessage->AddRef("refs", &ref);
-							fItemsMap[inode]->SetMessage(itemMessage);
+							it->second->SetMessage(itemMessage);
 
 							break;
 						}
@@ -228,10 +230,15 @@ BookmarkBar::MessageReceived(BMessage* message)
 				}
 				case B_ENTRY_REMOVED:
 				{
-					IconMenuItem* item = fItemsMap[inode];
+					std::map<ino_t, BPrivate::IconMenuItem*>::iterator it
+						= fItemsMap.find(inode);
+					if (it == fItemsMap.end())
+						break;
+
+					IconMenuItem* item = it->second;
 					RemoveItem(item);
 					fOverflowMenu->RemoveItem(item);
-					fItemsMap.erase(inode);
+					fItemsMap.erase(it);
 					delete item;
 
 					// Reevaluate whether the "more" menu is still needed
@@ -478,6 +485,10 @@ BookmarkBar::MinSize()
 void
 BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 {
+	// make sure the item doesn't already exist
+	if (fItemsMap.find(inode) != fItemsMap.end())
+		return;
+
 	entry_ref ref;
 	entry->GetRef(&ref);
 
@@ -568,9 +579,10 @@ BookmarkBar::_LoaderThread(void* data)
 					BBitmap* icon = new(std::nothrow) BBitmap(
 						BRect(0, 0, iconSize - 1, iconSize - 1), B_RGBA32);
 					if (icon != nullptr) {
-						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK)
-							message.AddPointer("icon", icon);
-						else
+						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK) {
+							if (message.AddPointer("icon", icon) != B_OK)
+								delete icon;
+						} else
 							delete icon;
 					}
 				}
