@@ -14,6 +14,8 @@ public:
     int32 Length() const { return (int32)fString.length(); }
     bool operator==(const BString& other) const { return fString == other.fString; }
     bool operator!=(const BString& other) const { return fString != other.fString; }
+    bool operator<(const BString& other) const { return fString < other.fString; }
+    bool operator>(const BString& other) const { return fString > other.fString; }
     BString& operator=(const char* s) { fString = s ? s : ""; return *this; }
     BString& operator<<(const char* s) { fString += (s ? s : ""); return *this; }
     BString& operator<<(int32 i) { fString += std::to_string(i); return *this; }

@@ -17,6 +17,25 @@ void assert_int_equal(int32 expected, int32 actual, const char* message) {
     }
 }
 
+void assert_uint32_equal(uint32 expected, uint32 actual, const char* message) {
+    if (expected == actual) {
+        printf("PASS: %s (%u == %u)\n", message, expected, actual);
+    } else {
+        printf("FAIL: %s (expected %u, but got %u)\n", message, expected, actual);
+        gTestFailures++;
+    }
+}
+
+void assert_bool(bool expected, bool actual, const char* message) {
+    if (actual == expected) {
+        printf("PASS: %s\n", message);
+    } else {
+        printf("FAIL: %s (expected %s, got %s)\n", message,
+            expected ? "true" : "false", actual ? "true" : "false");
+        gTestFailures++;
+    }
+}
+
 class BrowsingHistoryTest {
 public:
     static void Run() {
@@ -25,6 +44,8 @@ public:
         tester.test_insertion_index_order();
         tester.test_insertion_index_same_time();
         tester.test_insertion_index_duplicates();
+        tester.test_add_item_new();
+        tester.test_add_item_existing();
     }
 
 private:
@@ -97,6 +118,40 @@ private:
         BrowsingHistoryItem item1_dup(BString("http://test.com"), dt);
         // Should go at index 0 because it's equal to existing item1 and we use lower_bound
         assert_int_equal(0, history._InsertionIndex(&item1_dup), "Duplicate item should go at index 0");
+    }
+
+    void test_add_item_new() {
+        printf("Testing AddItem with new URL...\n");
+        BrowsingHistory history(false);
+        assert_int_equal(0, history.CountItems(), "History should be empty initially");
+
+        BrowsingHistoryItem item(BString("http://new.com"));
+        bool added = history.AddItem(item);
+        assert_bool(true, added, "AddItem should return true");
+        assert_int_equal(1, history.CountItems(), "History should have 1 item");
+        assert_bool(true, history.HistoryItemAt(0).URL() == "http://new.com", "Item URL should match");
+    }
+
+    void test_add_item_existing() {
+        printf("Testing AddItem with existing URL...\n");
+        BrowsingHistory history(false);
+
+        BrowsingHistoryItem item1(BString("http://test.com"));
+        history.AddItem(item1);
+        int32 initialCount = history.CountItems();
+        assert_int_equal(1, initialCount, "History should have 1 item");
+
+        uint32 initialInvokations = history.HistoryItemAt(0).InvokationCount();
+
+        // Add same URL again
+        BrowsingHistoryItem item2(BString("http://test.com"));
+        bool added = history.AddItem(item2);
+
+        assert_bool(true, added, "AddItem should return true for existing item");
+        assert_int_equal(initialCount, history.CountItems(), "Count should NOT increase for existing URL");
+
+        uint32 newInvokations = history.HistoryItemAt(0).InvokationCount();
+        assert_uint32_equal(initialInvokations + 1, newInvokations, "Invokation count should increase");
     }
 };
 

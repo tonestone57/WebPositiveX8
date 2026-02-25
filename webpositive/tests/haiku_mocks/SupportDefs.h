@@ -8,7 +8,8 @@ typedef uint64_t uint64;
 typedef int32 status_t;
 enum {
     B_OK = 0,
-    B_ERROR = -1
+    B_ERROR = -1,
+    B_BAD_VALUE = -2
 };
 enum {
     B_POINTER_EVENTS = 1

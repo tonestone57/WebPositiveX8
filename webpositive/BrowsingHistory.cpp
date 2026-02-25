@@ -164,13 +164,6 @@ BrowsingHistoryItem::Invoked()
 }
 
 
-// #pragma mark - BStringHash
-
-size_t
-BStringHash::operator()(const BString& s) const
-{
-	return std::hash<std::string_view>{}({s.String(), (size_t)s.Length()});
-}
 
 
 // #pragma mark - BrowsingHistory
@@ -380,7 +373,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 			BrowsingHistoryItemPtr itemToStore = newItem;
 			int32 insertionIndex = _InsertionIndex(itemToStore.get());
 			fHistoryItems->insert(fHistoryItems->begin() + insertionIndex, itemToStore);
-			fHistoryMap[itemToStore->URL().String()] = itemToStore;
+			fHistoryMap[itemToStore->URL()] = itemToStore;
 
 			_SaveSettings();
 		}
