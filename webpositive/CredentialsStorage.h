@@ -41,9 +41,13 @@ public:
 			const BString&		Username() const;
 			const BString&		Password() const;
 
+			bool				IsSecure() const;
+			void				SetSecure(bool secure);
+
 private:
 			BString				fUsername;
 			BString				fPassword;
+			bool				fIsSecure;
 };
 
 

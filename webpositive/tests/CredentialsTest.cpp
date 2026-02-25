@@ -87,18 +87,35 @@ main()
 		assert_true(c.Password() == "", "Password from NULL archive is empty");
 	}
 
-	// Archive
+	// Archive (insecure)
 	{
 		Credentials c("user", "pass");
 		BMessage archive;
-		assert_status(B_OK, c.Archive(&archive), "Archive returns B_OK");
+		assert_status(B_OK, c.Archive(&archive), "Archive (insecure) returns B_OK");
+
+		BString username;
+		BString password;
+		assert_status(B_OK, archive.FindString("username", &username),
+			"Archive contains username");
+		assert_status(B_OK, archive.FindString("password", &password),
+			"Archive (insecure) contains password");
+		assert_true(username == "user", "Archived username matches");
+		assert_true(password == "pass", "Archived password matches");
+	}
+
+	// Archive (secure)
+	{
+		Credentials c("user", "pass");
+		c.SetSecure(true);
+		BMessage archive;
+		assert_status(B_OK, c.Archive(&archive), "Archive (secure) returns B_OK");
 
 		BString username;
 		assert_status(B_OK, archive.FindString("username", &username),
 			"Archive contains username");
 		BString password;
 		assert_status(B_NAME_NOT_FOUND, archive.FindString("password", &password),
-			"Archive does NOT contain password");
+			"Archive (secure) does NOT contain password");
 		assert_true(username == "user", "Archived username matches");
 	}
 

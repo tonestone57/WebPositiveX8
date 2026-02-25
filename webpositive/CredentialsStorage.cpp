@@ -27,7 +27,8 @@
 Credentials::Credentials()
 	:
 	fUsername(),
-	fPassword()
+	fPassword(),
+	fIsSecure(false)
 {
 }
 
@@ -35,7 +36,8 @@ Credentials::Credentials()
 Credentials::Credentials(const BString& username, const BString& password)
 	:
 	fUsername(username),
-	fPassword(password)
+	fPassword(password),
+	fIsSecure(false)
 {
 }
 
@@ -47,6 +49,8 @@ Credentials::Credentials(const Credentials& other)
 
 
 Credentials::Credentials(const BMessage* archive)
+	:
+	fIsSecure(false)
 {
 	if (archive == NULL)
 		return;
@@ -64,7 +68,10 @@ Credentials::Archive(BMessage* archive) const
 {
 	if (archive == NULL)
 		return B_BAD_VALUE;
-	return archive->AddString("username", fUsername);
+	status_t status = archive->AddString("username", fUsername);
+	if (status == B_OK && !fIsSecure && fPassword.Length() > 0)
+		status = archive->AddString("password", fPassword);
+	return status;
 }
 
 
@@ -76,6 +83,7 @@ Credentials::operator=(const Credentials& other)
 
 	fUsername = other.fUsername;
 	fPassword = other.fPassword;
+	fIsSecure = other.fIsSecure;
 
 	return *this;
 }
@@ -87,7 +95,8 @@ Credentials::operator==(const Credentials& other) const
 	if (this == &other)
 		return true;
 
-	return fUsername == other.fUsername && fPassword == other.fPassword;
+	return fUsername == other.fUsername && fPassword == other.fPassword
+		&& fIsSecure == other.fIsSecure;
 }
 
 
@@ -109,6 +118,20 @@ const BString&
 Credentials::Password() const
 {
 	return fPassword;
+}
+
+
+bool
+Credentials::IsSecure() const
+{
+	return fIsSecure;
+}
+
+
+void
+Credentials::SetSecure(bool secure)
+{
+	fIsSecure = secure;
 }
 
 
@@ -184,6 +207,8 @@ status_t
 CredentialsStorage::PutCredentials(const HashString& key,
 	const Credentials& credentials)
 {
+	Credentials updatedCredentials(credentials);
+
 	if (fPersistent) {
 		BKeyStore keyStore;
 		BString oldUsername;
@@ -197,24 +222,26 @@ CredentialsStorage::PutCredentials(const HashString& key,
 			Unlock();
 		}
 
-		if (hadOld && oldUsername != credentials.Username()) {
+		if (hadOld) {
 			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
 				oldUsername.String());
+		}
+
+		if (!hadOld || oldUsername != credentials.Username()) {
+			keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
+				credentials.Username().String());
 		}
 
 		BPasswordKey passwordKey(credentials.Password().String(),
 			B_KEY_PURPOSE_WEB, key.String(), credentials.Username().String());
 
-		// Always try to remove the key with the current username to handle
-		// password updates, as AddKey() would fail with B_NAME_IN_USE.
-		keyStore.RemoveKey(B_KEY_PURPOSE_WEB, key.String(),
-			credentials.Username().String());
-		keyStore.AddKey(passwordKey);
+		if (keyStore.AddKey(passwordKey) == B_OK)
+			updatedCredentials.SetSecure(true);
 	}
 
 	BAutolock _(this);
 
-	status_t status = fCredentialMap.Put(key, credentials);
+	status_t status = fCredentialMap.Put(key, updatedCredentials);
 	if (status == B_OK)
 		_SaveSettings();
 
@@ -333,15 +360,18 @@ CredentialsStorage::_LoadSettings()
 						== B_OK) {
 				credentials = Credentials(credentials.Username(),
 					passwordKey.Password());
+				credentials.SetSecure(true);
 			} else if (passwordInArchive.Length() > 0) {
 				// Migration: Save to KeyStore
 				BPasswordKey newKey(passwordInArchive.String(),
 					B_KEY_PURPOSE_WEB, key.String(),
 					credentials.Username().String());
-				keyStore.AddKey(newKey);
 				credentials = Credentials(credentials.Username(),
 					passwordInArchive);
-				migrationOccurred = true;
+				if (keyStore.AddKey(newKey) == B_OK) {
+					credentials.SetSecure(true);
+					migrationOccurred = true;
+				}
 			}
 
 			if (credentials.Password().Length() > 0) {
