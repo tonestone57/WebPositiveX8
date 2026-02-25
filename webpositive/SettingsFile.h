@@ -11,9 +11,11 @@
 
 class BFile;
 class BPath;
+class BString;
 
 
 status_t GetSettingsPath(BPath& path, const char* fileName = NULL);
+status_t GetSettingsPath(BString& path, const char* fileName = NULL);
 status_t OpenSettingsFile(BFile& file, const char* fileName, uint32 mode);
 
 

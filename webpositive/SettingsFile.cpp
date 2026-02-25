@@ -9,6 +9,7 @@
 #include <File.h>
 #include <FindDirectory.h>
 #include <Path.h>
+#include <String.h>
 #include <sys/stat.h>
 
 #include "AppConstants.h"
@@ -29,6 +30,18 @@ GetSettingsPath(BPath& path, const char* fileName)
 		status = path.Append(fileName);
 
 	return status;
+}
+
+
+status_t
+GetSettingsPath(BString& path, const char* fileName)
+{
+	path = kApplicationName;
+	if (fileName != NULL) {
+		path << "/";
+		path << fileName;
+	}
+	return B_OK;
 }
 
 

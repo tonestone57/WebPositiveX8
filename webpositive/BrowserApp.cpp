@@ -110,8 +110,8 @@ BrowserApp::BrowserApp()
 	if (GetSettingsPath(curlCookies, "cookie.jar.db") == B_OK)
 		setenv("CURL_COOKIE_JAR_PATH", curlCookies.Path(), 0);
 
-	BString sessionStorePath = kApplicationName;
-	sessionStorePath << "/Session";
+	BString sessionStorePath;
+	GetSettingsPath(sessionStorePath, "Session");
 	fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
 		sessionStorePath.String());
 }
@@ -203,8 +203,8 @@ BrowserApp::ReadyToRun()
 		BWebSettings::SetPersistentStoragePath(path.Path());
 	}
 
-	BString mainSettingsPath(kApplicationName);
-	mainSettingsPath << "/Application";
+	BString mainSettingsPath;
+	GetSettingsPath(mainSettingsPath, "Application");
 	fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
 		mainSettingsPath.String());
 
@@ -689,8 +689,8 @@ BrowserApp::_CookieLoaderThread(void* data)
 {
 	BrowserApp* self = (BrowserApp*)data;
 
-	BString cookieStorePath = kApplicationName;
-	cookieStorePath << "/Cookies";
+	BString cookieStorePath;
+	GetSettingsPath(cookieStorePath, "Cookies");
 	SettingsMessage* cookies = new(std::nothrow) SettingsMessage(
 		B_USER_SETTINGS_DIRECTORY, cookieStorePath.String());
 
