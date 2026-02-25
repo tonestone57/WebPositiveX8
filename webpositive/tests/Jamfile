@@ -5,6 +5,16 @@ SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive autocompletion ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive support ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive tabview ] ;
 
+# Add include paths
+SubDirHdrs $(HAIKU_TOP) src apps webpositive ;
+SubDirHdrs $(HAIKU_TOP) src apps webpositive autocompletion ;
+SubDirHdrs $(HAIKU_TOP) src apps webpositive support ;
+SubDirHdrs $(HAIKU_TOP) src apps webpositive tabview ;
+
+# Haiku system/private headers
+UseLibraryHeaders icon ;
+UsePrivateHeaders interface netservices shared tracker ;
+SubDirHdrs $(HAIKU_TOP) src kits tracker ;
 SimpleTest TabManagerTest :
 	TabManagerTest.cpp
 	TabManager.cpp
@@ -22,6 +32,10 @@ SimpleTest URLChoiceTest :
 	be
 ;
 
+SimpleTest BookmarkBarTest :
+	BookmarkBarTest.cpp
+	:
+	be tracker network translation shared localestub
 SimpleTest DownloadSpeedCalculatorTest :
 	DownloadSpeedCalculatorTest.cpp
 	DownloadSpeedCalculator.cpp
