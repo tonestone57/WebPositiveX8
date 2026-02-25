@@ -24,6 +24,13 @@ SimpleTest TabManagerTest :
 	be
 ;
 
+SimpleTest BrowsingHistoryTest :
+	BrowsingHistoryTest.cpp
+	BrowsingHistory.cpp
+	:
+	be
+;
+
 SubDirHdrs [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
 
 SimpleTest URLChoiceTest :
