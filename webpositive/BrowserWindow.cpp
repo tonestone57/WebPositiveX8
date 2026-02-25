@@ -510,7 +510,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		// TODO we could also check if the folder is empty here.
 		if (bookmarkBar.Exists() && bookmarkBar.GetRef(&bookmarkBarRef)
 				== B_OK) {
-			fBookmarkBar = new BookmarkBar(kSettingsFileNameBookmarks, this,
+			fBookmarkBar = new BookmarkBar(B_TRANSLATE("Bookmarks"), this,
 				&bookmarkBarRef);
 			fBookmarkBarMenuItem->SetEnabled(true);
 		} else
