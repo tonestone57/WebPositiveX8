@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <vector>
+#include <string.h>
 #include "AutoCompleterDefaultImpl.h"
 
 int gTestFailures = 0;
@@ -10,6 +11,15 @@ void assert_bool(bool expected, bool actual, const char* message) {
     } else {
         printf("FAIL: %s (expected %s, got %s)\n", message,
             expected ? "true" : "false", actual ? "true" : "false");
+        gTestFailures++;
+    }
+}
+
+void assert_string_equal(const char* expected, const char* actual, const char* message) {
+    if (strcmp(expected, actual) == 0) {
+        printf("PASS: %s\n", message);
+    } else {
+        printf("FAIL: %s (expected '%s', got '%s')\n", message, expected, actual);
         gTestFailures++;
     }
 }
@@ -25,9 +35,26 @@ void assert_int32(int32 expected, int32 actual, const char* message) {
 
 class MockEditView : public BAutoCompleter::EditView {
 public:
+    MockEditView() : fCaretPos(0), fSetEditViewStateCalled(0), fLastSetCaretPos(0) {}
     virtual BRect GetAdjustmentFrame() { return BRect(); }
-    virtual void GetEditViewState(BString& text, int32* caretPos) {}
-    virtual void SetEditViewState(const BString& text, int32 caretPos, int32 selectionLength = 0) {}
+    virtual void GetEditViewState(BString& text, int32* caretPos) {
+        text = fText;
+        if (caretPos)
+            *caretPos = fCaretPos;
+    }
+    virtual void SetEditViewState(const BString& text, int32 caretPos, int32 selectionLength = 0) {
+        fText = text;
+        fCaretPos = caretPos;
+        fSetEditViewStateCalled++;
+        fLastSetText = text;
+        fLastSetCaretPos = caretPos;
+    }
+
+    BString fText;
+    int32 fCaretPos;
+    int32 fSetEditViewStateCalled;
+    BString fLastSetText;
+    int32 fLastSetCaretPos;
 };
 
 class MockChoiceModel : public BAutoCompleter::ChoiceModel {
@@ -65,23 +92,40 @@ private:
 
 class MockChoiceView : public BAutoCompleter::ChoiceView {
 public:
-    MockChoiceView() : fSelectedIndex(-1), fSelectChoiceAtCalled(0) {}
+    MockChoiceView() : fSelectedIndex(-1), fSelectChoiceAtCalled(0),
+        fHideChoicesCalled(0), fChoicesAreShown(false) {}
     virtual void SelectChoiceAt(int32 index) {
         fSelectedIndex = index;
         fSelectChoiceAtCalled++;
     }
-    virtual void ShowChoices(BAutoCompleter::CompletionStyle* completer) {}
-    virtual void HideChoices() {}
-    virtual bool ChoicesAreShown() { return false; }
+    virtual void ShowChoices(BAutoCompleter::CompletionStyle* completer) {
+        fChoicesAreShown = true;
+    }
+    virtual void HideChoices() {
+        fHideChoicesCalled++;
+        fChoicesAreShown = false;
+    }
+    virtual bool ChoicesAreShown() { return fChoicesAreShown; }
     virtual int32 CountVisibleChoices() const { return 0; }
 
     int32 fSelectedIndex;
     int32 fSelectChoiceAtCalled;
+    int32 fHideChoicesCalled;
+    bool fChoicesAreShown;
 };
 
 class MockPatternSelector : public BAutoCompleter::PatternSelector {
 public:
-    virtual void SelectPatternBounds(const BString& text, int32 caretPos, int32* start, int32* length) {}
+    MockPatternSelector() : fStart(0), fLength(0) {}
+    virtual void SelectPatternBounds(const BString& text, int32 caretPos, int32* start, int32* length) {
+        if (start)
+            *start = fStart;
+        if (length)
+            *length = fLength;
+    }
+
+    int32 fStart;
+    int32 fLength;
 };
 
 void testSelectPrevious() {
@@ -309,11 +353,151 @@ void testEdgeCases() {
     }
 }
 
+void testApplyChoice() {
+    printf("Testing BDefaultCompletionStyle::ApplyChoice...\n");
+
+    MockEditView* editView = new MockEditView();
+    MockChoiceModel* choiceModel = new MockChoiceModel();
+    MockChoiceView* choiceView = new MockChoiceView();
+    MockPatternSelector* patternSelector = new MockPatternSelector();
+
+    BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+
+    choiceModel->AddChoice("apple");
+    choiceModel->AddChoice("application");
+
+    // Scenario: user typed "app", wants to complete to "application"
+    editView->fText = "app";
+    editView->fCaretPos = 3;
+    patternSelector->fStart = 0;
+    patternSelector->fLength = 3;
+
+    style.EditViewStateChanged(true);
+    style.Select(1); // select "application"
+
+    choiceView->fHideChoicesCalled = 0;
+    editView->fSetEditViewStateCalled = 0;
+
+    style.ApplyChoice(true);
+
+    assert_int32(1, editView->fSetEditViewStateCalled, "SetEditViewState should be called");
+    assert_string_equal("application", editView->fLastSetText.String(), "Text should be completed to 'application'");
+    assert_int32(11, editView->fLastSetCaretPos, "Caret should be at the end of completed text");
+    assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should be called when hideChoices is true");
+    assert_int32(-1, style.SelectedChoiceIndex(), "Selection should be reset when choices are hidden");
+
+    // Scenario: user typed "test apple", wants to complete "apple" to "application"
+    editView->fText = "test apple";
+    editView->fCaretPos = 10;
+    patternSelector->fStart = 5;
+    patternSelector->fLength = 5;
+
+    style.EditViewStateChanged(true);
+    style.Select(1); // select "application"
+
+    style.ApplyChoice(false); // don't hide
+
+    assert_string_equal("test application", editView->fLastSetText.String(), "Partial completion should work");
+    assert_int32(16, editView->fLastSetCaretPos, "Caret position should be correct after partial completion");
+    assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should NOT be called again");
+    assert_int32(1, style.SelectedChoiceIndex(), "Selection should remain when choices are NOT hidden");
+}
+
+void testCancelChoice() {
+    printf("Testing BDefaultCompletionStyle::CancelChoice...\n");
+
+    MockEditView* editView = new MockEditView();
+    MockChoiceModel* choiceModel = new MockChoiceModel();
+    MockChoiceView* choiceView = new MockChoiceView();
+    MockPatternSelector* patternSelector = new MockPatternSelector();
+
+    BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+
+    choiceModel->AddChoice("apple");
+
+    editView->fText = "app";
+    editView->fCaretPos = 3;
+    patternSelector->fStart = 0;
+    patternSelector->fLength = 3;
+
+    style.EditViewStateChanged(true);
+    choiceView->fChoicesAreShown = true;
+    style.Select(0);
+
+    editView->fSetEditViewStateCalled = 0;
+    choiceView->fHideChoicesCalled = 0;
+
+    style.CancelChoice();
+
+    assert_int32(1, editView->fSetEditViewStateCalled, "SetEditViewState should be called to restore text");
+    assert_string_equal("app", editView->fLastSetText.String(), "Original text should be restored");
+    assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should be called");
+    assert_int32(-1, style.SelectedChoiceIndex(), "Selection should be reset");
+    assert_bool(false, choiceView->fChoicesAreShown, "Choices should not be shown anymore");
+}
+
+void testApplyChoiceEdgeCases() {
+    printf("Testing BDefaultCompletionStyle::ApplyChoice edge cases...\n");
+
+    // Case 1: No selection
+    {
+        MockEditView* editView = new MockEditView();
+        MockChoiceModel* choiceModel = new MockChoiceModel();
+        MockChoiceView* choiceView = new MockChoiceView();
+        MockPatternSelector* patternSelector = new MockPatternSelector();
+        BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+
+        choiceModel->AddChoice("choice");
+        style.EditViewStateChanged(true);
+        style.Select(-1);
+
+        editView->fSetEditViewStateCalled = 0;
+        style.ApplyChoice();
+        assert_int32(0, editView->fSetEditViewStateCalled, "ApplyChoice should do nothing if no choice is selected");
+    }
+
+    // Case 2: NULL EditView
+    {
+        MockChoiceModel* choiceModel = new MockChoiceModel();
+        MockChoiceView* choiceView = new MockChoiceView();
+        MockPatternSelector* patternSelector = new MockPatternSelector();
+        BDefaultCompletionStyle style(NULL, choiceModel, choiceView, patternSelector);
+
+        choiceModel->AddChoice("choice");
+        style.Select(0);
+        style.ApplyChoice();
+        // Should not crash
+        assert_int32(0, choiceView->fHideChoicesCalled, "HideChoices should not be called if EditView is NULL");
+    }
+}
+
+void testCancelChoiceEdgeCases() {
+    printf("Testing BDefaultCompletionStyle::CancelChoice edge cases...\n");
+
+    // Case 1: Choices are not shown
+    {
+        MockEditView* editView = new MockEditView();
+        MockChoiceModel* choiceModel = new MockChoiceModel();
+        MockChoiceView* choiceView = new MockChoiceView();
+        MockPatternSelector* patternSelector = new MockPatternSelector();
+        BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+
+        choiceView->fChoicesAreShown = false;
+        editView->fSetEditViewStateCalled = 0;
+        style.CancelChoice();
+        assert_int32(0, editView->fSetEditViewStateCalled, "CancelChoice should do nothing if choices are not shown");
+    }
+}
+
 int main() {
     testSelectPrevious();
     testSelectNext();
     testSingleChoice();
     testEdgeCases();
+    testApplyChoice();
+    testCancelChoice();
+    testApplyChoiceEdgeCases();
+    testCancelChoiceEdgeCases();
 
     if (gTestFailures > 0) {
         printf("\nFinished running tests: %d failures\n", gTestFailures);
