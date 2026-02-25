@@ -43,8 +43,11 @@ Credentials::Credentials(const BString& username, const BString& password)
 
 
 Credentials::Credentials(const Credentials& other)
+	:
+	fUsername(other.fUsername),
+	fPassword(other.fPassword),
+	fIsSecure(other.fIsSecure)
 {
-	*this = other;
 }
 
 

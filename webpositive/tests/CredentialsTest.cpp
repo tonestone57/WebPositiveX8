@@ -64,9 +64,11 @@ main()
 	// Copy constructor
 	{
 		Credentials c1("user", "pass");
+		c1.SetSecure(true);
 		Credentials c2(c1);
 		assert_true(c2.Username() == "user", "Copy username matches");
 		assert_true(c2.Password() == "pass", "Copy password matches");
+		assert_true(c2.IsSecure() == true, "Copy is secure");
 		assert_true(c2 == c1, "Copy is equal to original");
 	}
 
@@ -149,11 +151,14 @@ main()
 		Credentials c2("user", "pass");
 		Credentials c3("other", "pass");
 		Credentials c4("user", "other");
+		Credentials c5("user", "pass");
+		c5.SetSecure(true);
 
 		assert_true(c1 == c2, "c1 == c2");
 		assert_true(!(c1 != c2), "!(c1 != c2)");
 		assert_true(c1 != c3, "c1 != c3 (different username)");
 		assert_true(c1 != c4, "c1 != c4 (different password)");
+		assert_true(c1 != c5, "c1 != c5 (different security state)");
 		assert_true(!(c1 == c3), "!(c1 == c3)");
 	}
 
