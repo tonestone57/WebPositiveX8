@@ -380,7 +380,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 			BrowsingHistoryItemPtr itemToStore = newItem;
 			int32 insertionIndex = _InsertionIndex(itemToStore.get());
 			fHistoryItems->insert(fHistoryItems->begin() + insertionIndex, itemToStore);
-			fHistoryMap[itemToStore->URL().String()] = itemToStore;
+			fHistoryMap[itemToStore->URL()] = itemToStore;
 
 			_SaveSettings();
 		}

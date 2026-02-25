@@ -114,7 +114,7 @@ private:
 			typedef std::shared_ptr<HistoryVector> HistoryVectorPtr;
 
 			HistoryVectorPtr	fHistoryItems;
-			std::unordered_map<std::string, BrowsingHistoryItemPtr>
+			std::unordered_map<BString, BrowsingHistoryItemPtr, BStringHash>
 								fHistoryMap;
 			int32				fMaxHistoryItemAge;
 
