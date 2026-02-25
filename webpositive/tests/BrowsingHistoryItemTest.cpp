@@ -82,6 +82,31 @@ int main() {
     assert_true(item3 == item1, "item3 == item1 after multiple assignment");
     assert_true(item2 == item1, "item2 == item1 after multiple assignment");
 
+    printf("\nTesting BrowsingHistoryItem comparison operators...\n");
+    BrowsingHistoryItem itemA(BString("http://a.com"));
+    BrowsingHistoryItem itemB(BString("http://b.com"));
+
+    // If they have same time, URL should decide
+    assert_true(itemA < itemB, "a.com < b.com");
+    assert_true(itemB > itemA, "b.com > a.com");
+    assert_true(itemA != itemB, "a.com != b.com");
+    assert_true(itemA == itemA, "a.com == a.com");
+
+    // Test with different times
+    printf("Testing with different times...\n");
+    BDateTime dt_old = itemA.DateTime();
+    BDateTime dt_new = dt_old;
+    dt_new.Date().AddDays(1);
+
+    BrowsingHistoryItem itemA_newer(BString("http://a.com"), dt_new);
+    assert_true(itemA < itemA_newer, "older a.com < newer a.com");
+    assert_true(itemA_newer > itemA, "newer a.com > older a.com");
+
+    // Newer item with earlier URL vs older item with later URL
+    // Time should take precedence
+    BrowsingHistoryItem item0_newer(BString("http://0.com"), dt_new);
+    assert_true(itemB < item0_newer, "older b.com < newer 0.com (time takes precedence)");
+
     if (gTestFailures > 0) {
         printf("\nFinished running tests: %d failures\n", gTestFailures);
         return 1;
