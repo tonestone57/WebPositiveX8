@@ -1,0 +1,3 @@
+#ifndef _MOCK_NETWORK_COOKIE_JAR_H
+#define _MOCK_NETWORK_COOKIE_JAR_H
+#endif
