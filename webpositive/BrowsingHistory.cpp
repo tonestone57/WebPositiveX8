@@ -342,19 +342,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 
 			existingItem->Invoked();
 
-			int32 count = fHistoryItems.CountItems();
-			int32 insertionIndex = count;
-			if (count > 0 && *fHistoryItems.ItemAt(count - 1) < *existingItem) {
-				insertionIndex = count;
-			} else if (count > 0) {
-				BrowsingHistoryItem** items = (BrowsingHistoryItem**)fHistoryItems.Items();
-				BrowsingHistoryItem** insertIt = std::lower_bound(items, items + count,
-					existingItem,
-					[](const BrowsingHistoryItem* a, const BrowsingHistoryItem* b) {
-						return *a < *b;
-					});
-				insertionIndex = insertIt - items;
-			}
+			int32 insertionIndex = _InsertionIndex(existingItem);
 			if (!fHistoryItems.AddItem(existingItem, insertionIndex)) {
 				fHistoryMap.erase(it);
 				delete existingItem;
@@ -372,19 +360,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 	if (!internal)
 		newItem->Invoked();
 
-	int32 count = fHistoryItems.CountItems();
-	int32 insertionIndex = count;
-	if (count > 0 && *fHistoryItems.ItemAt(count - 1) < *newItem) {
-		insertionIndex = count;
-	} else if (count > 0) {
-		BrowsingHistoryItem** items = (BrowsingHistoryItem**)fHistoryItems.Items();
-		BrowsingHistoryItem** insertIt = std::lower_bound(items, items + count,
-			newItem,
-			[](const BrowsingHistoryItem* a, const BrowsingHistoryItem* b) {
-				return *a < *b;
-			});
-		insertionIndex = insertIt - items;
-	}
+	int32 insertionIndex = _InsertionIndex(newItem);
 
 	if (!fHistoryItems.AddItem(newItem, insertionIndex)) {
 		delete newItem;
@@ -397,6 +373,23 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 		_SaveSettings();
 
 	return true;
+}
+
+
+int32
+BrowsingHistory::_InsertionIndex(const BrowsingHistoryItem* item) const
+{
+	int32 count = fHistoryItems.CountItems();
+	if (count == 0 || *fHistoryItems.ItemAt(count - 1) < *item)
+		return count;
+
+	BrowsingHistoryItem** items = (BrowsingHistoryItem**)fHistoryItems.Items();
+	BrowsingHistoryItem** insertIt = std::lower_bound(items, items + count,
+		item,
+		[](const BrowsingHistoryItem* a, const BrowsingHistoryItem* b) {
+			return *a < *b;
+		});
+	return insertIt - items;
 }
 
 
