@@ -54,6 +54,10 @@ private:
 									int32 index);
 
 			DownloadProgressView*
+								_ViewAt(int32 index) const;
+			void				_RemoveView(int32 index);
+
+			DownloadProgressView*
 								_FindView(BWebDownload* download);
 
 	static	status_t			_SaveThread(void* data);
