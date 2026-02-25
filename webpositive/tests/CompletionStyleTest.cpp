@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string.h>
+#include <memory>
 #include "AutoCompleterDefaultImpl.h"
 
 int gTestFailures = 0;
@@ -558,95 +559,103 @@ void testSelectNextExhaustive() {
 void testEditViewStateChanged() {
     printf("Testing BDefaultCompletionStyle::EditViewStateChanged...\n");
 
-    MockEditView* editView = new MockEditView();
-    MockChoiceModel* choiceModel = new MockChoiceModel();
-    MockChoiceView* choiceView = new MockChoiceView();
-    MockPatternSelector* patternSelector = new MockPatternSelector();
+    // CompletionStyle takes ownership and deletes these in its destructor
+    std::unique_ptr<MockEditView> editView(new MockEditView());
+    std::unique_ptr<MockChoiceModel> choiceModel(new MockChoiceModel());
+    std::unique_ptr<MockChoiceView> choiceView(new MockChoiceView());
+    std::unique_ptr<MockPatternSelector> patternSelector(new MockPatternSelector());
 
-    BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+    // Pointers for internal test access before ownership transfer
+    MockChoiceModel* choiceModelPtr = choiceModel.get();
+    MockChoiceView* choiceViewPtr = choiceView.get();
+    MockEditView* editViewPtr = editView.get();
+    MockPatternSelector* patternSelectorPtr = patternSelector.get();
+
+    BDefaultCompletionStyle style(editView.release(), choiceModel.release(),
+        choiceView.release(), patternSelector.release());
 
     // Test case 1: No change in text
-    editView->fText = "initial";
+    editViewPtr->fText = "initial";
     style.EditViewStateChanged(true); // first call sets fFullEnteredText
 
-    choiceView->fShowChoicesCalled = 0;
-    choiceView->fHideChoicesCalled = 0;
-    choiceModel->fFetchChoicesForCalled = 0;
+    choiceViewPtr->fShowChoicesCalled = 0;
+    choiceViewPtr->fHideChoicesCalled = 0;
+    choiceModelPtr->fFetchChoicesForCalled = 0;
 
     style.EditViewStateChanged(true);
-    assert_int32(0, choiceModel->fFetchChoicesForCalled, "Should return early if text has not changed");
+    assert_int32(0, choiceModelPtr->fFetchChoicesForCalled, "Should return early if text has not changed");
 
     // Test case 2: updateChoices = false
-    editView->fText = "changed";
+    editViewPtr->fText = "changed";
     style.EditViewStateChanged(false);
-    assert_int32(0, choiceModel->fFetchChoicesForCalled, "Should not fetch choices if updateChoices is false");
+    assert_int32(0, choiceModelPtr->fFetchChoicesForCalled, "Should not fetch choices if updateChoices is false");
     // But fFullEnteredText should be updated, so a subsequent call with same text returns early
     style.EditViewStateChanged(true);
-    assert_int32(0, choiceModel->fFetchChoicesForCalled, "Should return early even if updateChoices=true if text was updated in previous call");
+    assert_int32(0, choiceModelPtr->fFetchChoicesForCalled, "Should return early even if updateChoices=true if text was updated in previous call");
 
     // Test case 3: updateChoices = true, multiple choices
-    editView->fText = "multiple";
-    editView->fCaretPos = 8;
-    patternSelector->fStart = 0;
-    patternSelector->fLength = 8;
-    choiceModel->ClearChoices();
-    choiceModel->AddChoice("multiple1");
-    choiceModel->AddChoice("multiple2");
+    editViewPtr->fText = "multiple";
+    editViewPtr->fCaretPos = 8;
+    patternSelectorPtr->fStart = 0;
+    patternSelectorPtr->fLength = 8;
+    choiceModelPtr->ClearChoices();
+    choiceModelPtr->AddChoice("multiple1");
+    choiceModelPtr->AddChoice("multiple2");
 
-    choiceView->fShowChoicesCalled = 0;
-    choiceView->fSelectChoiceAtCalled = 0;
+    choiceViewPtr->fShowChoicesCalled = 0;
+    choiceViewPtr->fSelectChoiceAtCalled = 0;
     style.Select(1); // Set some selection to see if it gets reset
 
     style.EditViewStateChanged(true);
 
-    assert_int32(1, choiceModel->fFetchChoicesForCalled, "Should fetch choices");
-    assert_string_equal("multiple", choiceModel->fLastPattern.String(), "Should fetch choices for correct pattern");
+    assert_int32(1, choiceModelPtr->fFetchChoicesForCalled, "Should fetch choices");
+    assert_string_equal("multiple", choiceModelPtr->fLastPattern.String(), "Should fetch choices for correct pattern");
     assert_int32(-1, style.SelectedChoiceIndex(), "Selection should be reset to -1");
-    assert_int32(1, choiceView->fShowChoicesCalled, "ShowChoices should be called when > 1 choices");
-    assert_int32(-1, choiceView->fSelectedIndex, "ChoiceView should select -1");
+    assert_int32(1, choiceViewPtr->fShowChoicesCalled, "ShowChoices should be called when > 1 choices");
+    assert_int32(-1, choiceViewPtr->fSelectedIndex, "ChoiceView should select -1");
 
     // Test case 4: single choice, matches pattern exactly (case-insensitive)
-    editView->fText = "apple";
-    editView->fCaretPos = 5;
-    patternSelector->fStart = 0;
-    patternSelector->fLength = 5;
-    choiceModel->ClearChoices();
-    choiceModel->AddChoice("Apple"); // Exact match except case
+    editViewPtr->fText = "apple";
+    editViewPtr->fCaretPos = 5;
+    patternSelectorPtr->fStart = 0;
+    patternSelectorPtr->fLength = 5;
+    choiceModelPtr->ClearChoices();
+    choiceModelPtr->AddChoice("Apple"); // Exact match except case
 
-    choiceView->fHideChoicesCalled = 0;
-    choiceView->fShowChoicesCalled = 0;
+    choiceViewPtr->fHideChoicesCalled = 0;
+    choiceViewPtr->fShowChoicesCalled = 0;
 
     style.EditViewStateChanged(true);
 
-    assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should be called when single choice matches pattern exactly");
-    assert_int32(0, choiceView->fShowChoicesCalled, "ShowChoices should NOT be called when single choice matches pattern exactly");
+    assert_int32(1, choiceViewPtr->fHideChoicesCalled, "HideChoices should be called when single choice matches pattern exactly");
+    assert_int32(0, choiceViewPtr->fShowChoicesCalled, "ShowChoices should NOT be called when single choice matches pattern exactly");
 
     // Test case 5: single choice, does NOT match pattern exactly
-    editView->fText = "app";
-    editView->fCaretPos = 3;
-    patternSelector->fStart = 0;
-    patternSelector->fLength = 3;
-    choiceModel->ClearChoices();
-    choiceModel->AddChoice("apple");
+    editViewPtr->fText = "app";
+    editViewPtr->fCaretPos = 3;
+    patternSelectorPtr->fStart = 0;
+    patternSelectorPtr->fLength = 3;
+    choiceModelPtr->ClearChoices();
+    choiceModelPtr->AddChoice("apple");
 
-    choiceView->fShowChoicesCalled = 0;
+    choiceViewPtr->fShowChoicesCalled = 0;
 
     style.EditViewStateChanged(true);
 
-    assert_int32(1, choiceView->fShowChoicesCalled, "ShowChoices should be called when single choice DOES NOT match pattern exactly");
+    assert_int32(1, choiceViewPtr->fShowChoicesCalled, "ShowChoices should be called when single choice DOES NOT match pattern exactly");
 
     // Test case 6: no choices
-    editView->fText = "nothing";
-    editView->fCaretPos = 7;
-    patternSelector->fStart = 0;
-    patternSelector->fLength = 7;
-    choiceModel->ClearChoices();
+    editViewPtr->fText = "nothing";
+    editViewPtr->fCaretPos = 7;
+    patternSelectorPtr->fStart = 0;
+    patternSelectorPtr->fLength = 7;
+    choiceModelPtr->ClearChoices();
 
-    choiceView->fHideChoicesCalled = 0;
+    choiceViewPtr->fHideChoicesCalled = 0;
 
     style.EditViewStateChanged(true);
 
-    assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should be called when no choices are found");
+    assert_int32(1, choiceViewPtr->fHideChoicesCalled, "HideChoices should be called when no choices are found");
 }
 
 int main() {

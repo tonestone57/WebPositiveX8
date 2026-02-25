@@ -1,7 +1,7 @@
 # Makefile for running tests on non-Haiku systems using mocks
 
 CXX = g++
-CXXFLAGS = -Ihaiku_mocks -I../autocompletion -I.. -Wall
+CXXFLAGS = -Ihaiku_mocks -I../autocompletion -I.. -Wall -Wno-multichar
 
 TESTS = CompletionStyleTest
 
