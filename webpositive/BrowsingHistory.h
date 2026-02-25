@@ -94,6 +94,7 @@ protected:
 
 private:
 			void				_Clear();
+			void				_EnsureUniqueVector();
 			bool				_AddItem(const BrowsingHistoryItem& item,
 									bool invoke);
 			int32				_InsertionIndex(
@@ -106,8 +107,11 @@ private:
 	static	status_t			_LoadThread(void* data);
 
 private:
-			std::vector<BrowsingHistoryItemPtr> fHistoryItems;
-			std::unordered_map<BString, BrowsingHistoryItemPtr, BStringHash>
+			typedef std::vector<BrowsingHistoryItemPtr> HistoryVector;
+			typedef std::shared_ptr<HistoryVector> HistoryVectorPtr;
+
+			HistoryVectorPtr	fHistoryItems;
+			std::unordered_map<std::string, BrowsingHistoryItemPtr>
 								fHistoryMap;
 			int32				fMaxHistoryItemAge;
 
@@ -118,8 +122,7 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			std::unique_ptr<std::vector<BrowsingHistoryItemPtr>>
-								fPendingSaveItems;
+			HistoryVectorPtr	fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 
