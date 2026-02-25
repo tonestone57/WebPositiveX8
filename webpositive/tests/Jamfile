@@ -4,10 +4,18 @@ SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive autocompletion ] ;
 SEARCH_SOURCE += [ FDirName $(HAIKU_TOP) src apps webpositive support ] ;
 
+SubDirHdrs [ FDirName $(HAIKU_TOP) src apps webpositive ] ;
+
 SimpleTest URLChoiceTest :
 	URLChoiceTest.cpp
 	:
 	be
+;
+
+SimpleTest CookieWindowTest :
+	CookieWindowTest.cpp
+	:
+	be network [ MultiArchDefaultGristFiles libcolumnlistview.a ]
 ;
 
 SimpleTest SettingsFileTest :
