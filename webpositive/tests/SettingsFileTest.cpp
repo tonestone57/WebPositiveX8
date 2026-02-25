@@ -19,7 +19,7 @@ static const char* sMockSettingsPath = "/boot/home/config/settings";
 #define find_directory mock_find_directory
 static status_t
 mock_find_directory(directory_which which, BPath* path, bool create_it = false,
-	BVolume* volume = NULL)
+	const BVolume* volume = NULL)
 {
 	if (which == B_USER_SETTINGS_DIRECTORY) {
 		if (sFindDirectoryResult == B_OK)
