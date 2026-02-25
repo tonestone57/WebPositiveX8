@@ -113,10 +113,15 @@ BrowserApp::BrowserApp()
 	if (GetSettingsPath(curlCookies, kSettingsFileNameCookieJar) == B_OK)
 		setenv("CURL_COOKIE_JAR_PATH", curlCookies.Path(), 0);
 
-	BString sessionStorePath = kApplicationName;
-	sessionStorePath << "/" << kSettingsFileNameSession;
-	fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-		sessionStorePath.String());
+	BPath sessionStorePath;
+	if (GetSettingsPath(sessionStorePath, kSettingsFileNameSession) == B_OK) {
+		fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+			BPath(kApplicationName).Append(kSettingsFileNameSession).Path());
+	} else {
+		BString path(kApplicationName);
+		path << "/" << kSettingsFileNameSession;
+		fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY, path.String());
+	}
 }
 
 
@@ -206,10 +211,15 @@ BrowserApp::ReadyToRun()
 		BWebSettings::SetPersistentStoragePath(path.Path());
 	}
 
-	BString mainSettingsPath(kApplicationName);
-	mainSettingsPath << "/" << kSettingsFileNameApplication;
-	fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-		mainSettingsPath.String());
+	BPath mainSettingsPath;
+	if (GetSettingsPath(mainSettingsPath, kSettingsFileNameApplication) == B_OK) {
+		fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+			BPath(kApplicationName).Append(kSettingsFileNameApplication).Path());
+	} else {
+		BString path(kApplicationName);
+		path << "/" << kSettingsFileNameApplication;
+		fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY, path.String());
+	}
 
 	fLastWindowFrame = fSettings->GetValue("window frame", fLastWindowFrame);
 	BRect defaultDownloadWindowFrame(-10, -10, 365, 265);
@@ -692,10 +702,10 @@ BrowserApp::_CookieLoaderThread(void* data)
 {
 	BrowserApp* self = (BrowserApp*)data;
 
-	BString cookieStorePath = kApplicationName;
-	cookieStorePath << "/" << kSettingsFileNameCookies;
+	BString cookieStoreSubPath(kApplicationName);
+	cookieStoreSubPath << "/" << kSettingsFileNameCookies;
 	SettingsMessage* cookies = new(std::nothrow) SettingsMessage(
-		B_USER_SETTINGS_DIRECTORY, cookieStorePath.String());
+		B_USER_SETTINGS_DIRECTORY, cookieStoreSubPath.String());
 
 	if (cookies == NULL)
 		return B_NO_MEMORY;
