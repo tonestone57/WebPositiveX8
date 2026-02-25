@@ -277,6 +277,18 @@ DownloadWindow::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+		case B_DOWNLOAD_STARTED:
+		case B_DOWNLOAD_PROGRESS:
+		{
+			BWebDownload* download;
+			if (message->FindPointer("download", reinterpret_cast<void**>(
+					&download)) == B_OK) {
+				DownloadProgressView* view = _FindView(download);
+				if (view != NULL)
+					view->PostMessage(message);
+			}
+			break;
+		}
 		case B_DOWNLOAD_REMOVED:
 		{
 			BWebDownload* download;
@@ -387,6 +399,7 @@ DownloadWindow::SetMinimizeOnClose(bool minimize)
 void
 DownloadWindow::_DownloadStarted(BWebDownload* download)
 {
+	download->SetProgressListener(BMessenger(this));
 	download->Start(BPath(fDownloadPath.String()));
 
 	int32 finishedCount = 0;
@@ -620,5 +633,21 @@ DownloadWindow::_LoadSettings()
 }
 
 
+DownloadProgressView*
+DownloadWindow::_FindView(BWebDownload* download)
+{
+	if (download == NULL)
+		return NULL;
+
+	for (int32 i = 0;
+			BLayoutItem* item = fDownloadViewsLayout->ItemAt(i); i++) {
+		DownloadProgressView* view = dynamic_cast<DownloadProgressView*>(
+			item->View());
+		if (view != NULL && view->Download() == download)
+			return view;
+	}
+
+	return NULL;
+}
 
 

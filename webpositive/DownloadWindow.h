@@ -47,6 +47,9 @@ private:
 			void				_SaveSettings();
 			void				_LoadSettings();
 
+			DownloadProgressView*
+								_FindView(BWebDownload* download);
+
 	static	status_t			_SaveThread(void* data);
 
 private:
