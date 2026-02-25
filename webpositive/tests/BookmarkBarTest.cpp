@@ -103,19 +103,24 @@ test_add_item_logic()
 	entry_ref ref;
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
 
+	// Add to a window to ensure ConvertToScreen and other UI calls have a context
+	BWindow* window = new BWindow(BRect(0, 0, 100, 100), "test", B_TITLED_WINDOW, 0);
+	window->AddChild(bar);
+
 	// We can test _AddItem(ino_t inode, const entry_ref* ref, const char* name,
 	// bool isDirectory, BBitmap* icon)
 	entry_ref itemRef(1, 1, "test_bookmark");
 	bar->_AddItem(1234, &itemRef, "test_bookmark", false, nullptr);
 
-	// When an item is added, and the bar width is 0, it should be moved to
+	// When an item is added, and the bar width is 0 (it is), it should be moved to
 	// the overflow menu.
 	assert_int32(1, bar->CountItems(), "One item added to the bar (the overflow menu)");
 	assert_true(bar->fOverflowMenuAdded, "Overflow menu should be added because width is 0");
 	assert_int32(1, bar->fOverflowMenu->CountItems(), "One item in the overflow menu");
 	assert_true(bar->fItemsMap.find(1234) != bar->fItemsMap.end(), "Item added to the map");
 
-	delete bar;
+	if (window->Lock())
+		window->Quit();
 }
 
 
@@ -144,19 +149,30 @@ test_add_bookmark_message()
 
 
 static void
-test_node_monitor_removed()
+test_node_monitor_events()
 {
-	printf("Testing B_ENTRY_REMOVED...\n");
+	printf("Testing Node Monitor events (Moved/Removed)...\n");
 
 	entry_ref ref(1, 1, "bookmarks");
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
 
 	// Add an item first
-	entry_ref itemRef(1, 1, "to_remove");
-	bar->_AddItem(999, &itemRef, "to_remove", false, nullptr);
+	entry_ref itemRef(1, 1, "test_bookmark");
+	bar->_AddItem(999, &itemRef, "test_bookmark", false, nullptr);
 	assert_true(bar->fItemsMap.find(999) != bar->fItemsMap.end(), "Item added");
 
-	// Now remove it via node monitor
+	// Test B_ENTRY_MOVED (Rename)
+	BMessage moved(B_NODE_MONITOR);
+	moved.AddInt32("opcode", B_ENTRY_MOVED);
+	moved.AddInt64("node", 999);
+	moved.AddInt64("from directory", 1);
+	moved.AddInt64("to directory", 1);
+	moved.AddString("name", "renamed_bookmark");
+
+	bar->MessageReceived(&moved);
+	assert_true(strcmp(bar->fItemsMap[999]->Label(), "renamed_bookmark") == 0, "Item was renamed");
+
+	// Test B_ENTRY_REMOVED
 	BMessage removed(B_NODE_MONITOR);
 	removed.AddInt32("opcode", B_ENTRY_REMOVED);
 	removed.AddInt64("node", 999);
@@ -180,7 +196,7 @@ main()
 	test_overflow_menu_created();
 	test_add_item_logic();
 	test_add_bookmark_message();
-	test_node_monitor_removed();
+	test_node_monitor_events();
 
 	if (gTestFailures > 0) {
 		printf("\nFinished running tests: %d failures\n", gTestFailures);
