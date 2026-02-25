@@ -478,10 +478,6 @@ BookmarkBar::MinSize()
 void
 BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 {
-	// make sure the item doesn't already exist
-	if (fItemsMap.find(inode) != fItemsMap.end())
-		return;
-
 	entry_ref ref;
 	entry->GetRef(&ref);
 
@@ -521,7 +517,6 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 
 		if (icon != nullptr) {
 			item = new IconMenuItem(name, message, icon, B_MINI_ICON);
-			delete icon;
 		} else {
 			BEntry followedLink(ref, true);
 			BNode node(&followedLink);
