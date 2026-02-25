@@ -15,6 +15,15 @@ void assert_bool(bool expected, bool actual, const char* message) {
     }
 }
 
+void assert_string_equal(const char* expected, const char* actual, const char* message) {
+    if (strcmp(expected, actual) == 0) {
+        printf("PASS: %s\n", message);
+    } else {
+        printf("FAIL: %s (expected '%s', got '%s')\n", message, expected, actual);
+        gTestFailures++;
+    }
+}
+
 void assert_int32(int32 expected, int32 actual, const char* message) {
     if (actual == expected) {
         printf("PASS: %s\n", message);
@@ -372,7 +381,7 @@ void testApplyChoice() {
     style.ApplyChoice(true);
 
     assert_int32(1, editView->fSetEditViewStateCalled, "SetEditViewState should be called");
-    assert_bool(true, strcmp("application", editView->fLastSetText.String()) == 0, "Text should be completed to 'application'");
+    assert_string_equal("application", editView->fLastSetText.String(), "Text should be completed to 'application'");
     assert_int32(11, editView->fLastSetCaretPos, "Caret should be at the end of completed text");
     assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should be called when hideChoices is true");
     assert_int32(-1, style.SelectedChoiceIndex(), "Selection should be reset when choices are hidden");
@@ -388,7 +397,7 @@ void testApplyChoice() {
 
     style.ApplyChoice(false); // don't hide
 
-    assert_bool(true, strcmp("test application", editView->fLastSetText.String()) == 0, "Partial completion should work");
+    assert_string_equal("test application", editView->fLastSetText.String(), "Partial completion should work");
     assert_int32(16, editView->fLastSetCaretPos, "Caret position should be correct after partial completion");
     assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should NOT be called again");
     assert_int32(1, style.SelectedChoiceIndex(), "Selection should remain when choices are NOT hidden");
@@ -421,7 +430,7 @@ void testCancelChoice() {
     style.CancelChoice();
 
     assert_int32(1, editView->fSetEditViewStateCalled, "SetEditViewState should be called to restore text");
-    assert_bool(true, strcmp("app", editView->fLastSetText.String()) == 0, "Original text should be restored");
+    assert_string_equal("app", editView->fLastSetText.String(), "Original text should be restored");
     assert_int32(1, choiceView->fHideChoicesCalled, "HideChoices should be called");
     assert_int32(-1, style.SelectedChoiceIndex(), "Selection should be reset");
     assert_bool(false, choiceView->fChoicesAreShown, "Choices should not be shown anymore");
