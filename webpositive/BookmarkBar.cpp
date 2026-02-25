@@ -119,7 +119,7 @@ BookmarkBar::AttachedToWindow()
 
 	// Enumerate initial directory content in a background thread
 	LoaderArgs* args = new(std::nothrow) LoaderArgs;
-	if (args == NULL)
+	if (args == nullptr)
 		return;
 
 	args->messenger = BMessenger(this);
@@ -183,7 +183,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 					BEntry entry(&ref);
 					BEntry followedEntry(&ref, true); // traverse in case it's a symlink
 
-					if (fItemsMap[inode] == NULL) {
+					if (fItemsMap[inode] == nullptr) {
 						_AddItem(inode, &entry);
 						break;
 					} else {
@@ -342,17 +342,27 @@ BookmarkBar::MessageReceived(BMessage* message)
 		{
 			// User clicked OK, get the new name
 			BString newName = message->FindString("text");
-			BMenuItem* selectedItem = NULL;
+			BMenuItem* selectedItem = nullptr;
 			message->FindPointer("item", (void**)&selectedItem);
+
+			if (selectedItem == nullptr)
+				break;
+
+			// Sanitize the name to avoid path traversal
+			newName.ReplaceAll('/', '-');
+			newName.Truncate(B_FILE_NAME_LENGTH - 1);
+
+			if (newName.IsEmpty())
+				break;
 
 			// Rename the bookmark file
 			entry_ref ref;
 			if (selectedItem->Message()->FindRef("refs", &ref) == B_OK) {
 				BEntry entry(&ref);
-				entry.Rename(newName.String());
-
-				// Update the menu item label
-				selectedItem->SetLabel(newName);
+				if (entry.Rename(newName.String()) == B_OK) {
+					// Update the menu item label
+					selectedItem->SetLabel(newName);
+				}
 			}
 			break;
 		}
@@ -394,7 +404,7 @@ BookmarkBar::FrameResized(float width, float height)
 		// See if we can move some items from the "more" menu in the remaining
 		// space.
 		BMenuItem* extraItem = fOverflowMenu->ItemAt(0);
-		while (extraItem != NULL) {
+		while (extraItem != nullptr) {
 			BRect frame = extraItem->Frame();
 			if (frame.Width() + rightmost > width - overflowMenuWidth)
 				break;
@@ -455,7 +465,7 @@ BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 	entry->GetName(name);
 
 	// make sure the item doesn't already exists
-	if (fItemsMap[inode] != NULL)
+	if (fItemsMap[inode] != nullptr)
 		return;
 
 	entry_ref ref;
@@ -465,7 +475,7 @@ BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 	// but add the symlink's entry_ref for the IconMenuItem so it gets renamed/deleted/etc.
 	BEntry followedLink(&ref, true); // traverse link
 
-	IconMenuItem* item = NULL;
+	IconMenuItem* item = nullptr;
 
 	if (followedLink.IsDirectory()) {
 		BNavMenu* menu = new BNavMenu(name, B_REFS_RECEIVED, Window());
