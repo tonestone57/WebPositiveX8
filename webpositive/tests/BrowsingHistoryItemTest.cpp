@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <String.h>
 #include <DateTime.h>
+#include "AppConstants.h"
 #include "BrowsingHistory.h"
-
-const char* kApplicationName = "WebPositive";
 
 int gTestFailures = 0;
 

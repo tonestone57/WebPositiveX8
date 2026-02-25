@@ -61,7 +61,6 @@
 #include <OS.h>
 #include <Path.h>
 #include <Roster.h>
-#include "SettingsFile.h"
 #include <Screen.h>
 #include <SeparatorView.h>
 #include <Size.h>
@@ -85,6 +84,7 @@
 #include "CredentialsStorage.h"
 #include "IconButton.h"
 #include "NavMenu.h"
+#include "SettingsFile.h"
 #include "SettingsKeys.h"
 #include "SettingsMessage.h"
 #include "TabManager.h"

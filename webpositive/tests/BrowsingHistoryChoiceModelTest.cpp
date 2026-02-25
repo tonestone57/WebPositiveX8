@@ -2,11 +2,10 @@
 #include <limits.h>
 #include <DateTime.h>
 #include <String.h>
+#include "AppConstants.h"
 #include "BrowsingHistoryChoiceModel.h"
 #include "BrowsingHistory.h"
 #include "URLChoice.h"
-
-const char* kApplicationName = "WebPositive";
 
 int gTestFailures = 0;
 

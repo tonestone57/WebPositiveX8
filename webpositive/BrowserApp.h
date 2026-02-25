@@ -35,6 +35,8 @@
 #include <Rect.h>
 #include <UrlContext.h>
 
+#include "AppConstants.h"
+
 
 class ConsoleWindow;
 class CookieWindow;
@@ -94,9 +96,6 @@ private:
 			ConsoleWindow*		fConsoleWindow;
 			CookieWindow*		fCookieWindow;
 };
-
-
-#include "AppConstants.h"
 
 
 #endif // BROWSER_APP_H

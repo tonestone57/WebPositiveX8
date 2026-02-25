@@ -12,11 +12,16 @@ SimpleTest URLChoiceTest :
 
 SimpleTest BrowsingHistoryChoiceModelTest :
 	BrowsingHistoryChoiceModelTest.cpp
+	AppConstants.cpp
 	BrowsingHistoryChoiceModel.cpp
 	BrowsingHistory.cpp
 	BaseURL.cpp
 	SettingsFile.cpp
 	AutoCompleter.cpp
+	:
+	be locale
+;
+
 SimpleTest PatternSelectorTest :
 	PatternSelectorTest.cpp
 	AutoCompleterDefaultImpl.cpp
@@ -26,7 +31,9 @@ SimpleTest PatternSelectorTest :
 
 SimpleTest BrowsingHistoryItemTest :
 	BrowsingHistoryItemTest.cpp
+	AppConstants.cpp
 	BrowsingHistory.cpp
+	SettingsFile.cpp
 	:
-	be
+	be locale
 ;

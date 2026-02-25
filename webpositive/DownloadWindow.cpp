@@ -38,11 +38,10 @@
 #include "WebPage.h"
 
 
-static const char* kSettingsFileName = "Downloads";
-
-
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "Download Window"
+
+static const char* kSettingsFileName = "Downloads";
 
 enum {
 	INIT = 'init',
