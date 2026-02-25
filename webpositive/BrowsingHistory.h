@@ -7,16 +7,15 @@
 #define BROWSING_HISTORY_H
 
 #include <memory>
-#include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <String.h>
 
 #include "DateTime.h"
 #include <Locker.h>
 #include <ObjectList.h>
 #include <OS.h>
+
+#include <String.h>
 
 class BFile;
 class BString;
@@ -24,6 +23,7 @@ class BString;
 
 class BrowsingHistoryItem;
 typedef std::shared_ptr<const BrowsingHistoryItem> BrowsingHistoryItemPtr;
+
 
 class BrowsingHistoryItem {
 public:
@@ -60,6 +60,11 @@ private:
 			BString				fURL;
 			BDateTime			fDateTime;
 			uint32				fInvokationCount;
+};
+
+
+struct BStringHash {
+	size_t operator()(const BString& s) const;
 };
 
 
@@ -103,7 +108,7 @@ private:
 
 private:
 			std::vector<BrowsingHistoryItemPtr> fHistoryItems;
-			std::unordered_map<std::string, BrowsingHistoryItemPtr>
+			std::unordered_map<BString, BrowsingHistoryItemPtr, BStringHash>
 								fHistoryMap;
 			int32				fMaxHistoryItemAge;
 
