@@ -73,7 +73,10 @@
 #include <memory>
 #include <new>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "AuthenticationPanel.h"
 #include "BaseURL.h"
@@ -2898,13 +2901,30 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		if (ret == B_OK)
 			ret = find_directory(B_SYSTEM_TEMP_DIRECTORY, &pathToPageSource);
 
-		BString tmpFileName("PageSource_");
-		tmpFileName << system_time() << ".html";
 		if (ret == B_OK)
-			ret = pathToPageSource.Append(tmpFileName.String());
+			ret = pathToPageSource.Append("PageSource_XXXXXX.html");
 
-		BFile pageSourceFile(pathToPageSource.Path(),
-			B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY);
+		if (ret == B_OK) {
+			char* path = strdup(pathToPageSource.Path());
+			if (path == NULL) {
+				ret = B_NO_MEMORY;
+			} else {
+				int fd = mkstemps(path, 5);
+				if (fd != -1) {
+					close(fd);
+					pathToPageSource.SetTo(path);
+				} else {
+					ret = B_ERROR;
+				}
+				free(path);
+			}
+		}
+
+		BFile pageSourceFile;
+		if (ret == B_OK) {
+			ret = pageSourceFile.SetTo(pathToPageSource.Path(),
+				B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY);
+		}
 		if (ret == B_OK)
 			ret = pageSourceFile.InitCheck();
 		if (ret == B_OK)
