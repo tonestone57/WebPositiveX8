@@ -48,6 +48,7 @@ private:
 			void				_StoreOriginalSettings();
 			void				_RestoreLiveSettings();
 			void				_UpdateLiveSettings();
+			void				_UpdateLiveSetting(uint32 what);
 			void 				_ChooseDownloadFolder(const BMessage* message);
 
 			void				_HandleDownloadPanelResult(BFilePanel* panel,

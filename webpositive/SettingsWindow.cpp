@@ -212,7 +212,7 @@ SettingsWindow::MessageReceived(BMessage* message)
 			if (message->FindPointer("source", (void**)&source) == B_OK)
 				source->SetMarked(true);
 
-			_UpdateLiveSettings();
+			_UpdateLiveSetting(message->what);
 			_ValidateControlsEnabledStatus();
 			break;
 		}
@@ -227,7 +227,7 @@ SettingsWindow::MessageReceived(BMessage* message)
 		case MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED:
 		case MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED:
 		case MSG_SHOW_HOME_BUTTON_CHANGED:
-			_UpdateLiveSettings();
+			_UpdateLiveSetting(message->what);
 			_ValidateControlsEnabledStatus();
 			break;
 
@@ -651,23 +651,25 @@ SettingsWindow::_CanApplySettings() const
 		!= fSettings->GetValue("fixed font size", kDefaultFontSize));
 
 	// Proxy settings
+	fOriginalSettings.FindBool(kSettingsKeyUseProxy, &boolValue);
 	canApply = canApply || ((fUseProxyCheckBox->Value() == B_CONTROL_ON)
-		!= fSettings->GetValue(kSettingsKeyUseProxy, false));
+		!= boolValue);
 
-	canApply = canApply || (strcmp(fProxyAddressControl->Text(),
-		fSettings->GetValue(kSettingsKeyProxyAddress, "")) != 0);
+	fOriginalSettings.FindString(kSettingsKeyProxyAddress, &stringValue);
+	canApply = canApply || (stringValue != fProxyAddressControl->Text());
 
-	canApply = canApply || (_ProxyPort()
-		!= fSettings->GetValue(kSettingsKeyProxyPort, (uint32)0));
+	fOriginalSettings.FindUInt32(kSettingsKeyProxyPort, &uintValue);
+	canApply = canApply || (_ProxyPort() != uintValue);
 
+	fOriginalSettings.FindBool(kSettingsKeyUseProxyAuth, &boolValue);
 	canApply = canApply || ((fUseProxyAuthCheckBox->Value() == B_CONTROL_ON)
-		!= fSettings->GetValue(kSettingsKeyUseProxyAuth, false));
+		!= boolValue);
 
-	canApply = canApply || (strcmp(fProxyUsernameControl->Text(),
-		fSettings->GetValue(kSettingsKeyProxyUsername, "")) != 0);
+	fOriginalSettings.FindString(kSettingsKeyProxyUsername, &stringValue);
+	canApply = canApply || (stringValue != fProxyUsernameControl->Text());
 
-	canApply = canApply || (strcmp(fProxyPasswordControl->Text(),
-		fSettings->GetValue(kSettingsKeyProxyPassword, "")) != 0);
+	fOriginalSettings.FindString(kSettingsKeyProxyPassword, &stringValue);
+	canApply = canApply || (stringValue != fProxyPasswordControl->Text());
 
 	return canApply;
 }
@@ -809,6 +811,20 @@ SettingsWindow::_StoreOriginalSettings()
 		fSettings->GetValue(kSettingsKeyNewWindowPolicy, (uint32)OpenStartPage));
 	fOriginalSettings.AddUInt32(kSettingsKeyNewTabPolicy,
 		fSettings->GetValue(kSettingsKeyNewTabPolicy, (uint32)OpenBlankPage));
+
+	// Store non-live Proxy settings for dirty checking
+	fOriginalSettings.AddBool(kSettingsKeyUseProxy,
+		fSettings->GetValue(kSettingsKeyUseProxy, false));
+	fOriginalSettings.AddString(kSettingsKeyProxyAddress,
+		fSettings->GetValue(kSettingsKeyProxyAddress, ""));
+	fOriginalSettings.AddUInt32(kSettingsKeyProxyPort,
+		fSettings->GetValue(kSettingsKeyProxyPort, (uint32)0));
+	fOriginalSettings.AddBool(kSettingsKeyUseProxyAuth,
+		fSettings->GetValue(kSettingsKeyUseProxyAuth, false));
+	fOriginalSettings.AddString(kSettingsKeyProxyUsername,
+		fSettings->GetValue(kSettingsKeyProxyUsername, ""));
+	fOriginalSettings.AddString(kSettingsKeyProxyPassword,
+		fSettings->GetValue(kSettingsKeyProxyPassword, ""));
 }
 
 
@@ -851,22 +867,63 @@ SettingsWindow::_RestoreLiveSettings()
 void
 SettingsWindow::_UpdateLiveSettings()
 {
-	fSettings->SetValue(kSettingsKeyStartPageURL, fStartPageControl->Text());
-	fSettings->SetValue(kSettingsKeySearchPageURL, fSearchPageControl->Text());
-	fSettings->SetValue(kSettingsKeyDownloadPath,
-		fDownloadFolderControl->Text());
-	fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen,
-		fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON);
-	fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
-		fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON);
-	fSettings->SetValue(kSettingsKeyAutoHidePointer,
-		fAutoHidePointer->Value() == B_CONTROL_ON);
-	fSettings->SetValue(kSettingsKeyShowHomeButton,
-		fShowHomeButton->Value() == B_CONTROL_ON);
+	_UpdateLiveSetting(MSG_START_PAGE_CHANGED);
+	_UpdateLiveSetting(MSG_SEARCH_PAGE_CHANGED);
+	_UpdateLiveSetting(MSG_DOWNLOAD_FOLDER_CHANGED);
+	_UpdateLiveSetting(MSG_START_UP_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_NEW_TABS_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_TAB_DISPLAY_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED);
+	_UpdateLiveSetting(MSG_SHOW_HOME_BUTTON_CHANGED);
+}
 
-	fSettings->SetValue(kSettingsKeyStartUpPolicy, _StartUpPolicy());
-	fSettings->SetValue(kSettingsKeyNewWindowPolicy, _NewWindowPolicy());
-	fSettings->SetValue(kSettingsKeyNewTabPolicy, _NewTabPolicy());
+
+void
+SettingsWindow::_UpdateLiveSetting(uint32 what)
+{
+	switch (what) {
+		case MSG_START_PAGE_CHANGED:
+			fSettings->SetValue(kSettingsKeyStartPageURL,
+				fStartPageControl->Text());
+			break;
+		case MSG_SEARCH_PAGE_CHANGED:
+		case MSG_SEARCH_PAGE_CHANGED_MENU:
+			fSettings->SetValue(kSettingsKeySearchPageURL,
+				fSearchPageControl->Text());
+			break;
+		case MSG_DOWNLOAD_FOLDER_CHANGED:
+			fSettings->SetValue(kSettingsKeyDownloadPath,
+				fDownloadFolderControl->Text());
+			break;
+		case MSG_START_UP_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyStartUpPolicy, _StartUpPolicy());
+			break;
+		case MSG_NEW_WINDOWS_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyNewWindowPolicy,
+				_NewWindowPolicy());
+			break;
+		case MSG_NEW_TABS_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyNewTabPolicy, _NewTabPolicy());
+			break;
+		case MSG_TAB_DISPLAY_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen,
+				fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON);
+			break;
+		case MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
+				fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON);
+			break;
+		case MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED:
+			fSettings->SetValue(kSettingsKeyAutoHidePointer,
+				fAutoHidePointer->Value() == B_CONTROL_ON);
+			break;
+		case MSG_SHOW_HOME_BUTTON_CHANGED:
+			fSettings->SetValue(kSettingsKeyShowHomeButton,
+				fShowHomeButton->Value() == B_CONTROL_ON);
+			break;
+	}
 }
 
 
@@ -1023,7 +1080,7 @@ SettingsWindow:: _HandleDownloadPanelResult(BFilePanel* panel,
 	{
 		BPath path(&ref);
 		fDownloadFolderControl->SetText(path.Path());
-		_UpdateLiveSettings();
+		_UpdateLiveSetting(MSG_DOWNLOAD_FOLDER_CHANGED);
 		_ValidateControlsEnabledStatus();
 	}
 }
