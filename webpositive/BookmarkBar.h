@@ -16,6 +16,7 @@
 #include <Size.h>
 
 
+class BBitmap;
 class BEntry;
 
 namespace BPrivate {
@@ -44,6 +45,9 @@ private:
 	};
 
 	void							_AddItem(ino_t inode, BEntry* entry);
+	void							_AddItem(ino_t inode, const entry_ref* ref,
+										const char* name, bool isDirectory,
+										BBitmap* icon);
 	static status_t					_LoaderThread(void* data);
 
 private:
