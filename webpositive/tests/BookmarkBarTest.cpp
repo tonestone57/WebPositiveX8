@@ -53,9 +53,6 @@ test_initialization()
 {
 	printf("Testing BookmarkBar initialization...\n");
 
-	// We need a BApplication to create UI objects
-	BApplication app("application/x-vnd.Haiku-BookmarkBarTest");
-
 	entry_ref ref;
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
 
@@ -70,7 +67,6 @@ static void
 test_min_size()
 {
 	printf("Testing BookmarkBar::MinSize()...\n");
-	BApplication app("application/x-vnd.Haiku-BookmarkBarTest");
 
 	entry_ref ref;
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
@@ -87,7 +83,6 @@ static void
 test_overflow_menu_created()
 {
 	printf("Testing overflow menu creation...\n");
-	BApplication app("application/x-vnd.Haiku-BookmarkBarTest");
 
 	entry_ref ref;
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
@@ -104,7 +99,6 @@ static void
 test_add_item_logic()
 {
 	printf("Testing BookmarkBar::_AddItem logic...\n");
-	BApplication app("application/x-vnd.Haiku-BookmarkBarTest");
 
 	entry_ref ref;
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
@@ -129,7 +123,6 @@ static void
 test_add_bookmark_message()
 {
 	printf("Testing kAddBookmarkMsg...\n");
-	BApplication app("application/x-vnd.Haiku-BookmarkBarTest");
 
 	entry_ref ref(1, 1, "bookmarks");
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
@@ -154,7 +147,6 @@ static void
 test_node_monitor_removed()
 {
 	printf("Testing B_ENTRY_REMOVED...\n");
-	BApplication app("application/x-vnd.Haiku-BookmarkBarTest");
 
 	entry_ref ref(1, 1, "bookmarks");
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
@@ -181,6 +173,8 @@ test_node_monitor_removed()
 int
 main()
 {
+	BApplication app("application/x-vnd.Haiku-BookmarkBarTest");
+
 	test_initialization();
 	test_min_size();
 	test_overflow_menu_created();
