@@ -30,9 +30,11 @@
 
 #include "BrowserApp.h"
 #include "SettingsFile.h"
+#include "SettingsKeys.h"
+
+
 #include "BrowserWindow.h"
 #include "DownloadProgressView.h"
-#include "SettingsKeys.h"
 #include "SettingsMessage.h"
 #include "WebDownload.h"
 #include "WebPage.h"
@@ -581,7 +583,7 @@ DownloadWindow::_SaveThread(void* data)
 
 		if (messageToSave) {
 			BFile file;
-			if (OpenSettingsFile(file, "Downloads",
+			if (OpenSettingsFile(file, kSettingsFileNameDownloads,
 					B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY) == B_OK) {
 				messageToSave->Flatten(&file);
 			}
@@ -598,8 +600,10 @@ void
 DownloadWindow::_LoadSettings()
 {
 	BFile file;
-	if (OpenSettingsFile(file, "Downloads", B_READ_ONLY) != B_OK)
+	if (OpenSettingsFile(file, kSettingsFileNameDownloads,
+			B_READ_ONLY) != B_OK) {
 		return;
+	}
 	BMessage message;
 	if (message.Unflatten(&file) != B_OK)
 		return;

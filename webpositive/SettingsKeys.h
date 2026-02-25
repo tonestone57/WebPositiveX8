@@ -40,6 +40,15 @@ extern const char* kSettingsKeyProxyPassword;
 
 extern const char* kSettingsShowBookmarkBar;
 
+extern const char* kSettingsFileNameBrowsingHistory;
+extern const char* kSettingsFileNameCredentialsStorage;
+extern const char* kSettingsFileNameDownloads;
+extern const char* kSettingsFileNameBookmarks;
+extern const char* kSettingsFileNameCookies;
+extern const char* kSettingsFileNameCookieJar;
+extern const char* kSettingsFileNameSession;
+extern const char* kSettingsFileNameApplication;
+
 struct SearchEngine {
 	const char* name;
 	const char* url;

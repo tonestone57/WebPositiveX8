@@ -45,6 +45,8 @@
 
 #include "BrowserWindow.h"
 #include "BrowsingHistory.h"
+#include "SettingsFile.h"
+#include "SettingsKeys.h"
 #include "DownloadWindow.h"
 #include "SettingsMessage.h"
 #include "SettingsWindow.h"
@@ -108,17 +110,13 @@ BrowserApp::BrowserApp()
 		resume_thread(fCookieLoaderThread);
 
 	BPath curlCookies;
-	if (find_directory(B_USER_SETTINGS_DIRECTORY, &curlCookies) == B_OK
-		&& curlCookies.Append(kApplicationName) == B_OK
-		&& curlCookies.Append("cookie.jar.db") == B_OK) {
-
+	if (GetSettingsPath(curlCookies, kSettingsFileNameCookieJar) == B_OK)
 		setenv("CURL_COOKIE_JAR_PATH", curlCookies.Path(), 0);
-	}
 
-	BString sessionStorePath = kApplicationName;
-	sessionStorePath << "/Session";
+	BString sessionStoreSubPath(kApplicationName);
+	sessionStoreSubPath << "/" << kSettingsFileNameSession;
 	fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-		sessionStorePath.String());
+		sessionStoreSubPath.String());
 }
 
 
@@ -202,17 +200,16 @@ BrowserApp::ReadyToRun()
 	BWebPage::SetCacheModel(B_WEBKIT_CACHE_MODEL_WEB_BROWSER);
 
 	BPath path;
-	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path) == B_OK
-		&& path.Append(kApplicationName) == B_OK
+	if (GetSettingsPath(path) == B_OK
 		&& create_directory(path.Path(), S_IRWXU) == B_OK) {
 
 		BWebSettings::SetPersistentStoragePath(path.Path());
 	}
 
-	BString mainSettingsPath(kApplicationName);
-	mainSettingsPath << "/Application";
+	BString mainSettingsSubPath(kApplicationName);
+	mainSettingsSubPath << "/" << kSettingsFileNameApplication;
 	fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-		mainSettingsPath.String());
+		mainSettingsSubPath.String());
 
 	fLastWindowFrame = fSettings->GetValue("window frame", fLastWindowFrame);
 	BRect defaultDownloadWindowFrame(-10, -10, 365, 265);
@@ -695,10 +692,10 @@ BrowserApp::_CookieLoaderThread(void* data)
 {
 	BrowserApp* self = (BrowserApp*)data;
 
-	BString cookieStorePath = kApplicationName;
-	cookieStorePath << "/Cookies";
+	BString cookieStoreSubPath(kApplicationName);
+	cookieStoreSubPath << "/" << kSettingsFileNameCookies;
 	SettingsMessage* cookies = new(std::nothrow) SettingsMessage(
-		B_USER_SETTINGS_DIRECTORY, cookieStorePath.String());
+		B_USER_SETTINGS_DIRECTORY, cookieStoreSubPath.String());
 
 	if (cookies == NULL)
 		return B_NO_MEMORY;

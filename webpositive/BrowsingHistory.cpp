@@ -20,6 +20,7 @@
 
 #include "BrowserApp.h"
 #include "SettingsFile.h"
+#include "SettingsKeys.h"
 
 
 BrowsingHistoryItem::BrowsingHistoryItem(const BString& url)
@@ -509,7 +510,7 @@ BrowsingHistory::_SaveThread(void* data)
 		if (itemsToSave) {
 			self->fFileLock.Lock();
 			BFile settingsFile;
-			if (OpenSettingsFile(settingsFile, "BrowsingHistory",
+			if (OpenSettingsFile(settingsFile, kSettingsFileNameBrowsingHistory,
 					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
 				BMessage settingsArchive;
 
@@ -550,8 +551,8 @@ BrowsingHistory::_LoadThread(void* data)
 	// We read into a BMessage first, then lock the main object to add items.
 	// This keeps the critical section (reading/parsing) out of the main lock.
 	BMessage settingsArchive;
-	bool fileOpened = OpenSettingsFile(settingsFile, "BrowsingHistory",
-		B_READ_ONLY) == B_OK;
+	bool fileOpened = OpenSettingsFile(settingsFile,
+		kSettingsFileNameBrowsingHistory, B_READ_ONLY) == B_OK;
 	if (fileOpened)
 		settingsArchive.Unflatten(&settingsFile);
 	self->fFileLock.Unlock();

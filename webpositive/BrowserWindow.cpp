@@ -84,6 +84,7 @@
 #include "CredentialsStorage.h"
 #include "IconButton.h"
 #include "NavMenu.h"
+#include "SettingsFile.h"
 #include "SettingsKeys.h"
 #include "SettingsMessage.h"
 #include "TabManager.h"
@@ -527,7 +528,8 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		// TODO we could also check if the folder is empty here.
 		if (bookmarkBar.Exists() && bookmarkBar.GetRef(&bookmarkBarRef)
 				== B_OK) {
-			fBookmarkBar = new BookmarkBar("Bookmarks", this, &bookmarkBarRef);
+			fBookmarkBar = new BookmarkBar(B_TRANSLATE("Bookmarks"), this,
+				&bookmarkBarRef);
 			fBookmarkBarMenuItem->SetEnabled(true);
 		} else
 			fBookmarkBarMenuItem->SetEnabled(false);
@@ -2026,15 +2028,7 @@ BrowserWindow::_TabChanged(int32 index)
 status_t
 BrowserWindow::_BookmarkPath(BPath& path) const
 {
-	status_t ret = find_directory(B_USER_SETTINGS_DIRECTORY, &path);
-	if (ret != B_OK)
-		return ret;
-
-	ret = path.Append(kApplicationName);
-	if (ret != B_OK)
-		return ret;
-
-	ret = path.Append("Bookmarks");
+	status_t ret = GetSettingsPath(path, kSettingsFileNameBookmarks);
 	if (ret != B_OK)
 		return ret;
 
