@@ -44,6 +44,7 @@ private:
 			void				_DownloadFinished(BWebDownload* download);
 			void				_RemoveFinishedDownloads();
 			void				_RemoveMissingDownloads();
+			void				_RemoveDownloads(bool finished, bool missing);
 			void				_ValidateButtonStatus();
 			void				_SaveSettings();
 			void				_LoadSettings();
