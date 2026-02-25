@@ -322,7 +322,7 @@ void
 DownloadProgressView::AttachedToWindow()
 {
 	if (fDownload) {
-		fDownload->SetProgressListener(BMessenger(this));
+		fDownload->SetProgressListener(BMessenger(Window()));
 		// Will start node monitor upon receiving the B_DOWNLOAD_STARTED
 		// message.
 	} else {
@@ -403,12 +403,6 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			}
 			break;
 		}
-		case B_DOWNLOAD_REMOVED:
-			// TODO: This is a bit asymetric. The removed notification
-			// arrives here, but it would be nicer if it arrived
-			// at the window...
-			Window()->PostMessage(message);
-			break;
 		case OPEN_DOWNLOAD:
 		{
 			entry_ref ref;
