@@ -459,7 +459,14 @@ BDefaultChoiceView::SetMaxVisibleChoices(int32 choices)
 
 	fMaxVisibleChoices = choices;
 
-	// TODO: Update live?
+	if (fListView != NULL) {
+		BAutoCompleter::CompletionStyle* completer = fListView->Completer();
+		if (completer != NULL) {
+			int32 selectedIndex = completer->SelectedChoiceIndex();
+			ShowChoices(completer);
+			SelectChoiceAt(selectedIndex);
+		}
+	}
 }
 
 
