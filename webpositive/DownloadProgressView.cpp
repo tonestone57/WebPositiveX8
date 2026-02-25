@@ -156,16 +156,6 @@ static const time_t kSecondsPerHour = 60 * 60;
 
 class IconView : public BView {
 public:
-	IconView(const BEntry& entry)
-		:
-		BView("Download icon", B_WILL_DRAW),
-		fIconBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32),
-		fDimmedIcon(false)
-	{
-		SetDrawingMode(B_OP_OVER);
-		SetTo(entry);
-	}
-
 	IconView()
 		:
 		BView("Download icon", B_WILL_DRAW),
@@ -183,14 +173,6 @@ public:
 		fDimmedIcon(true)
 	{
 		SetDrawingMode(B_OP_OVER);
-	}
-
-	void SetTo(const BEntry& entry)
-	{
-		BNode node(&entry);
-		BNodeInfo info(&node);
-		info.GetTrackerIcon(&fIconBitmap, B_LARGE_ICON);
-		Invalidate();
 	}
 
 	void SetIconDimmed(bool iconDimmed)
@@ -665,9 +647,8 @@ DownloadProgressView::MessageReceived(BMessage* message)
 				}
 				case B_ATTR_CHANGED:
 				{
-					BEntry entry(fPath.Path());
 					fIconView->SetIconDimmed(false);
-					fIconView->SetTo(entry);
+					_StartAsyncInit();
 					break;
 				}
 			}
