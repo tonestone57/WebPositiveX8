@@ -22,6 +22,11 @@ SimpleTest URLChoiceTest :
 	be
 ;
 
+SimpleTest DownloadSpeedCalculatorTest :
+	DownloadSpeedCalculatorTest.cpp
+	DownloadSpeedCalculator.cpp
+	:
+	be
 SimpleTest CookieWindowTest :
 	CookieWindowTest.cpp
 	:
