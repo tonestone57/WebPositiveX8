@@ -82,13 +82,16 @@ public:
 					BBitmap* icon = NULL;
 
 					if (exists) {
-						entry.GetNodeRef(&nref);
-						icon = new BBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32);
-						BNode node(&entry);
-						BNodeInfo info(&node);
-						if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
-							delete icon;
-							icon = NULL;
+						if (entry.GetNodeRef(&nref) != B_OK)
+							exists = false;
+						else {
+							icon = new BBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32);
+							BNode node(&entry);
+							BNodeInfo info(&node);
+							if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
+								delete icon;
+								icon = NULL;
+							}
 						}
 					}
 
@@ -117,6 +120,19 @@ public:
 
 static AsyncWorker* sAsyncWorker = NULL;
 static BLocker sAsyncWorkerLock("AsyncWorker lock");
+
+class AsyncWorkerCleanup {
+public:
+	~AsyncWorkerCleanup()
+	{
+		BAutolock _(sAsyncWorkerLock);
+		if (sAsyncWorker != NULL) {
+			sAsyncWorker->PostMessage(B_QUIT_REQUESTED);
+			sAsyncWorker = NULL;
+		}
+	}
+};
+static AsyncWorkerCleanup sAsyncWorkerCleanup;
 
 static AsyncWorker*
 GetAsyncWorker()
