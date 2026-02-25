@@ -2007,7 +2007,7 @@ BrowserWindow::_TabChanged(int32 index)
 status_t
 BrowserWindow::_BookmarkPath(BPath& path) const
 {
-	status_t ret = GetSettingsPath(path, "Bookmarks");
+	status_t ret = GetSettingsPath(path, kSettingsFileNameBookmarks);
 	if (ret != B_OK)
 		return ret;
 

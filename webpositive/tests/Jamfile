@@ -17,6 +17,7 @@ SimpleTest BrowsingHistoryChoiceModelTest :
 	BrowsingHistory.cpp
 	BaseURL.cpp
 	SettingsFile.cpp
+	SettingsKeys.cpp
 	AutoCompleter.cpp
 	:
 	be locale
@@ -34,6 +35,7 @@ SimpleTest BrowsingHistoryItemTest :
 	AppConstants.cpp
 	BrowsingHistory.cpp
 	SettingsFile.cpp
+	SettingsKeys.cpp
 	:
 	be locale
 ;

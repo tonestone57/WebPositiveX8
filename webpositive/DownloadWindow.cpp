@@ -41,8 +41,6 @@
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "Download Window"
 
-static const char* kSettingsFileName = "Downloads";
-
 enum {
 	INIT = 'init',
 	OPEN_DOWNLOADS_FOLDER = 'odnf',
@@ -583,7 +581,7 @@ DownloadWindow::_SaveThread(void* data)
 
 		if (messageToSave) {
 			BFile file;
-			if (OpenSettingsFile(file, kSettingsFileName,
+			if (OpenSettingsFile(file, kSettingsFileNameDownloads,
 					B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY) == B_OK) {
 				messageToSave->Flatten(&file);
 			}
@@ -600,7 +598,7 @@ void
 DownloadWindow::_LoadSettings()
 {
 	BFile file;
-	if (OpenSettingsFile(file, kSettingsFileName, B_READ_ONLY) != B_OK)
+	if (OpenSettingsFile(file, kSettingsFileNameDownloads, B_READ_ONLY) != B_OK)
 		return;
 	BMessage message;
 	if (message.Unflatten(&file) != B_OK)

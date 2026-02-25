@@ -34,7 +34,7 @@ GetSettingsPath(BPath& path, const char* fileName)
 
 
 status_t
-GetSettingsPath(BString& path, const char* fileName)
+GetRelativeSettingsPath(BString& path, const char* fileName)
 {
 	path = kApplicationName;
 	if (fileName != NULL) {
