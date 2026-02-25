@@ -489,9 +489,68 @@ void testCancelChoiceEdgeCases() {
     }
 }
 
+void testSelectNextExhaustive() {
+    printf("Testing BDefaultCompletionStyle::SelectNext exhaustive...\n");
+
+    // CompletionStyle takes ownership and deletes these in its destructor
+    MockEditView* editView = new MockEditView();
+    MockChoiceModel* choiceModel = new MockChoiceModel();
+    MockChoiceView* choiceView = new MockChoiceView();
+    MockPatternSelector* patternSelector = new MockPatternSelector();
+
+    BDefaultCompletionStyle style(editView, choiceModel, choiceView, patternSelector);
+
+    choiceModel->AddChoice("c1");
+    choiceModel->AddChoice("c2");
+
+    // Start at -1
+    assert_int32(-1, style.SelectedChoiceIndex(), "Initially nothing selected");
+    assert_bool(false, style.IsChoiceSelected(), "IsChoiceSelected should be false");
+
+    // SelectNext(false): -1 -> 0
+    choiceView->fSelectChoiceAtCalled = 0;
+    assert_bool(true, style.SelectNext(false), "SelectNext(false) from -1 should return true");
+    assert_int32(0, style.SelectedChoiceIndex(), "Should select index 0");
+    assert_bool(true, style.IsChoiceSelected(), "IsChoiceSelected should be true");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should be at 0");
+    assert_int32(1, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt called once");
+
+    // SelectNext(false): 0 -> 1
+    choiceView->fSelectChoiceAtCalled = 0;
+    assert_bool(true, style.SelectNext(false), "SelectNext(false) from 0 should return true");
+    assert_int32(1, style.SelectedChoiceIndex(), "Should select index 1");
+    assert_int32(1, choiceView->fSelectedIndex, "ChoiceView should be at 1");
+    assert_int32(1, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt called once");
+
+    // SelectNext(false): 1 -> 1 (at last)
+    choiceView->fSelectChoiceAtCalled = 0;
+    assert_bool(false, style.SelectNext(false), "SelectNext(false) from 1 should return false");
+    assert_int32(1, style.SelectedChoiceIndex(), "Should stay at index 1");
+    assert_int32(0, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt should NOT be called");
+
+    // SelectNext(true): 1 -> 0 (wrap)
+    choiceView->fSelectChoiceAtCalled = 0;
+    assert_bool(true, style.SelectNext(true), "SelectNext(true) from 1 should return true (wrap)");
+    assert_int32(0, style.SelectedChoiceIndex(), "Should wrap to 0");
+    assert_int32(0, choiceView->fSelectedIndex, "ChoiceView should be at 0");
+    assert_int32(1, choiceView->fSelectChoiceAtCalled, "ChoiceView::SelectChoiceAt called once");
+
+    // Boundary and invalid index tests
+    style.Select(-1); // reset
+    assert_bool(false, style.Select(-2), "Select(-2) should return false");
+    assert_int32(-1, style.SelectedChoiceIndex(), "Index should still be -1");
+
+    // Let's test a larger list
+    choiceModel->AddChoice("c3"); // Now 3 items: 0, 1, 2
+    style.Select(2);
+    assert_bool(true, style.SelectNext(true), "SelectNext(true) from 2 should wrap to 0");
+    assert_int32(0, style.SelectedChoiceIndex(), "Index should be 0");
+}
+
 int main() {
     testSelectPrevious();
     testSelectNext();
+    testSelectNextExhaustive();
     testSingleChoice();
     testEdgeCases();
     testApplyChoice();

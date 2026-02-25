@@ -19,6 +19,7 @@ SimpleTest SettingsFileTest :
 SimpleTest CompletionStyleTest :
 	CompletionStyleTest.cpp
 	AutoCompleterDefaultImpl.cpp
+	AutoCompleter.cpp
 	:
 	be
 ;
