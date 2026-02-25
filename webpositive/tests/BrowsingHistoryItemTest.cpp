@@ -1,6 +1,7 @@
 #include <stdio.h>
-#include <String.h>
 #include <DateTime.h>
+#include <Message.h>
+#include <String.h>
 #include "BrowsingHistory.h"
 
 const char* kApplicationName = "WebPositive";
@@ -16,8 +17,37 @@ void assert_true(bool condition, const char* message) {
     }
 }
 
+void test_invoked() {
+    printf("Testing BrowsingHistoryItem::Invoked()...\n");
+    BrowsingHistoryItem item(BString("http://www.haiku-os.org"));
+    assert_true(item.InvokationCount() == 0, "Initial invokation count is 0");
+
+    BDateTime before = item.DateTime();
+
+    item.Invoked();
+    assert_true(item.InvokationCount() == 1, "Invokation count is 1 after one call");
+    assert_true(item.DateTime() >= before, "DateTime is updated (>= before)");
+
+    item.Invoked();
+    assert_true(item.InvokationCount() == 2, "Invokation count is 2 after two calls");
+
+    // Test overflow
+    printf("Testing overflow protection...\n");
+    BMessage archive;
+    archive.AddString("url", "http://www.haiku-os.org");
+    archive.AddUInt32("invokations", 0xFFFFFFFF);
+
+    BrowsingHistoryItem overflowItem(&archive);
+    assert_true(overflowItem.InvokationCount() == 0xFFFFFFFF, "Item initialized with max uint32");
+
+    overflowItem.Invoked();
+    assert_true(overflowItem.InvokationCount() == 0xFFFFFFFF, "Invokation count stays at max uint32 on overflow");
+}
+
 int main() {
-    printf("Testing BrowsingHistoryItem assignment operator...\n");
+    test_invoked();
+
+    printf("\nTesting BrowsingHistoryItem assignment operator...\n");
 
     BrowsingHistoryItem item1(BString("http://www.google.com"));
     // Simulate some state
