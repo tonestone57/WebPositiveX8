@@ -178,7 +178,8 @@ BrowsingHistory::BrowsingHistory(bool startThreads)
 	fFileLock("browsing history file lock"),
 	fLastSaveTime(0)
 {
-	fHistoryItems.reserve(64);
+	fHistoryItems = std::make_shared<HistoryVector>();
+	fHistoryItems->reserve(64);
 	if (startThreads) {
 		fSaveSem = create_sem(0, "browsing history save sem");
 		fSaveThread = spawn_thread(_SaveThread, "browsing history saver",
@@ -247,9 +248,11 @@ BrowsingHistory::RemoveItem(const BString& url)
 		return false;
 
 	BrowsingHistoryItemPtr item = it->second;
-	auto it_list = std::find(fHistoryItems.begin(), fHistoryItems.end(), item);
-	if (it_list != fHistoryItems.end())
-		fHistoryItems.erase(it_list);
+
+	_EnsureUniqueVector();
+	auto it_list = std::find(fHistoryItems->begin(), fHistoryItems->end(), item);
+	if (it_list != fHistoryItems->end())
+		fHistoryItems->erase(it_list);
 
 	fHistoryMap.erase(it);
 
@@ -264,7 +267,7 @@ BrowsingHistory::CountItems() const
 {
 	BAutolock _(const_cast<BrowsingHistory*>(this));
 
-	return (int32)fHistoryItems.size();
+	return (int32)fHistoryItems->size();
 }
 
 
@@ -273,19 +276,19 @@ BrowsingHistory::HistoryItemAt(int32 index) const
 {
 	BAutolock _(const_cast<BrowsingHistory*>(this));
 
-	if (index < 0 || index >= (int32)fHistoryItems.size())
+	if (index < 0 || index >= (int32)fHistoryItems->size())
 		return BrowsingHistoryItem(BString());
 
-	return *fHistoryItems[index];
+	return *(*fHistoryItems)[index];
 }
 
 
 const BrowsingHistoryItem*
 BrowsingHistory::ItemAt(int32 index) const
 {
-	if (index < 0 || index >= (int32)fHistoryItems.size())
+	if (index < 0 || index >= (int32)fHistoryItems->size())
 		return nullptr;
-	return fHistoryItems[index].get();
+	return (*fHistoryItems)[index].get();
 }
 
 
@@ -322,8 +325,17 @@ BrowsingHistory::MaxHistoryItemAge() const
 void
 BrowsingHistory::_Clear()
 {
-	fHistoryItems.clear();
+	fHistoryItems = std::make_shared<HistoryVector>();
 	fHistoryMap.clear();
+}
+
+
+void
+BrowsingHistory::_EnsureUniqueVector()
+{
+	if (fHistoryItems.use_count() > 1) {
+		fHistoryItems = std::make_shared<HistoryVector>(*fHistoryItems);
+	}
 }
 
 
@@ -334,9 +346,11 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 	if (it != fHistoryMap.end()) {
 		if (!internal) {
 			BrowsingHistoryItemPtr existingItem = it->second;
-			auto it_list = std::find(fHistoryItems.begin(), fHistoryItems.end(), existingItem);
-			if (it_list != fHistoryItems.end())
-				fHistoryItems.erase(it_list);
+
+			_EnsureUniqueVector();
+			auto it_list = std::find(fHistoryItems->begin(), fHistoryItems->end(), existingItem);
+			if (it_list != fHistoryItems->end())
+				fHistoryItems->erase(it_list);
 
 			std::shared_ptr<BrowsingHistoryItem> newItem(new(std::nothrow) BrowsingHistoryItem(*existingItem));
 			if (!newItem)
@@ -345,7 +359,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 
 			BrowsingHistoryItemPtr itemToStore = newItem;
 			int32 insertionIndex = _InsertionIndex(itemToStore.get());
-			fHistoryItems.insert(fHistoryItems.begin() + insertionIndex, itemToStore);
+			fHistoryItems->insert(fHistoryItems->begin() + insertionIndex, itemToStore);
 			fHistoryMap[itemToStore->URL().String()] = itemToStore;
 
 			_SaveSettings();
@@ -363,7 +377,8 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 	BrowsingHistoryItemPtr itemToStore = newItem;
 	int32 insertionIndex = _InsertionIndex(itemToStore.get());
 
-	fHistoryItems.insert(fHistoryItems.begin() + insertionIndex, itemToStore);
+	_EnsureUniqueVector();
+	fHistoryItems->insert(fHistoryItems->begin() + insertionIndex, itemToStore);
 
 	fHistoryMap[itemToStore->URL().String()] = itemToStore;
 
@@ -377,16 +392,16 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 int32
 BrowsingHistory::_InsertionIndex(const BrowsingHistoryItem* item) const
 {
-	int32 count = (int32)fHistoryItems.size();
-	if (count == 0 || *fHistoryItems[count - 1] < *item)
+	int32 count = (int32)fHistoryItems->size();
+	if (count == 0 || *(*fHistoryItems)[count - 1] < *item)
 		return count;
 
-	auto it = std::lower_bound(fHistoryItems.begin(), fHistoryItems.end(),
+	auto it = std::lower_bound(fHistoryItems->begin(), fHistoryItems->end(),
 		item,
 		[](const BrowsingHistoryItemPtr& a, const BrowsingHistoryItem* b) {
 			return *a < *b;
 		});
-	return (int32)std::distance(fHistoryItems.begin(), it);
+	return (int32)std::distance(fHistoryItems->begin(), it);
 }
 
 
@@ -417,15 +432,10 @@ BrowsingHistory::_SaveSettings(bool force)
 
 	fLastSaveTime = system_time();
 
-	// Create shallow copy of items to save. This is safe because the items
-	// themselves are now immutable (using COW).
-	std::unique_ptr<std::vector<BrowsingHistoryItemPtr>> newItems(
-		new(std::nothrow) std::vector<BrowsingHistoryItemPtr>(fHistoryItems));
-	if (!newItems)
-		return;
-
+	// Take a reference to the current history vector. This is O(1) and safe
+	// because of the COW logic on the vector itself.
 	fSaveLock.Lock();
-	fPendingSaveItems = std::move(newItems);
+	fPendingSaveItems = fHistoryItems;
 	fSaveLock.Unlock();
 
 	if (fSaveSem >= 0)
@@ -441,7 +451,7 @@ BrowsingHistory::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		std::unique_ptr<std::vector<BrowsingHistoryItemPtr>> itemsToSave;
+		HistoryVectorPtr itemsToSave;
 
 		self->fSaveLock.Lock();
 		itemsToSave = std::move(self->fPendingSaveItems);
