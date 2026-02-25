@@ -37,20 +37,20 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 			| B_NOT_ZOOMABLE | B_CLOSE_ON_ESCAPE | B_AUTO_UPDATE_SIZE_LIMITS),
 	m_parentWindowFrame(parentFrame),
 	m_usernameTextControl(new BTextControl("user", B_TRANSLATE("Username:"),
-		"", NULL)),
+		"", nullptr)),
 	m_passwordTextControl(new BTextControl("pass", B_TRANSLATE("Password:"),
-		"", NULL)),
+		"", nullptr)),
 	m_hidePasswordCheckBox(new BCheckBox("hide", B_TRANSLATE("Hide password "
 		"text"), new BMessage(kHidePassword))),
 	m_rememberCredentialsCheckBox(new BCheckBox("remember",
-		B_TRANSLATE("Remember username and password for this site"), NULL)),
+		B_TRANSLATE("Remember username and password for this site"), nullptr)),
 	m_okButton(new BButton("ok", B_TRANSLATE("OK"),
 		new BMessage(kMsgPanelOK))),
 	m_cancelButton(new BButton("cancel", B_TRANSLATE("Cancel"),
 		new BMessage(B_QUIT_REQUESTED))),
 	m_cancelled(false),
 	m_exitSemaphore(create_sem(0, "Authentication Panel")),
-	m_jitterRunner(NULL),
+	m_jitterRunner(nullptr),
 	m_jitterCount(0)
 {
 }
@@ -79,21 +79,9 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 	case kMsgPanelOK:
 		release_sem(m_exitSemaphore);
 		break;
-	case kHidePassword: {
-		// TODO: Toggling this is broken in BTextView. Workaround is to
-		// set the text and selection again.
-		BString text = m_passwordTextControl->Text();
-		int32 selectionStart;
-		int32 selectionEnd;
-		m_passwordTextControl->TextView()->GetSelection(&selectionStart,
-			&selectionEnd);
-		m_passwordTextControl->TextView()->HideTyping(
-			m_hidePasswordCheckBox->Value() == B_CONTROL_ON);
-		m_passwordTextControl->SetText(text.String());
-		m_passwordTextControl->TextView()->Select(selectionStart,
-			selectionEnd);
+	case kHidePassword:
+		_UpdatePasswordVisibility();
 		break;
-	}
 	case kMsgJitter: {
 		if (m_jitterCount == 0) {
 			UpdateIfNeeded();
@@ -113,7 +101,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		} else {
 			MoveTo(m_originalPos);
 			delete m_jitterRunner;
-			m_jitterRunner = NULL;
+			m_jitterRunner = nullptr;
 			m_jitterCount = 0;
 		}
 		break;
@@ -121,6 +109,30 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 	default:
 		BWindow::MessageReceived(message);
 	}
+}
+
+
+void
+AuthenticationPanel::_UpdatePasswordVisibility()
+{
+	bool hide = m_hidePasswordCheckBox->Value() == B_CONTROL_ON;
+	BTextView* textView = m_passwordTextControl->TextView();
+
+	if (textView->IsTypingHidden() == hide)
+		return;
+
+	// BTextView::HideTyping() is destructive when enabling, as it deletes
+	// the current text. We work around this by saving the text and
+	// selection, and restoring it after toggling.
+	BString text = m_passwordTextControl->Text();
+	int32 selectionStart = 0;
+	int32 selectionEnd = 0;
+	textView->GetSelection(&selectionStart, &selectionEnd);
+
+	textView->HideTyping(hide);
+
+	m_passwordTextControl->SetText(text.String());
+	textView->Select(selectionStart, selectionEnd);
 }
 
 
@@ -196,7 +208,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	// Block calling thread
 	// Get the originating window, if it exists, to let it redraw itself.
 	BWindow* window = dynamic_cast<BWindow*>
-		(BLooper::LooperForThread(find_thread(NULL)));
+		(BLooper::LooperForThread(find_thread(nullptr)));
 	if (window) {
 		status_t err;
 		for (;;) {
