@@ -173,15 +173,26 @@ public:
 				BBitmap* largeIcon = NULL;
 
 				BMessage miniIconMsg;
-				if (message->FindMessage("miniIcon", &miniIconMsg) == B_OK)
-					miniIcon = new BBitmap(&miniIconMsg);
+				if (message->FindMessage("miniIcon", &miniIconMsg) == B_OK) {
+					miniIcon = new(std::nothrow) BBitmap(&miniIconMsg);
+					if (miniIcon != NULL && miniIcon->InitCheck() != B_OK) {
+						delete miniIcon;
+						miniIcon = NULL;
+					}
+				}
 
 				BMessage largeIconMsg;
-				if (message->FindMessage("largeIcon", &largeIconMsg) == B_OK)
-					largeIcon = new BBitmap(&largeIconMsg);
+				if (message->FindMessage("largeIcon", &largeIconMsg) == B_OK) {
+					largeIcon = new(std::nothrow) BBitmap(&largeIconMsg);
+					if (largeIcon != NULL && largeIcon->InitCheck() != B_OK) {
+						delete largeIcon;
+						largeIcon = NULL;
+					}
+				}
 
 				BPath path(pathString.String());
-				_DoCreateBookmark(path, fileName, title, url, miniIcon, largeIcon);
+				if (path.InitCheck() == B_OK)
+					_DoCreateBookmark(path, fileName, title, url, miniIcon, largeIcon);
 
 				delete miniIcon;
 				delete largeIcon;
