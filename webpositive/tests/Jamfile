@@ -24,6 +24,10 @@ SimpleTest TabManagerTest :
 	be
 ;
 
+SimpleTest ConsoleWindowTest :
+	ConsoleWindowTest.cpp
+	:
+	be localestub
 SimpleTest BrowsingHistoryTest :
 	BrowsingHistoryTest.cpp
 	BrowsingHistory.cpp
