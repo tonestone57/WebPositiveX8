@@ -72,6 +72,7 @@
 #include <map>
 #include <memory>
 #include <new>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -2900,22 +2901,80 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		pathToPageSource.SetTo(url.String());
 	} else {
 		// Something else, store it.
-		// TODO: What if it isn't HTML, but for example SVG?
 		BString source;
 		ret = message->FindString("source", &source);
+
+		BString type = "text/html";
+		if (message->FindString("type", &type) != B_OK) {
+			BUrl bUrl(url);
+			BString path = bUrl.Path();
+			if (path.IEndsWith(".svg"))
+				type = "image/svg+xml";
+			else if (path.IEndsWith(".xml") || path.IEndsWith(".rss")
+				|| path.IEndsWith(".atom")) {
+				type = "text/xml";
+			} else if (path.IEndsWith(".xhtml"))
+				type = "application/xhtml+xml";
+			else if (path.IEndsWith(".txt"))
+				type = "text/plain";
+			else if (path.IEndsWith(".css"))
+				type = "text/css";
+			else if (path.IEndsWith(".js"))
+				type = "application/javascript";
+			else if (path.IEndsWith(".json") || path.IEndsWith(".webmanifest")
+				|| path.IEndsWith(".jsonld") || path.IEndsWith(".geojson")) {
+				type = "application/json";
+			} else {
+				BString sniff(source, 2048);
+				const char* s = sniff.String();
+				while (*s != '\0' && isspace(*s))
+					s++;
+
+				if (strncmp(s, "<?xml", 5) == 0) {
+					if (sniff.IFindFirst("<svg") != -1)
+						type = "image/svg+xml";
+					else
+						type = "text/xml";
+				} else if (strncmp(s, "<svg", 4) == 0) {
+					type = "image/svg+xml";
+				} else if (*s == '{' || *s == '[') {
+					type = "application/json";
+				}
+			}
+		}
+
+		BString extension = ".html";
+		if (type == "image/svg+xml")
+			extension = ".svg";
+		else if (type == "text/xml" || type == "application/xml"
+			|| type == "application/rss+xml" || type == "application/atom+xml") {
+			extension = ".xml";
+		} else if (type == "application/xhtml+xml")
+			extension = ".xhtml";
+		else if (type == "text/plain")
+			extension = ".txt";
+		else if (type == "text/css")
+			extension = ".css";
+		else if (type == "application/javascript" || type == "text/javascript")
+			extension = ".js";
+		else if (type == "application/json" || type == "application/manifest+json")
+			extension = ".json";
 
 		if (ret == B_OK)
 			ret = find_directory(B_SYSTEM_TEMP_DIRECTORY, &pathToPageSource);
 
-		if (ret == B_OK)
-			ret = pathToPageSource.Append("PageSource_XXXXXX.html");
+		if (ret == B_OK) {
+			BString fileName("PageSource_XXXXXX");
+			fileName << extension;
+			ret = pathToPageSource.Append(fileName.String());
+		}
 
 		if (ret == B_OK) {
 			char* path = strdup(pathToPageSource.Path());
 			if (path == NULL) {
 				ret = B_NO_MEMORY;
 			} else {
-				int fd = mkstemps(path, 5);
+				int fd = mkstemps(path, extension.Length());
 				if (fd != -1) {
 					close(fd);
 					pathToPageSource.SetTo(path);
@@ -2944,9 +3003,9 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		}
 
 		if (ret == B_OK) {
-			const char* type = "text/html";
-			size_t size = strlen(type);
-			pageSourceFile.WriteAttr("BEOS:TYPE", B_STRING_TYPE, 0, type, size);
+			size_t size = type.Length();
+			pageSourceFile.WriteAttr("BEOS:TYPE", B_STRING_TYPE, 0,
+				type.String(), size);
 				// If it fails we don't care.
 		}
 	}
