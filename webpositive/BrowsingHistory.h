@@ -7,6 +7,7 @@
 #define BROWSING_HISTORY_H
 
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -65,12 +66,14 @@ private:
 
 
 struct BStringHash {
-	size_t operator()(const BString& s) const;
+	size_t operator()(const BString& s) const
+	{
+		return std::hash<std::string_view>{}({s.String(), (size_t)s.Length()});
+	}
 };
 
 
 class BrowsingHistory : public BLocker {
-	friend class BrowsingHistoryTest;
 public:
 	static	BrowsingHistory*	DefaultInstance();
 
