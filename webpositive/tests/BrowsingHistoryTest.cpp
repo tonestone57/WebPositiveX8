@@ -128,7 +128,7 @@ private:
         bool added = history.AddItem(item);
         assert_true(added, "AddItem should return true");
         assert_int_equal(1, history.CountItems(), "History should have 1 item");
-        assert_true(history.HistoryItemAt(0).URL() == "http://new.com", "Item URL should match");
+        assert_true(history.ItemAt(0)->URL() == "http://new.com", "Item URL should match");
     }
 
     void test_add_item_existing() {
@@ -140,7 +140,7 @@ private:
         int32 initialCount = history.CountItems();
         assert_int_equal(1, initialCount, "History should have 1 item");
 
-        uint32 initialInvokations = history.HistoryItemAt(0).InvokationCount();
+        uint32 initialInvokations = history.ItemAt(0)->InvokationCount();
 
         // Add same URL again
         BrowsingHistoryItem item2(BString("http://test.com"));
@@ -149,7 +149,7 @@ private:
         assert_true(added, "AddItem should return true for existing item");
         assert_int_equal(initialCount, history.CountItems(), "Count should NOT increase for existing URL");
 
-        uint32 newInvokations = history.HistoryItemAt(0).InvokationCount();
+        uint32 newInvokations = history.ItemAt(0)->InvokationCount();
         assert_uint32_equal(initialInvokations + 1, newInvokations, "Invokation count should increase");
     }
 };
