@@ -34,8 +34,10 @@ class MockChoiceModel : public BAutoCompleter::ChoiceModel {
 public:
     MockChoiceModel() {}
     virtual ~MockChoiceModel() {
-        for (auto choice : fChoices)
-            delete choice;
+        for (std::vector<BAutoCompleter::Choice*>::iterator it = fChoices.begin();
+                it != fChoices.end(); ++it) {
+            delete *it;
+        }
     }
     virtual void FetchChoicesFor(const BString& pattern) {}
     virtual int32 CountChoices() const { return (int32)fChoices.size(); }
@@ -50,8 +52,10 @@ public:
     }
 
     void ClearChoices() {
-        for (auto choice : fChoices)
-            delete choice;
+        for (std::vector<BAutoCompleter::Choice*>::iterator it = fChoices.begin();
+                it != fChoices.end(); ++it) {
+            delete *it;
+        }
         fChoices.clear();
     }
 
@@ -139,6 +143,7 @@ void testSelectPrevious() {
 void testSelectNext() {
     printf("Testing BDefaultCompletionStyle::SelectNext...\n");
 
+    // CompletionStyle takes ownership and deletes these in its destructor
     MockEditView* editView = new MockEditView();
     MockChoiceModel* choiceModel = new MockChoiceModel();
     MockChoiceView* choiceView = new MockChoiceView();
@@ -194,6 +199,7 @@ void testSelectNext() {
 void testSingleChoice() {
     printf("Testing BDefaultCompletionStyle with single choice...\n");
 
+    // CompletionStyle takes ownership and deletes these in its destructor
     MockEditView* editView = new MockEditView();
     MockChoiceModel* choiceModel = new MockChoiceModel();
     MockChoiceView* choiceView = new MockChoiceView();
@@ -228,6 +234,7 @@ void testEdgeCases() {
 
     // NULL ChoiceModel
     {
+        // CompletionStyle takes ownership and deletes these in its destructor
         MockEditView* editView = new MockEditView();
         MockChoiceView* choiceView = new MockChoiceView();
         MockPatternSelector* patternSelector = new MockPatternSelector();
@@ -238,6 +245,7 @@ void testEdgeCases() {
 
     // NULL ChoiceView
     {
+        // CompletionStyle takes ownership and deletes these in its destructor
         MockEditView* editView = new MockEditView();
         MockChoiceModel* choiceModel = new MockChoiceModel();
         MockPatternSelector* patternSelector = new MockPatternSelector();
@@ -249,6 +257,7 @@ void testEdgeCases() {
 
     // Model changes (CountChoices changes)
     {
+        // CompletionStyle takes ownership and deletes these in its destructor
         MockEditView* editView = new MockEditView();
         MockChoiceModel* choiceModel = new MockChoiceModel();
         MockChoiceView* choiceView = new MockChoiceView();
@@ -276,6 +285,7 @@ void testEdgeCases() {
 
     // SetChoiceModel
     {
+        // CompletionStyle takes ownership and deletes these in its destructor
         MockEditView* editView = new MockEditView();
         MockChoiceModel* choiceModel1 = new MockChoiceModel();
         MockChoiceView* choiceView = new MockChoiceView();
@@ -289,7 +299,8 @@ void testEdgeCases() {
         choiceModel2->AddChoice("c2_1");
         choiceModel2->AddChoice("c2_2");
 
-        style.SetChoiceModel(choiceModel2); // This deletes choiceModel1
+        // SetChoiceModel takes ownership of choiceModel2 and deletes choiceModel1
+        style.SetChoiceModel(choiceModel2);
         // Note: style.fSelectedIndex is still 0.
         assert_int32(0, style.SelectedChoiceIndex(), "Index remains 0 after SetChoiceModel");
 
