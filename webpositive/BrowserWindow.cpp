@@ -56,6 +56,7 @@
 #include <MenuBar.h>
 #include <MenuItem.h>
 #include <MessageRunner.h>
+#include <MimeType.h>
 #include <NodeInfo.h>
 #include <NodeMonitor.h>
 #include <OS.h>
@@ -2900,22 +2901,46 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		pathToPageSource.SetTo(url.String());
 	} else {
 		// Something else, store it.
-		// TODO: What if it isn't HTML, but for example SVG?
 		BString source;
 		ret = message->FindString("source", &source);
+
+		BString type = "text/html";
+		BString extension = "html";
+
+		if (ret == B_OK) {
+			BMimeType mime;
+			if (message->FindString("type", &type) != B_OK) {
+				if (BMimeType::GuessMimeType(source.String(), source.Length(),
+						&mime) == B_OK) {
+					type = mime.Type();
+				}
+			} else {
+				mime.SetTo(type.String());
+			}
+
+			BMessage extensions;
+			const char* ext;
+			if (mime.GetFileExtensions(&extensions) == B_OK
+				&& extensions.FindString("extensions", &ext) == B_OK) {
+				extension = ext;
+			}
+		}
 
 		if (ret == B_OK)
 			ret = find_directory(B_SYSTEM_TEMP_DIRECTORY, &pathToPageSource);
 
+		BString fileName = "PageSource_XXXXXX.";
+		fileName << extension;
+
 		if (ret == B_OK)
-			ret = pathToPageSource.Append("PageSource_XXXXXX.html");
+			ret = pathToPageSource.Append(fileName.String());
 
 		if (ret == B_OK) {
 			char* path = strdup(pathToPageSource.Path());
 			if (path == NULL) {
 				ret = B_NO_MEMORY;
 			} else {
-				int fd = mkstemps(path, 5);
+				int fd = mkstemps(path, extension.Length() + 1);
 				if (fd != -1) {
 					close(fd);
 					pathToPageSource.SetTo(path);
@@ -2944,9 +2969,9 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		}
 
 		if (ret == B_OK) {
-			const char* type = "text/html";
-			size_t size = strlen(type);
-			pageSourceFile.WriteAttr("BEOS:TYPE", B_STRING_TYPE, 0, type, size);
+			size_t size = type.Length();
+			pageSourceFile.WriteAttr("BEOS:TYPE", B_STRING_TYPE, 0,
+				type.String(), size);
 				// If it fails we don't care.
 		}
 	}
