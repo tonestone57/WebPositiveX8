@@ -33,6 +33,16 @@ BrowsingHistoryItem::BrowsingHistoryItem(const BString& url)
 }
 
 
+BrowsingHistoryItem::BrowsingHistoryItem(const BString& url,
+	const BDateTime& dateTime)
+	:
+	fURL(url),
+	fDateTime(dateTime),
+	fInvokationCount(0)
+{
+}
+
+
 BrowsingHistoryItem::BrowsingHistoryItem(const BrowsingHistoryItem& other)
 {
 	*this = other;

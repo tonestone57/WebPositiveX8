@@ -27,6 +27,8 @@ typedef std::shared_ptr<const BrowsingHistoryItem> BrowsingHistoryItemPtr;
 class BrowsingHistoryItem {
 public:
 								BrowsingHistoryItem(const BString& url);
+								BrowsingHistoryItem(const BString& url,
+									const BDateTime& dateTime);
 								BrowsingHistoryItem(
 									const BrowsingHistoryItem& other);
 								BrowsingHistoryItem(const BMessage* archive);
@@ -68,6 +70,7 @@ struct BStringHash {
 
 
 class BrowsingHistory : public BLocker {
+	friend class BrowsingHistoryTest;
 public:
 	static	BrowsingHistory*	DefaultInstance();
 
