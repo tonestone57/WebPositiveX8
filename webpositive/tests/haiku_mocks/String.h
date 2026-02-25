@@ -10,7 +10,6 @@ public:
     BString(const char* s) : fString(s ? s : "") {}
     BString(const char* s, int32 length) : fString(s ? s : "", length) {}
     BString(const BString& other) : fString(other.fString) {}
-    operator std::string() const { return fString; }
     const char* String() const { return fString.c_str(); }
     int32 Length() const { return (int32)fString.length(); }
     bool operator==(const BString& other) const { return fString == other.fString; }

@@ -26,11 +26,12 @@ void assert_uint32_equal(uint32 expected, uint32 actual, const char* message) {
     }
 }
 
-void assert_true(bool condition, const char* message) {
-    if (condition) {
+void assert_bool(bool expected, bool actual, const char* message) {
+    if (actual == expected) {
         printf("PASS: %s\n", message);
     } else {
-        printf("FAIL: %s\n", message);
+        printf("FAIL: %s (expected %s, got %s)\n", message,
+            expected ? "true" : "false", actual ? "true" : "false");
         gTestFailures++;
     }
 }
@@ -126,9 +127,9 @@ private:
 
         BrowsingHistoryItem item(BString("http://new.com"));
         bool added = history.AddItem(item);
-        assert_true(added, "AddItem should return true");
+        assert_bool(true, added, "AddItem should return true");
         assert_int_equal(1, history.CountItems(), "History should have 1 item");
-        assert_true(history.HistoryItemAt(0).URL() == "http://new.com", "Item URL should match");
+        assert_bool(true, history.HistoryItemAt(0).URL() == "http://new.com", "Item URL should match");
     }
 
     void test_add_item_existing() {
@@ -146,7 +147,7 @@ private:
         BrowsingHistoryItem item2(BString("http://test.com"));
         bool added = history.AddItem(item2);
 
-        assert_true(added, "AddItem should return true for existing item");
+        assert_bool(true, added, "AddItem should return true for existing item");
         assert_int_equal(initialCount, history.CountItems(), "Count should NOT increase for existing URL");
 
         uint32 newInvokations = history.HistoryItemAt(0).InvokationCount();
