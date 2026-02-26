@@ -188,7 +188,7 @@ URLInputGroup::URLTextView::KeyDown(const char* bytes, int32 numBytes)
 			break;
 
 		case B_RETURN:
-			// Don't let this through to the text view.
+			fURLInputGroup->GoButton()->Invoke();
 			break;
 
 		default:
@@ -428,6 +428,9 @@ public:
 
 	virtual void Draw(BRect updateRect)
 	{
+		if (fIcon == NULL)
+			return;
+
 		BRect bounds(Bounds());
 		BRect iconBounds(0, 0, 15, 15);
 		iconBounds.OffsetTo(

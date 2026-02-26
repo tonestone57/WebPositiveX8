@@ -110,7 +110,7 @@ CookieWindow::CookieWindow(BRect frame,
 	BWindow(frame, B_TRANSLATE("Cookie manager"), B_TITLED_WINDOW,
 		B_NORMAL_WINDOW_FEEL,
 		B_AUTO_UPDATE_SIZE_LIMITS | B_ASYNCHRONOUS_CONTROLS | B_NOT_ZOOMABLE),
-	fCookieJar(jar)
+	fCookieJar(&jar)
 {
 	BGroupLayout* root = new BGroupLayout(B_HORIZONTAL, 0.0);
 	SetLayout(root);
@@ -208,6 +208,18 @@ CookieWindow::QuitRequested()
 
 
 void
+CookieWindow::SetCookieJar(BPrivate::Network::BNetworkCookieJar& jar)
+{
+	if (Lock()) {
+		fCookieJar = &jar;
+		if (!IsHidden())
+			_BuildDomainList();
+		Unlock();
+	}
+}
+
+
+void
 CookieWindow::_BuildDomainList()
 {
 	// Empty the domain list (TODO should we do this when hiding instead?)
@@ -222,7 +234,7 @@ CookieWindow::_BuildDomainList()
 	fDomains->AddItem(rootItem);
 
 	// Populate the domain list and cookie cache
-	BPrivate::Network::BNetworkCookieJar::Iterator it = fCookieJar.GetIterator();
+	BPrivate::Network::BNetworkCookieJar::Iterator it = fCookieJar->GetIterator();
 
 	fCookieMap.clear();
 	const BPrivate::Network::BNetworkCookie* cookie;
@@ -413,7 +425,7 @@ CookieWindow::_DeleteCookies()
 		// delete this cookie
 		BPrivate::Network::BNetworkCookie& cookie = row->Cookie();
 		cookie.SetExpirationDate(0);
-		fCookieJar.AddCookie(cookie);
+		fCookieJar->AddCookie(cookie);
 	}
 
 	// A domain was selected in the domain list
@@ -428,7 +440,7 @@ CookieWindow::_DeleteCookies()
 			BPrivate::Network::BNetworkCookie& cookie = row->Cookie();
 			_RemoveCookieFromMap(cookie);
 			cookie.SetExpirationDate(0);
-			fCookieJar.AddCookie(cookie);
+			fCookieJar->AddCookie(cookie);
 			fCookies->RemoveRow(row);
 			delete row;
 		}

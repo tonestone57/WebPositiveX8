@@ -35,6 +35,9 @@ public:
 	virtual void				Show();
 	virtual	bool				QuitRequested();
 
+			void				SetCookieJar(
+									BPrivate::Network::BNetworkCookieJar& jar);
+
 private:
 			void				_BuildDomainList();
 			BStringItem*		_AddDomain(BString domain, bool fake);
@@ -48,7 +51,7 @@ private:
 	BColumnListView*			fCookies;
 	BStringView*				fHeaderView;
 
-	BPrivate::Network::BNetworkCookieJar&	fCookieJar;
+	BPrivate::Network::BNetworkCookieJar*	fCookieJar;
 
 	std::map<BString, std::vector<BPrivate::Network::BNetworkCookie>>
 								fCookieMap;
