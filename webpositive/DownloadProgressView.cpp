@@ -526,8 +526,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			if (request != NULL) {
 				request->AddString("url", fURL);
 				request->AddBool("forDownload", true);
-				if (be_app->PostMessage(request) != B_OK)
-					delete request;
+				be_app->PostMessage(request);
 			}
 			break;
 		}
