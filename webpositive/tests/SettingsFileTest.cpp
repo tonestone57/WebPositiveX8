@@ -11,14 +11,11 @@
 #include <FindDirectory.h>
 #include <String.h>
 
-// Mocking find_directory using a preprocessor macro before including the source
-// This avoids linker conflicts with libbe's find_directory.
 static status_t sFindDirectoryResult = B_OK;
 static const char* sMockSettingsPath = "/boot/home/config/settings";
 
-#define find_directory mock_find_directory
 static status_t
-mock_find_directory(directory_which which, BPath* path, bool create_it = false,
+my_find_directory(directory_which which, BPath* path, bool create_it = false,
 	const BVolume* volume = NULL)
 {
 	if (which == B_USER_SETTINGS_DIRECTORY) {
@@ -29,8 +26,7 @@ mock_find_directory(directory_which which, BPath* path, bool create_it = false,
 	return B_ERROR;
 }
 
-#include "SettingsFile.cpp"
-#undef find_directory
+#include "../SettingsFile.cpp"
 
 
 // Define kApplicationName for the test as it is typically defined in BrowserApp.cpp
@@ -128,6 +124,8 @@ test_get_settings_path_error()
 int
 main()
 {
+	gMockFindDirectory = my_find_directory;
+
 	test_get_settings_path_basic();
 	test_get_settings_path_null_filename();
 	test_get_settings_path_empty_filename();

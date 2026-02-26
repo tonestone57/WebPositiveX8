@@ -14,4 +14,5 @@ inline status_t release_sem(sem_id sem, uint32 count = 1) { return B_OK; }
 inline thread_id spawn_thread(status_t (*func)(void*), const char* name, int32 priority, void* data) { return -1; }
 inline status_t resume_thread(thread_id thread) { return B_OK; }
 inline status_t wait_for_thread(thread_id thread, status_t* exitValue) { return B_OK; }
+inline void snooze(bigtime_t microseconds) {}
 #endif
