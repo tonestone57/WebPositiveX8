@@ -5,6 +5,7 @@
  */
 #include "SettingsWindow.h"
 
+#include <new>
 #include <Button.h>
 #include <CheckBox.h>
 #include <ControlLook.h>

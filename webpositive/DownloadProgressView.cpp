@@ -831,7 +831,8 @@ DownloadProgressView::_UpdateStatus(off_t currentSize, off_t expectedSize)
 	fCurrentSize = currentSize;
 	fExpectedSize = expectedSize;
 
-	fStatusBar->SetTo(100.0 * currentSize / expectedSize);
+	if (expectedSize > 0)
+		fStatusBar->SetTo(100.0 * currentSize / expectedSize);
 
 	bigtime_t currentTime = system_time();
 	if ((currentTime - fLastUpdateTime) > kMaxUpdateInterval) {
@@ -901,6 +902,8 @@ DownloadProgressView::_UpdateStatusText()
 	} else if (!sShowSpeed && fCurrentSize < fExpectedSize) {
 		double totalBytesPerSecond = fSpeedCalculator.AverageSpeed(
 				fCurrentSize, system_time());
+		if (totalBytesPerSecond <= 0.0)
+			return;
 		double secondsRemaining = (fExpectedSize - fCurrentSize)
 			/ totalBytesPerSecond;
 		time_t now = (time_t)real_time_clock();
