@@ -23,6 +23,16 @@
 // This also gives us access to private constants like kAddBookmarkMsg.
 #include "BookmarkBar.cpp"
 
+class BookmarkBarTest {
+public:
+	static void test_initialization();
+	static void test_min_size();
+	static void test_overflow_menu_created();
+	static void test_add_item_logic();
+	static void test_add_bookmark_message();
+	static void test_node_monitor_events();
+};
+
 int gTestFailures = 0;
 
 static void
@@ -48,8 +58,8 @@ assert_int32(int32 expected, int32 actual, const char* message)
 }
 
 
-static void
-test_initialization()
+void
+BookmarkBarTest::test_initialization()
 {
 	printf("Testing BookmarkBar initialization...\n");
 
@@ -63,8 +73,8 @@ test_initialization()
 }
 
 
-static void
-test_min_size()
+void
+BookmarkBarTest::test_min_size()
 {
 	printf("Testing BookmarkBar::MinSize()...\n");
 
@@ -79,8 +89,8 @@ test_min_size()
 }
 
 
-static void
-test_overflow_menu_created()
+void
+BookmarkBarTest::test_overflow_menu_created()
 {
 	printf("Testing overflow menu creation...\n");
 
@@ -95,8 +105,8 @@ test_overflow_menu_created()
 }
 
 
-static void
-test_add_item_logic()
+void
+BookmarkBarTest::test_add_item_logic()
 {
 	printf("Testing BookmarkBar::_AddItem logic...\n");
 
@@ -124,8 +134,8 @@ test_add_item_logic()
 }
 
 
-static void
-test_add_bookmark_message()
+void
+BookmarkBarTest::test_add_bookmark_message()
 {
 	printf("Testing kAddBookmarkMsg...\n");
 
@@ -148,8 +158,8 @@ test_add_bookmark_message()
 }
 
 
-static void
-test_node_monitor_events()
+void
+BookmarkBarTest::test_node_monitor_events()
 {
 	printf("Testing Node Monitor events (Moved/Removed)...\n");
 
@@ -191,12 +201,12 @@ main()
 {
 	BApplication app("application/x-vnd.Haiku-BookmarkBarTest");
 
-	test_initialization();
-	test_min_size();
-	test_overflow_menu_created();
-	test_add_item_logic();
-	test_add_bookmark_message();
-	test_node_monitor_events();
+	BookmarkBarTest::test_initialization();
+	BookmarkBarTest::test_min_size();
+	BookmarkBarTest::test_overflow_menu_created();
+	BookmarkBarTest::test_add_item_logic();
+	BookmarkBarTest::test_add_bookmark_message();
+	BookmarkBarTest::test_node_monitor_events();
 
 	if (gTestFailures > 0) {
 		printf("\nFinished running tests: %d failures\n", gTestFailures);
