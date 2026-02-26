@@ -11,9 +11,15 @@
 #include <StringItem.h>
 #include <Window.h>
 
-#define private public
 #include "ConsoleWindow.h"
-#undef private
+
+class ConsoleWindowTest {
+public:
+	static void test_add_message();
+	static void test_message_repetition();
+	static void test_different_messages();
+	static void test_clear_messages();
+};
 
 // Define constants if not already defined to allow compilation for testing
 #ifndef ADD_CONSOLE_MESSAGE
@@ -58,8 +64,8 @@ assert_string(const char* expected, const char* actual, const char* message)
 	}
 }
 
-static void
-test_add_message()
+void
+ConsoleWindowTest::test_add_message()
 {
 	printf("Testing ADD_CONSOLE_MESSAGE...\n");
 	ConsoleWindow* window = new ConsoleWindow(BRect(0, 0, 100, 100));
@@ -79,8 +85,8 @@ test_add_message()
 	delete window;
 }
 
-static void
-test_message_repetition()
+void
+ConsoleWindowTest::test_message_repetition()
 {
 	printf("Testing message repetition...\n");
 	ConsoleWindow* window = new ConsoleWindow(BRect(0, 0, 100, 100));
@@ -111,8 +117,8 @@ test_message_repetition()
 	delete window;
 }
 
-static void
-test_different_messages()
+void
+ConsoleWindowTest::test_different_messages()
 {
 	printf("Testing different messages...\n");
 	ConsoleWindow* window = new ConsoleWindow(BRect(0, 0, 100, 100));
@@ -149,8 +155,8 @@ test_different_messages()
 	delete window;
 }
 
-static void
-test_clear_messages()
+void
+ConsoleWindowTest::test_clear_messages()
 {
 	printf("Testing CLEAR_CONSOLE_MESSAGES...\n");
 	ConsoleWindow* window = new ConsoleWindow(BRect(0, 0, 100, 100));
@@ -177,10 +183,10 @@ main()
 {
 	BApplication app("application/x-vnd.Haiku-ConsoleWindowTest");
 
-	test_add_message();
-	test_message_repetition();
-	test_different_messages();
-	test_clear_messages();
+	ConsoleWindowTest::test_add_message();
+	ConsoleWindowTest::test_message_repetition();
+	ConsoleWindowTest::test_different_messages();
+	ConsoleWindowTest::test_clear_messages();
 
 	if (gTestFailures > 0) {
 		printf("\nFinished running tests: %d failures\n", gTestFailures);

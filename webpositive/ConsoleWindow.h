@@ -19,6 +19,7 @@ class BButton;
 
 
 class ConsoleWindow : public BWindow {
+	friend class ConsoleWindowTest;
 public:
 								ConsoleWindow(BRect frame);
 	virtual	void				MessageReceived(BMessage* message);
