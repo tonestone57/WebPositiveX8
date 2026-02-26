@@ -99,10 +99,14 @@ ConsoleWindow::MessageReceived(BMessage* message)
 				// preserve the repeated line
 				if (fRepeatCounter > 1) {
 					int32 index = fMessagesListView->CountItems() - 1;
-					BStringItem* item = (BStringItem*)fMessagesListView->ItemAt(index);
-					item->SetText(finalText.String());
-					fMessagesListView->InvalidateItem(index);
-					break;
+					if (index >= 0) {
+						BStringItem* item = (BStringItem*)fMessagesListView->ItemAt(index);
+						if (item != NULL) {
+							item->SetText(finalText.String());
+							fMessagesListView->InvalidateItem(index);
+							break;
+						}
+					}
 				}
 			} else {
 				fPreviousText = finalText;

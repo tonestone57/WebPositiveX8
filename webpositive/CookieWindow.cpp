@@ -16,6 +16,7 @@
 #include <GroupLayoutBuilder.h>
 #include <NetworkCookieJar.h>
 #include <OutlineListView.h>
+#include <StringItem.h>
 #include <ScrollView.h>
 #include <StringView.h>
 
@@ -225,15 +226,10 @@ void
 CookieWindow::_BuildDomainList()
 {
 	// Empty the domain list (TODO should we do this when hiding instead?)
-	for (int i = fDomains->FullListCountItems() - 1; i >= 1; i--) {
+	for (int i = fDomains->FullListCountItems() - 1; i >= 0; i--) {
 		delete fDomains->FullListItemAt(i);
 	}
 	fDomains->MakeEmpty();
-
-	// BOutlineListView does not handle parent = NULL in many methods, so let's
-	// make sure everything always has a parent.
-	DomainItem* rootItem = new DomainItem("", true);
-	fDomains->AddItem(rootItem);
 
 	// Populate the domain list and cookie cache
 	BPrivate::Network::BNetworkCookieJar::Iterator it = fCookieJar->GetIterator();
@@ -252,18 +248,7 @@ CookieWindow::_BuildDomainList()
 		fCookieMap[domain].push_back(*cookie);
 	}
 
-	int i = 1;
-	while (i < fDomains->FullListCountItems())
-	{
-		DomainItem* item = (DomainItem*)fDomains->FullListItemAt(i);
-		// Detach items from the fake root
-		item->SetOutlineLevel(item->OutlineLevel() - 1);
-		i++;
-	}
-	fDomains->RemoveItem(rootItem);
-	delete rootItem;
-
-	i = 0;
+	int i = 0;
 	int firstNotEmpty = i;
 	// Collapse empty items to keep the list short
 	while (i < fDomains->FullListCountItems())
@@ -312,8 +297,6 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		BString parentDomain(domain);
 		parentDomain.Remove(0, firstDot + 1);
 		parent = _AddDomain(parentDomain, true);
-	} else {
-		parent = (BStringItem*)fDomains->FullListItemAt(0);
 	}
 
 	int siblingCount = fDomains->CountItemsUnder(parent, true);
@@ -342,7 +325,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 
 	// Insert the new item, keeping the list alphabetically sorted
 	BStringItem* domainItem = new DomainItem(domain, fake);
-	domainItem->SetOutlineLevel(parent->OutlineLevel() + 1);
+	domainItem->SetOutlineLevel(parent != NULL ? parent->OutlineLevel() + 1 : 0);
 
 	if (insertIndex < siblingCount) {
 		BListItem* nextSibling = fDomains->ItemUnderAt(parent, true,
@@ -359,7 +342,9 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 				+ fDomains->CountItemsUnder(lastSibling, false) + 1);
 		} else {
 			// There were no siblings, insert right after the parent
-			fDomains->AddItem(domainItem, fDomains->FullListIndexOf(parent) + 1);
+			int32 index = parent != NULL ? fDomains->FullListIndexOf(parent) + 1
+				: fDomains->FullListCountItems();
+			fDomains->AddItem(domainItem, index);
 		}
 	}
 

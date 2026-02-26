@@ -50,6 +50,10 @@ BrowsingHistoryItem::BrowsingHistoryItem(const BrowsingHistoryItem& other)
 
 
 BrowsingHistoryItem::BrowsingHistoryItem(const BMessage* archive)
+	:
+	fURL(""),
+	fDateTime(),
+	fInvocationCount(0)
 {
 	if (!archive)
 		return;

@@ -79,6 +79,7 @@ BrowserApp::BrowserApp()
 	fInitialized(false),
 	fSettings(NULL),
 	fCookies(NULL),
+	fCookiesLoaded(false),
 	fCookieLoaderThread(-1),
 	fSession(NULL),
 	fContext(NULL),
@@ -324,6 +325,8 @@ BrowserApp::MessageReceived(BMessage* message)
 			if (fCookieWindow != NULL)
 				fCookieWindow->SetCookieJar(fContext->GetCookieJar());
 
+			fCookiesLoaded = true;
+
 			// Clean up thread handle as it finished
 			status_t exitValue;
 			wait_for_thread(fCookieLoaderThread, &exitValue);
@@ -521,7 +524,7 @@ BrowserApp::QuitRequested()
 		// But we MUST check fCookies before dereferencing.
 	}
 
-	if (fCookies != NULL) {
+	if (fCookies != NULL && fCookiesLoaded) {
 		BMessage cookieArchive;
 		BPrivate::Network::BNetworkCookieJar& cookieJar = fContext->GetCookieJar();
 		cookieJar.PurgeForExit();

@@ -1,9 +1,16 @@
 #ifndef _ICON_MENU_ITEM_H
 #define _ICON_MENU_ITEM_H
 #include "MenuItem.h"
-class BIconMenuItem : public BMenuItem {
+#include "Bitmap.h"
+
+namespace BPrivate {
+class IconMenuItem : public BMenuItem {
 public:
-    BIconMenuItem(const char* label, BMessage* message, char shortcut = 0, uint32 modifiers = 0, const BBitmap* icon = nullptr)
-        : BMenuItem(label, message, shortcut, modifiers) {}
+    IconMenuItem(const char* label, BMessage* message, BBitmap* icon, int32 which) : BMenuItem(label, message) {}
+    IconMenuItem(const char* label, BMessage* message, const char* fileType, int32 which) : BMenuItem(label, message) {}
+    IconMenuItem(BMenu* submenu, BMessage* message, const char* fileType, int32 which) : BMenuItem(submenu, message) {}
+    IconMenuItem(const char* label, BMessage* message, void* info, int32 which) : BMenuItem(label, message) {}
 };
+}
+using BPrivate::IconMenuItem;
 #endif

@@ -1,13 +1,12 @@
 #ifndef _NODE_H
 #define _NODE_H
 #include "SupportDefs.h"
-#include <sys/types.h>
-struct node_ref {
-    dev_t device;
-    ino_t node;
-};
+class BEntry;
 class BNode {
 public:
     BNode() {}
+    BNode(const BEntry* entry) {}
+    virtual ~BNode() {}
+    status_t InitCheck() const { return B_OK; }
 };
 #endif
