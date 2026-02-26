@@ -28,6 +28,7 @@
 
 #include "BrowserApp.h"
 
+#include <new>
 #include <AboutWindow.h>
 #include <Alert.h>
 #include <Autolock.h>

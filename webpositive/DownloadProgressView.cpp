@@ -6,6 +6,7 @@
 
 #include "DownloadProgressView.h"
 
+#include <new>
 #include <stdio.h>
 #include <sys/stat.h>
 
