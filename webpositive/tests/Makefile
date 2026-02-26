@@ -3,7 +3,7 @@
 CXX = g++
 CXXFLAGS = -I. -Ihaiku_mocks -I../autocompletion -I.. -Wall -Wno-multichar
 
-TESTS = CompletionStyleTest BrowsingHistoryTest DownloadSpeedCalculatorTest BrowsingHistoryItemTest SettingsFileTest URLChoiceTest PatternSelectorTest BrowsingHistoryChoiceModelTest CredentialsTest
+TESTS = CompletionStyleTest BrowsingHistoryTest DownloadSpeedCalculatorTest BrowsingHistoryItemTest SettingsFileTest URLChoiceTest PatternSelectorTest BrowsingHistoryChoiceModelTest CredentialsTest ConsoleWindowTest
 
 all: $(TESTS)
 
@@ -34,6 +34,9 @@ BrowsingHistoryChoiceModelTest: BrowsingHistoryChoiceModelTest.cpp ../autocomple
 CredentialsTest: CredentialsTest.cpp ../CredentialsStorage.cpp ../SettingsFile.cpp ../SettingsKeys.cpp haiku_mocks/Mocks.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
+ConsoleWindowTest: ConsoleWindowTest.cpp haiku_mocks/Mocks.cpp
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
 run: $(TESTS)
 	./CompletionStyleTest
 	./BrowsingHistoryTest
@@ -44,6 +47,7 @@ run: $(TESTS)
 	./PatternSelectorTest
 	./BrowsingHistoryChoiceModelTest
 	./CredentialsTest
+	./ConsoleWindowTest
 
 clean:
 	rm -f $(TESTS)

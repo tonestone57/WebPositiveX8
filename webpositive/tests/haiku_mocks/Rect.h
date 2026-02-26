@@ -9,6 +9,7 @@ public:
     bool Contains(BPoint p) const {
         return p.x >= left && p.x <= right && p.y >= top && p.y <= bottom;
     }
+    bool IsValid() const { return left <= right && top <= bottom; }
     float Width() const { return right - left; }
     float Height() const { return bottom - top; }
     void OffsetTo(float x, float y) {

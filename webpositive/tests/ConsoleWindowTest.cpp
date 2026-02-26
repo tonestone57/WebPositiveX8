@@ -11,7 +11,9 @@
 #include <StringItem.h>
 #include <Window.h>
 
+#define private public
 #include "ConsoleWindow.h"
+#undef private
 
 // Define constants if not already defined to allow compilation for testing
 #ifndef ADD_CONSOLE_MESSAGE
