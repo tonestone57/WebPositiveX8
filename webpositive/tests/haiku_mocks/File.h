@@ -5,6 +5,8 @@ class BFile {
 public:
     BFile() {}
     BFile(const char* path, uint32 mode) {}
+    status_t SetTo(const char* path, uint32 mode) { return B_OK; }
+    status_t SetPermissions(uint32 mode) { return B_OK; }
 };
 enum {
     B_READ_ONLY = 0,

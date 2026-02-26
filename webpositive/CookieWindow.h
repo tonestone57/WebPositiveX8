@@ -27,6 +27,7 @@ class BString;
 
 
 class CookieWindow : public BWindow {
+	friend class CookieWindowTest;
 public:
 								CookieWindow(BRect frame,
 									BPrivate::Network::BNetworkCookieJar& jar);

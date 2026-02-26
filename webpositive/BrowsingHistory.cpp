@@ -28,7 +28,7 @@ BrowsingHistoryItem::BrowsingHistoryItem(const BString& url)
 	:
 	fURL(url),
 	fDateTime(BDateTime::CurrentDateTime(B_LOCAL_TIME)),
-	fInvokationCount(0)
+	fInvocationCount(0)
 {
 }
 
@@ -38,7 +38,7 @@ BrowsingHistoryItem::BrowsingHistoryItem(const BString& url,
 	:
 	fURL(url),
 	fDateTime(dateTime),
-	fInvokationCount(0)
+	fInvocationCount(0)
 {
 }
 
@@ -57,7 +57,8 @@ BrowsingHistoryItem::BrowsingHistoryItem(const BMessage* archive)
 	if (archive->FindMessage("date time", &dateTimeArchive) == B_OK)
 		fDateTime = BDateTime(&dateTimeArchive);
 	archive->FindString("url", &fURL);
-	archive->FindUInt32("invokations", &fInvokationCount);
+	if (archive->FindUInt32("invocations", &fInvocationCount) != B_OK)
+		archive->FindUInt32("invokations", &fInvocationCount);
 }
 
 
@@ -78,7 +79,7 @@ BrowsingHistoryItem::Archive(BMessage* archive) const
 	if (status == B_OK)
 		status = archive->AddString("url", fURL.String());
 	if (status == B_OK)
-		status = archive->AddUInt32("invokations", fInvokationCount);
+		status = archive->AddUInt32("invocations", fInvocationCount);
 	return status;
 }
 
@@ -91,7 +92,7 @@ BrowsingHistoryItem::operator=(const BrowsingHistoryItem& other)
 
 	fURL = other.fURL;
 	fDateTime = other.fDateTime;
-	fInvokationCount = other.fInvokationCount;
+	fInvocationCount = other.fInvocationCount;
 
 	return *this;
 }
@@ -104,7 +105,7 @@ BrowsingHistoryItem::operator==(const BrowsingHistoryItem& other) const
 		return true;
 
 	return fURL == other.fURL && fDateTime == other.fDateTime
-		&& fInvokationCount == other.fInvokationCount;
+		&& fInvocationCount == other.fInvocationCount;
 }
 
 
@@ -157,9 +158,9 @@ void
 BrowsingHistoryItem::Invoked()
 {
 	// Eventually, we may overflow...
-	uint32 count = fInvokationCount + 1;
-	if (count > fInvokationCount)
-		fInvokationCount = count;
+	uint32 count = fInvocationCount + 1;
+	if (count > fInvocationCount)
+		fInvocationCount = count;
 	fDateTime = BDateTime::CurrentDateTime(B_LOCAL_TIME);
 }
 
@@ -311,7 +312,7 @@ BrowsingHistory::Clear()
 	BAutolock _(this);
 	_Clear();
 	_SaveSettings(true);
-}	
+}
 
 
 void
@@ -322,14 +323,14 @@ BrowsingHistory::SetMaxHistoryItemAge(int32 days)
 		fMaxHistoryItemAge = days;
 		_SaveSettings(true);
 	}
-}	
+}
 
 
 int32
 BrowsingHistory::MaxHistoryItemAge() const
 {
 	return fMaxHistoryItemAge;
-}	
+}
 
 
 // #pragma mark - private

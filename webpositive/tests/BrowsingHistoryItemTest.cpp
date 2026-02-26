@@ -20,32 +20,40 @@ void assert_true(bool condition, const char* message) {
 void test_invoked() {
     printf("Testing BrowsingHistoryItem::Invoked()...\n");
     BrowsingHistoryItem item(BString("http://www.haiku-os.org"));
-    assert_true(item.InvokationCount() == 0, "Initial invokation count is 0");
+    assert_true(item.InvocationCount() == 0, "Initial invocation count is 0");
 
     BDateTime before = item.DateTime();
     assert_true(before.IsValid(), "Initial DateTime is valid");
 
     item.Invoked();
-    assert_true(item.InvokationCount() == 1, "Invokation count is 1 after one call");
+    assert_true(item.InvocationCount() == 1, "Invocation count is 1 after one call");
     assert_true(item.DateTime() >= before, "DateTime is updated (>= before)");
     assert_true(item.DateTime().IsValid(), "DateTime after invocation is valid");
 
     item.Invoked();
-    assert_true(item.InvokationCount() == 2, "Invokation count is 2 after two calls");
+    assert_true(item.InvocationCount() == 2, "Invocation count is 2 after two calls");
 
     // Test overflow protection
     printf("Testing overflow protection...\n");
     BMessage archive;
     archive.AddString("url", "http://www.haiku-os.org");
-    // We use the exact key "invokations" and type UInt32 as found in BrowsingHistory.cpp
+    // Test that new key "invocations" works
     uint32 maxCount = 0xFFFFFFFF;
-    archive.AddUInt32("invokations", maxCount);
+    archive.AddUInt32("invocations", maxCount);
 
     BrowsingHistoryItem overflowItem(&archive);
-    assert_true(overflowItem.InvokationCount() == maxCount, "Item initialized with max uint32");
+    assert_true(overflowItem.InvocationCount() == maxCount, "Item initialized with max uint32");
 
     overflowItem.Invoked();
-    assert_true(overflowItem.InvokationCount() == maxCount, "Invokation count stays at max uint32 on overflow (clamping)");
+    assert_true(overflowItem.InvocationCount() == maxCount, "Invocation count stays at max uint32 on overflow (clamping)");
+
+    // Test backward compatibility with old key "invokations"
+    printf("Testing backward compatibility with 'invokations' key...\n");
+    BMessage oldArchive;
+    oldArchive.AddString("url", "http://www.haiku-os.org");
+    oldArchive.AddUInt32("invokations", 42);
+    BrowsingHistoryItem oldItem(&oldArchive);
+    assert_true(oldItem.InvocationCount() == 42, "Old 'invokations' key should be supported");
 }
 
 int main() {
@@ -60,21 +68,21 @@ int main() {
     BrowsingHistoryItem item2(BString("http://www.haiku-os.org"));
 
     assert_true(item1.URL() == "http://www.google.com", "item1 URL is correct");
-    assert_true(item1.InvokationCount() == 2, "item1 invokation count is 2");
+    assert_true(item1.InvocationCount() == 2, "item1 invocation count is 2");
     assert_true(item2.URL() == "http://www.haiku-os.org", "item2 URL is correct");
-    assert_true(item2.InvokationCount() == 0, "item2 invokation count is 0");
+    assert_true(item2.InvocationCount() == 0, "item2 invocation count is 0");
 
     printf("Assigning item1 to item2...\n");
     item2 = item1;
 
     assert_true(item2.URL() == item1.URL(), "item2 URL matches item1 URL after assignment");
     assert_true(item2.DateTime() == item1.DateTime(), "item2 DateTime matches item1 DateTime after assignment");
-    assert_true(item2.InvokationCount() == item1.InvokationCount(), "item2 invokation count matches item1 after assignment");
+    assert_true(item2.InvocationCount() == item1.InvocationCount(), "item2 invocation count matches item1 after assignment");
     assert_true(item2 == item1, "item2 == item1 after assignment");
 
     printf("Testing self-assignment...\n");
     item1 = item1;
-    assert_true(item1.InvokationCount() == 2, "item1 invokation count still correct after self-assignment");
+    assert_true(item1.InvocationCount() == 2, "item1 invocation count still correct after self-assignment");
 
     printf("Testing multiple assignment...\n");
     BrowsingHistoryItem item3(BString("http://www.example.com"));

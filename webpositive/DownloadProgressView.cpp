@@ -144,7 +144,6 @@ GetAsyncWorker()
 }
 
 const bigtime_t kMaxUpdateInterval = 100000LL;
-const bigtime_t kSpeedReferenceInterval = 500000LL;
 const bigtime_t kShowSpeedInterval = 8000000LL;
 const bigtime_t kShowEstimatedFinishInterval = 4000000LL;
 

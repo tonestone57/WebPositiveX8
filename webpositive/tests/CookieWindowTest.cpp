@@ -15,12 +15,18 @@
 #include <StringView.h>
 #include <Button.h>
 
+#include "CookieWindow.h"
+
 // We include the .cpp file to access private members for testing.
 // Since the Jamfile includes the parent directory in SEARCH_SOURCE,
 // this should be found.
-#define private public
 #include "CookieWindow.cpp"
-#undef private
+
+class CookieWindowTest {
+public:
+	static void test_add_domain_hierarchy();
+	static void test_build_domain_list();
+};
 
 int gTestFailures = 0;
 
@@ -52,8 +58,8 @@ assert_string(const char* expected, const char* actual, const char* message)
 }
 
 
-static void
-test_add_domain_hierarchy()
+void
+CookieWindowTest::test_add_domain_hierarchy()
 {
 	printf("Testing CookieWindow::_AddDomain() hierarchy...\n");
 
@@ -84,8 +90,8 @@ test_add_domain_hierarchy()
 }
 
 
-static void
-test_build_domain_list()
+void
+CookieWindowTest::test_build_domain_list()
 {
 	printf("Testing CookieWindow::_BuildDomainList()...\n");
 
@@ -137,8 +143,8 @@ main()
 	// We need a BApplication for UI classes to work
 	BApplication app("application/x-vnd.Haiku-CookieWindowTest");
 
-	test_add_domain_hierarchy();
-	test_build_domain_list();
+	CookieWindowTest::test_add_domain_hierarchy();
+	CookieWindowTest::test_build_domain_list();
 
 	if (gTestFailures > 0) {
 		printf("\nFinished running tests: %d failures\n", gTestFailures);

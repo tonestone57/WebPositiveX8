@@ -25,6 +25,7 @@ namespace BPrivate {
 
 
 class BookmarkBar: public BMenuBar {
+	friend class BookmarkBarTest;
 public:
 									BookmarkBar(const char* title,
 										BHandler* target,
