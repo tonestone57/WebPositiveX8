@@ -16,7 +16,7 @@ public:
     BMessage* Message() const { return fMessage; }
     void SetMessage(BMessage* message) { delete fMessage; fMessage = message; }
     const char* Label() const { return fLabel.String(); }
-    void SetLabel(const char* label) { fLabel = label; }
+    virtual void SetLabel(const char* label) { fLabel = label; }
     void SetMarked(bool marked) {}
     BMenu* Submenu() const { return fSubmenu; }
 

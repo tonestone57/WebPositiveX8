@@ -2,9 +2,9 @@
 #define _SUPPORT_DEFS_H
 
 #include <stdint.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 typedef int32_t int32;
 typedef uint32_t uint32;
@@ -14,8 +14,6 @@ typedef int16_t int16;
 typedef uint16_t uint16;
 typedef int8_t int8;
 typedef uint8_t uint8;
-typedef float float32;
-typedef double float64;
 
 typedef int32 status_t;
 typedef int32 team_id;
@@ -45,10 +43,10 @@ typedef struct {
 
 struct entry_ref {
     dev_t device;
-    int64 directory;
+    ino_t directory;
     char* name;
     entry_ref() : device(0), directory(0), name(nullptr) {}
-    entry_ref(dev_t d, int64 dir, const char* n) : device(d), directory(dir), name(n ? strdup(n) : nullptr) {}
+    entry_ref(dev_t d, ino_t dir, const char* n) : device(d), directory(dir), name(n ? strdup(n) : nullptr) {}
     ~entry_ref() { free(name); }
     entry_ref(const entry_ref& other) : device(other.device), directory(other.directory), name(other.name ? strdup(other.name) : nullptr) {}
     entry_ref& operator=(const entry_ref& other) {

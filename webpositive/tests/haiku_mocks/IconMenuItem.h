@@ -10,6 +10,7 @@ public:
     IconMenuItem(const char* label, BMessage* message, const char* fileType, int32 which) : BMenuItem(label, message) {}
     IconMenuItem(BMenu* submenu, BMessage* message, const char* fileType, int32 which) : BMenuItem(submenu, message) {}
     IconMenuItem(const char* label, BMessage* message, void* info, int32 which) : BMenuItem(label, message) {}
+    virtual ~IconMenuItem() {}
 };
 }
 using BPrivate::IconMenuItem;

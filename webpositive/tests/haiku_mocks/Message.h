@@ -5,148 +5,119 @@
 #include "Rect.h"
 #include "String.h"
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
-class BHandler;
 class BFile;
 
 class BMessage {
 public:
+    uint32 what;
     BMessage() : what(0) {}
     BMessage(uint32 what) : what(what) {}
     virtual ~BMessage() {}
-    uint32 what;
 
-    status_t AddString(const char* name, const char* string) { if (!name) return B_BAD_VALUE; fStrings[name] = string ? string : ""; return B_OK; }
-    status_t AddString(const char* name, const BString& string) { return AddString(name, string.String()); }
-    status_t AddInt32(const char* name, int32 value) { if (!name) return B_BAD_VALUE; fInt32s[name] = value; return B_OK; }
-    status_t AddUInt32(const char* name, uint32 value) { if (!name) return B_BAD_VALUE; fUInt32s[name] = value; return B_OK; }
-    status_t AddInt64(const char* name, int64 value) { if (!name) return B_BAD_VALUE; fInt64s[name] = value; return B_OK; }
-    status_t AddBool(const char* name, bool value) { if (!name) return B_BAD_VALUE; fBools[name] = value; return B_OK; }
-    status_t AddFloat(const char* name, float value) { if (!name) return B_BAD_VALUE; fFloats[name] = value; return B_OK; }
-    status_t AddRect(const char* name, BRect rect) { if (!name) return B_BAD_VALUE; fRects[name] = rect; return B_OK; }
-    status_t AddMessage(const char* name, const BMessage* message) { if (!name) return B_BAD_VALUE; if (message) fMessages[name] = *message; return B_OK; }
-    status_t AddPointer(const char* name, const void* pointer) { if (!name) return B_BAD_VALUE; fPointers[name] = pointer; return B_OK; }
-    status_t AddRef(const char* name, const entry_ref* ref) { if (!name) return B_BAD_VALUE; if (ref) fRefs[name] = *ref; return B_OK; }
+    status_t AddString(const char* name, const char* s) { if(!name) return B_BAD_VALUE; fStrings[name].push_back(s ? s : ""); return B_OK; }
+    status_t AddString(const char* name, const BString& s) { return AddString(name, s.String()); }
+    status_t AddInt32(const char* name, int32 v) { if(!name) return B_BAD_VALUE; fInt32s[name].push_back(v); return B_OK; }
+    status_t AddUInt32(const char* name, uint32 v) { if(!name) return B_BAD_VALUE; fInt32s[name].push_back((int32)v); return B_OK; }
+    status_t AddInt64(const char* name, int64 v) { if(!name) return B_BAD_VALUE; fInt64s[name].push_back(v); return B_OK; }
+    status_t AddBool(const char* name, bool v) { if(!name) return B_BAD_VALUE; fBools[name].push_back(v); return B_OK; }
+    status_t AddFloat(const char* name, float v) { if(!name) return B_BAD_VALUE; fFloats[name].push_back(v); return B_OK; }
+    status_t AddRect(const char* name, BRect v) { if(!name) return B_BAD_VALUE; fRects[name].push_back(v); return B_OK; }
+    status_t AddMessage(const char* name, const BMessage* v) { if(!name) return B_BAD_VALUE; if(v) fMessages[name].push_back(*v); return B_OK; }
+    status_t AddPointer(const char* name, const void* v) { if(!name) return B_BAD_VALUE; fPointers[name].push_back(v); return B_OK; }
+    status_t AddRef(const char* name, const entry_ref* v) { if(!name) return B_BAD_VALUE; if(v) fRefs[name].push_back(*v); return B_OK; }
     status_t AddData(const char* name, uint32 type, const void* data, ssize_t size) { return B_OK; }
 
-    status_t FindString(const char* name, BString* string) const {
-        if (!name) return B_BAD_VALUE;
+    status_t FindString(const char* name, int32 index, const char** s) const {
+        if(!name) return B_BAD_VALUE;
         auto it = fStrings.find(name);
-        if (it != fStrings.end()) { if (string) *string = it->second.c_str(); return B_OK; }
-        return B_NAME_NOT_FOUND;
+        if(it == fStrings.end() || (size_t)index >= it->second.size()) return B_NAME_NOT_FOUND;
+        if(s) *s = it->second[index].c_str();
+        return B_OK;
     }
-    BString FindString(const char* name) const {
-        if (!name) return BString();
-        auto it = fStrings.find(name);
-        if (it != fStrings.end()) return BString(it->second.c_str());
-        return BString();
+    status_t FindString(const char* name, const char** s) const { return FindString(name, 0, s); }
+    status_t FindString(const char* name, BString* s) const {
+        const char* str = nullptr;
+        status_t st = FindString(name, &str);
+        if(st == B_OK && s) *s = str;
+        return st;
     }
-    status_t FindString(const char* name, int32 index, BString* string) const { return FindString(name, string); }
-    status_t FindString(const char* name, const char** string) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fStrings.find(name);
-        if (it != fStrings.end()) { if (string) *string = it->second.c_str(); return B_OK; }
-        return B_NAME_NOT_FOUND;
+    BString FindString(const char* name, int32 index = 0) const {
+        const char* str = nullptr;
+        FindString(name, index, &str);
+        return BString(str);
     }
-    status_t FindInt32(const char* name, int32* value) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fInt32s.find(name);
-        if (it != fInt32s.end()) { if (value) *value = it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindInt32(const char* name, dev_t* value) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fInt32s.find(name);
-        if (it != fInt32s.end()) { if (value) *value = (dev_t)it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindInt32(const char* name, int32 index, int32* value) const { return FindInt32(name, value); }
-    status_t FindUInt32(const char* name, uint32* value) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fUInt32s.find(name);
-        if (it != fUInt32s.end()) { if (value) *value = it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindInt64(const char* name, int64* value) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fInt64s.find(name);
-        if (it != fInt64s.end()) { if (value) *value = it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    int64 FindInt64(const char* name) const {
-        if (!name) return 0;
-        auto it = fInt64s.find(name);
-        if (it != fInt64s.end()) return it->second;
-        return 0;
-    }
-    status_t FindInt64(const char* name, uint64* value) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fInt64s.find(name);
-        if (it != fInt64s.end()) { if (value) *value = (uint64)it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindBool(const char* name, bool* value) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fBools.find(name);
-        if (it != fBools.end()) { if (value) *value = it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindFloat(const char* name, float* value) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fFloats.find(name);
-        if (it != fFloats.end()) { if (value) *value = it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindRect(const char* name, BRect* rect) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fRects.find(name);
-        if (it != fRects.end()) { if (rect) *rect = it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindMessage(const char* name, BMessage* message) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fMessages.find(name);
-        if (it != fMessages.end()) { if (message) *message = it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindMessage(const char* name, int32 index, BMessage* message) const { return FindMessage(name, message); }
-    status_t FindPointer(const char* name, void** pointer) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fPointers.find(name);
-        if (it != fPointers.end()) { if (pointer) *pointer = (void*)it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindPointer(const char* name, int32 index, void** pointer) const { return FindPointer(name, pointer); }
-    status_t FindRef(const char* name, entry_ref* ref) const {
-        if (!name) return B_BAD_VALUE;
-        auto it = fRefs.find(name);
-        if (it != fRefs.end()) { if (ref) *ref = it->second; return B_OK; }
-        return B_NAME_NOT_FOUND;
-    }
-    status_t FindRef(const char* name, int32 index, entry_ref* ref) const { return FindRef(name, ref); }
+
+    template<typename T>
+    status_t FindInt32(const char* name, T* v) const { return FindInt(name, 0, v); }
+    status_t FindInt32(const char* name, int32 index, int32* v) const { return FindInt(name, index, v); }
+    template<typename T>
+    status_t FindUInt32(const char* name, T* v) const { return FindInt(name, 0, v); }
+
+    template<typename T>
+    status_t FindInt64(const char* name, T* v) const { return FindInt(name, 0, v); }
+    status_t FindInt64(const char* name, int32 index, int64* v) const { return FindInt(name, index, v); }
+
+    int64 FindInt64(const char* name) const { int64 v = 0; FindInt(name, 0, &v); return v; }
+
+    status_t FindBool(const char* name, int32 index, bool* v) const { return FindValue(fBools, name, index, v); }
+    status_t FindBool(const char* name, bool* v) const { return FindBool(name, 0, v); }
+    status_t FindFloat(const char* name, int32 index, float* v) const { return FindValue(fFloats, name, index, v); }
+    status_t FindFloat(const char* name, float* v) const { return FindFloat(name, 0, v); }
+    status_t FindRect(const char* name, int32 index, BRect* v) const { return FindValue(fRects, name, index, v); }
+    status_t FindRect(const char* name, BRect* v) const { return FindRect(name, 0, v); }
+    status_t FindMessage(const char* name, int32 index, BMessage* v) const { return FindValue(fMessages, name, index, v); }
+    status_t FindMessage(const char* name, BMessage* v) const { return FindMessage(name, 0, v); }
+    status_t FindPointer(const char* name, int32 index, void** v) const { return FindValue(fPointers, name, index, v); }
+    status_t FindPointer(const char* name, void** v) const { return FindPointer(name, 0, v); }
+    status_t FindRef(const char* name, int32 index, entry_ref* v) const { return FindValue(fRefs, name, index, v); }
+    status_t FindRef(const char* name, entry_ref* v) const { return FindRef(name, 0, v); }
     status_t FindData(const char* name, uint32 type, const void** data, ssize_t* size) const { return B_NAME_NOT_FOUND; }
 
     void MakeEmpty() {
-        fStrings.clear(); fInt32s.clear(); fUInt32s.clear(); fInt64s.clear();
-        fBools.clear(); fFloats.clear(); fRects.clear(); fMessages.clear();
-        fPointers.clear(); fRefs.clear();
+        fStrings.clear(); fInt32s.clear(); fInt64s.clear(); fBools.clear();
+        fFloats.clear(); fRects.clear(); fMessages.clear(); fPointers.clear(); fRefs.clear();
     }
     status_t Flatten(BFile* file) const { return B_OK; }
     status_t Unflatten(BFile* file) { return B_OK; }
 
 private:
-    std::map<std::string, std::string> fStrings;
-    std::map<std::string, int32> fInt32s;
-    std::map<std::string, uint32> fUInt32s;
-    std::map<std::string, int64> fInt64s;
-    std::map<std::string, bool> fBools;
-    std::map<std::string, float> fFloats;
-    std::map<std::string, BRect> fRects;
-    std::map<std::string, BMessage> fMessages;
-    std::map<std::string, const void*> fPointers;
-    std::map<std::string, entry_ref> fRefs;
+    template<typename M, typename T>
+    status_t FindValue(const M& map, const char* name, int32 index, T* value) const {
+        if(!name) return B_BAD_VALUE;
+        auto it = map.find(name);
+        if(it == map.end() || (size_t)index >= it->second.size()) return B_NAME_NOT_FOUND;
+        if(value) *value = (T)it->second[index];
+        return B_OK;
+    }
+
+    template<typename T>
+    status_t FindInt(const char* name, int32 index, T* value) const {
+        if(!name) return B_BAD_VALUE;
+        auto it32 = fInt32s.find(name);
+        if(it32 != fInt32s.end() && (size_t)index < it32->second.size()) {
+            if(value) *value = (T)it32->second[index];
+            return B_OK;
+        }
+        auto it64 = fInt64s.find(name);
+        if(it64 != fInt64s.end() && (size_t)index < it64->second.size()) {
+            if(value) *value = (T)it64->second[index];
+            return B_OK;
+        }
+        return B_NAME_NOT_FOUND;
+    }
+
+    std::map<std::string, std::vector<std::string>> fStrings;
+    std::map<std::string, std::vector<int32>> fInt32s;
+    std::map<std::string, std::vector<int64>> fInt64s;
+    std::map<std::string, std::vector<bool>> fBools;
+    std::map<std::string, std::vector<float>> fFloats;
+    std::map<std::string, std::vector<BRect>> fRects;
+    std::map<std::string, std::vector<BMessage>> fMessages;
+    std::map<std::string, std::vector<const void*>> fPointers;
+    std::map<std::string, std::vector<entry_ref>> fRefs;
 };
 
 #endif

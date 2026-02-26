@@ -111,9 +111,17 @@ CookieWindowTest::test_build_domain_list()
 	cookie2.AddString("domain", "sub.example.com");
 	cookie2.AddString("path", "/");
 
+	// Add another domain to prevent collapsing of 'com'
+	BMessage cookie3;
+	cookie3.AddString("name", "name3");
+	cookie3.AddString("value", "value3");
+	cookie3.AddString("domain", "google.com");
+	cookie3.AddString("path", "/");
+
 	BMessage cookies;
 	cookies.AddMessage("cookie", &cookie1);
 	cookies.AddMessage("cookie", &cookie2);
+	cookies.AddMessage("cookie", &cookie3);
 	archive.AddMessage("cookies", &cookies);
 
 	jar.Unarchive(&archive);
@@ -122,8 +130,23 @@ CookieWindowTest::test_build_domain_list()
 
 	window->_BuildDomainList();
 
-	// We expect "com", "example.com" and "sub.example.com"
-	assert_int32(3, window->fDomains->FullListCountItems(), "Domain list should have 3 items after build");
+	// We expect "com", "example.com", "sub.example.com", and "google.com"
+	// Sort order: com, example.com, sub.example.com, google.com
+	// Wait, alphabetically: com, example.com, sub.example.com, google.com?
+	// No: 'com' is level 0.
+	// children of 'com': 'example.com', 'google.com'.
+	// child of 'example.com': 'sub.example.com'.
+	// Alphabetical order of children:
+	// 1. example.com
+	//    1.1. sub.example.com
+	// 2. google.com
+	// So FullList:
+	// 0: com
+	// 1: example.com
+	// 2: sub.example.com
+	// 3: google.com
+
+	assert_int32(4, window->fDomains->FullListCountItems(), "Domain list should have 4 items after build");
 
 	DomainItem* item1 = (DomainItem*)window->fDomains->FullListItemAt(1);
 	assert_string("example.com", item1->Text(), "Second item should be example.com");
@@ -131,6 +154,7 @@ CookieWindowTest::test_build_domain_list()
 	// Check if cookie map is populated
 	assert_int32(1, (int32)window->fCookieMap["example.com"].size(), "example.com should have 1 cookie in map");
 	assert_int32(1, (int32)window->fCookieMap["sub.example.com"].size(), "sub.example.com should have 1 cookie in map");
+	assert_int32(1, (int32)window->fCookieMap["google.com"].size(), "google.com should have 1 cookie in map");
 
 	window->Lock();
 	window->Quit();

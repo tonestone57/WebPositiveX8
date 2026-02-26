@@ -5,13 +5,12 @@
 class BGroupView : public BView {
 public:
     BGroupView(orientation orientation, float spacing = 0.0) : BView(nullptr, 0) {
-        fLayout = new BGroupLayout(orientation, spacing);
+        BGroupLayout* layout = new BGroupLayout(orientation, spacing);
+        SetLayout(layout);
     }
-    virtual ~BGroupView() { delete fLayout; }
-    BGroupLayout* GroupLayout() const { return fLayout; }
+    virtual ~BGroupView() {}
+    BGroupLayout* GroupLayout() const { return (BGroupLayout*)GetLayout(); }
     void DoLayout() {}
     void InvalidateLayout(bool descendants = false) {}
-private:
-    BGroupLayout* fLayout;
 };
 #endif

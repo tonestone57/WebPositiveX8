@@ -32,6 +32,7 @@ enum alignment {
 struct BAlignment {
     alignment horizontal;
     alignment vertical;
+    BAlignment() : horizontal(B_ALIGN_LEFT), vertical(B_ALIGN_CENTER) {}
     BAlignment(alignment h, alignment v) : horizontal(h), vertical(v) {}
 };
 

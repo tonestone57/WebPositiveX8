@@ -141,6 +141,11 @@ test_select_tab()
 	manager.AddTab(new BView("v1", 0), "T1");
 	manager.AddTab(new BView("v2", 0), "T2");
 
+	// Reset counter because adding tabs might have triggered selection changes
+	looper->Lock();
+	handler->fTabChangedCount = 0;
+	looper->Unlock();
+
 	manager.SelectTab(1);
 	assert_int32(1, manager.SelectedTabIndex(), "Selected tab index is 1");
 

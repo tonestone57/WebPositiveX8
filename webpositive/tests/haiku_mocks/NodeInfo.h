@@ -2,7 +2,9 @@
 #define _NODE_INFO_H
 #include "SupportDefs.h"
 
-enum icon_size { B_MINI_ICON = 16, B_LARGE_ICON = 32 };
+typedef enum { kMockMiniIcon, kMockLargeIcon } icon_size;
+#define B_MINI_ICON kMockMiniIcon
+#define B_LARGE_ICON kMockLargeIcon
 
 class BBitmap;
 class BNodeInfo {

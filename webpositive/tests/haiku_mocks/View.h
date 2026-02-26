@@ -39,12 +39,11 @@ class BToolTip {};
 
 class BView : public BHandler {
 public:
-    BView() : fParent(nullptr), fWindow(nullptr), fFrame(0, 0, -1, -1) {}
-    BView(const char* name, uint32 flags = 0) : BHandler(name), fName(name ? name : ""), fParent(nullptr), fWindow(nullptr), fFrame(0, 0, -1, -1) {}
-    BView(BRect frame, const char* name, uint32 resizingMode, uint32 flags) : BHandler(name), fName(name ? name : ""), fParent(nullptr), fWindow(nullptr), fFrame(frame) {}
-    virtual ~BView() {
-        for (auto child : fChildren) delete child;
-    }
+    BView() : BHandler(nullptr), fParent(nullptr), fWindow(nullptr), fFrame(0, 0, -1, -1), fLayout(nullptr) {}
+    BView(const char* name, uint32 flags = 0) : BHandler(name), fParent(nullptr), fWindow(nullptr), fFrame(0, 0, -1, -1), fLayout(nullptr) {}
+    BView(BRect frame, const char* name, uint32 resizingMode, uint32 flags) : BHandler(name), fParent(nullptr), fWindow(nullptr), fFrame(frame), fLayout(nullptr) {}
+    virtual ~BView(); // Defined in Mocks.cpp or here if no other dependency
+
     virtual void AttachedToWindow() {}
     virtual void AllAttached() {}
     virtual void DetachedFromWindow() {}
@@ -61,13 +60,8 @@ public:
     virtual void KeyDown(const char* bytes, int32 numBytes) {}
     virtual void Pulse() {}
 
-    void AddChild(BView* child) { fChildren.push_back(child); child->fParent = this; }
-    bool RemoveChild(BView* child) {
-        for (auto it = fChildren.begin(); it != fChildren.end(); ++it) {
-            if (*it == child) { fChildren.erase(it); child->fParent = nullptr; return true; }
-        }
-        return false;
-    }
+    void AddChild(BView* child);
+    bool RemoveChild(BView* child);
     BView* ChildAt(int32 index) const {
         if (index >= 0 && index < (int32)fChildren.size()) return fChildren[index];
         return nullptr;
@@ -75,7 +69,6 @@ public:
     int32 CountChildren() const { return (int32)fChildren.size(); }
     BView* Parent() const { return fParent; }
     BWindow* Window() const { return fWindow; }
-    const char* Name() const { return fName.String(); }
 
     BRect Bounds() const { return BRect(0, 0, fFrame.Width(), fFrame.Height()); }
     BRect Frame() const { return fFrame; }
@@ -108,7 +101,7 @@ public:
 
     void SetExplicitMinSize(BSize size) {}
     void SetExplicitMaxSize(BSize size) {}
-    virtual BSize MinSize() { return BSize(0, 0); }
+    virtual BSize MinSize();
     virtual BSize MaxSize() { return BSize(10000, 10000); }
     virtual BSize PreferredSize() { return BSize(100, 100); }
 
@@ -143,22 +136,22 @@ public:
     void InvalidateItem(int32 index) {}
     void DrawString(const char* s, BPoint p) {}
     void DrawString(const char* s, BView* owner, BRect r) {}
-    void SetLayout(BLayout* layout) {}
+    void SetLayout(BLayout* layout);
     BLayoutItem* LayoutItem() const { return nullptr; }
     void HideToolTip() {}
     void SetToolTip(const char* text) {}
     void SetToolTip(void* toolTip) {}
     void SetBlendingMode(int32 src, int32 dst) {}
     void DrawBitmap(const BBitmap* bitmap, BRect src, BRect dst, uint32 flags = 0) {}
-    BLayout* GetLayout() const { return nullptr; }
+    BLayout* GetLayout() const { return fLayout; }
     bool IsEnabled() const { return true; }
 
 private:
-    BString fName;
     BView* fParent;
     BWindow* fWindow;
     std::vector<BView*> fChildren;
     BRect fFrame;
+    BLayout* fLayout;
 };
 
 #endif

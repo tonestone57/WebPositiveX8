@@ -848,6 +848,9 @@ TabManager::HasView(const BView* containedView) const
 void
 TabManager::SelectTab(int32 tabIndex)
 {
+	if (tabIndex == SelectedTabIndex())
+		return;
+
 	fCardLayout->SetVisibleItem(tabIndex);
 	fTabContainerView->SelectTab(tabIndex);
 

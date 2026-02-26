@@ -7,6 +7,7 @@
 #include "Path.h"
 #include "Messenger.h"
 #include "OS.h"
+#include "Layout.h"
 #include <cstdio>
 
 find_directory_func gMockFindDirectory = nullptr;
@@ -27,11 +28,6 @@ BApplication* be_app = nullptr;
 
 void BWindow::AddChild(BView* view) {}
 
-status_t BEntry::GetPath(BPath* path) const {
-    if (path) path->SetTo("/tmp/test");
-    return B_OK;
-}
-
 BMessenger be_app_messenger;
 
 void snooze(bigtime_t microseconds) {}
@@ -46,3 +42,43 @@ status_t release_sem(sem_id sem) { return B_OK; }
 thread_id spawn_thread(thread_func func, const char* name, int32 priority, void* data) { return 1; }
 status_t resume_thread(thread_id thread) { return B_OK; }
 status_t wait_for_thread(thread_id thread, status_t* exit_value) { if (exit_value) *exit_value = B_OK; return B_OK; }
+
+BView::~BView() {
+    if (fParent) fParent->RemoveChild(this);
+    delete fLayout; fLayout = nullptr;
+    auto children = fChildren;
+    fChildren.clear();
+    for (auto child : children) {
+        child->fParent = nullptr; // Prevent child from trying to remove itself from us while we iterate
+        delete child;
+    }
+}
+
+void BView::AddChild(BView* child) {
+    if (!child) return;
+    if (child->fParent) child->fParent->RemoveChild(child);
+    fChildren.push_back(child);
+    child->fParent = this;
+}
+
+bool BView::RemoveChild(BView* child) {
+    for (auto it = fChildren.begin(); it != fChildren.end(); ++it) {
+        if (*it == child) {
+            fChildren.erase(it);
+            child->fParent = nullptr;
+            return true;
+        }
+    }
+    return false;
+}
+
+void BView::SetLayout(BLayout* layout) {
+    if (fLayout) delete fLayout;
+    fLayout = layout;
+    if (fLayout) fLayout->SetView(this);
+}
+
+BSize BView::MinSize() {
+    if (fLayout) return fLayout->MinSize();
+    return BSize(0, 0);
+}

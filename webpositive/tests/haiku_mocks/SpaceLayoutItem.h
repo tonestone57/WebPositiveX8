@@ -6,5 +6,8 @@ public:
     static BSpaceLayoutItem* CreateGlue() { return new BSpaceLayoutItem(); }
     static BSpaceLayoutItem* CreateHorizontalStrut(float width) { return new BSpaceLayoutItem(); }
     static BSpaceLayoutItem* CreateVerticalStrut(float height) { return new BSpaceLayoutItem(); }
+
+    // Standard Haiku API
+    virtual void SetVisible(bool visible) override {}
 };
 #endif

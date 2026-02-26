@@ -33,15 +33,19 @@ public:
         : BView(frame, name, resizingMode, flags) {}
     virtual ~BListView() { MakeEmpty(); }
     virtual void SelectionChanged() {}
-    void AddItem(BListItem* item) { fItems.push_back(item); }
-    void AddItem(BListItem* item, int32 index) {
+    virtual bool AddItem(BListItem* item) { fItems.push_back(item); return true; }
+    virtual bool AddItem(BListItem* item, int32 index) {
         if (index >= 0 && index <= (int32)fItems.size())
             fItems.insert(fItems.begin() + index, item);
         else
             fItems.push_back(item);
+        return true;
     }
-    void MakeEmpty() {
-        for (auto item : fItems) delete item;
+    virtual void MakeEmpty() {
+        // NOTE: Standard BListView does NOT delete items.
+        // But for our mocks it might be easier.
+        // Actually, CookieWindow.cpp deletes them manually.
+        // So we should NOT delete them here if we want to be realistic.
         fItems.clear();
     }
     int32 CountItems() const { return (int32)fItems.size(); }
@@ -49,13 +53,13 @@ public:
         if (index < 0 || index >= (int32)fItems.size()) return nullptr;
         return fItems[index];
     }
-    BListItem* RemoveItem(int32 index) {
+    virtual BListItem* RemoveItem(int32 index) {
         if (index < 0 || index >= (int32)fItems.size()) return nullptr;
         BListItem* item = fItems[index];
         fItems.erase(fItems.begin() + index);
         return item;
     }
-    bool RemoveItem(BListItem* item) {
+    virtual bool RemoveItem(BListItem* item) {
         for (auto it = fItems.begin(); it != fItems.end(); ++it) {
             if (*it == item) { fItems.erase(it); return true; }
         }

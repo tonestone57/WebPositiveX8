@@ -12,7 +12,7 @@ enum menu_layout {
 
 class BMenu : public BView {
 public:
-    BMenu(const char* title, menu_layout layout = B_ITEMS_IN_COLUMN) {}
+    BMenu(const char* title, menu_layout layout = B_ITEMS_IN_COLUMN) : BView(title) {}
     virtual ~BMenu() {
         for (auto item : fItems) delete item;
     }
