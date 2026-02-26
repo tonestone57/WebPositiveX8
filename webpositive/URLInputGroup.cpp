@@ -188,7 +188,7 @@ URLInputGroup::URLTextView::KeyDown(const char* bytes, int32 numBytes)
 			break;
 
 		case B_RETURN:
-			fURLInputGroup->GoButton()->Invoke();
+			// Don't let this through to the text view.
 			break;
 
 		default:

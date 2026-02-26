@@ -77,10 +77,15 @@ ConsoleWindow::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case ADD_CONSOLE_MESSAGE:
 		{
-			BString source = message->FindString("source");
-			int32 lineNumber = message->FindInt32("line");
-			int32 columnNumber = message->FindInt32("column");
-			BString text = message->FindString("string");
+			BString source;
+			int32 lineNumber;
+			int32 columnNumber;
+			BString text;
+			if (message->FindString("source", &source) != B_OK
+				|| message->FindInt32("line", &lineNumber) != B_OK
+				|| message->FindInt32("column", &columnNumber) != B_OK
+				|| message->FindString("string", &text) != B_OK)
+				break;
 			BString finalText;
 			finalText.SetToFormat("%s:%" B_PRIi32 ":%" B_PRIi32 ": %s\n",
 				source.String(), lineNumber, columnNumber, text.String());

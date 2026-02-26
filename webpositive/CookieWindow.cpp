@@ -166,7 +166,9 @@ CookieWindow::MessageReceived(BMessage* message)
 	switch(message->what) {
 		case DOMAIN_SELECTED:
 		{
-			int32 index = message->FindInt32("index");
+			int32 index;
+			if (message->FindInt32("index", &index) != B_OK)
+				break;
 			BStringItem* item = (BStringItem*)fDomains->ItemAt(index);
 			if (item != NULL) {
 				BString domain = item->Text();

@@ -408,11 +408,13 @@ CredentialsStorage::_SaveSettings()
 		if (entry.value.Archive(&credentialsArchive) != B_OK
 			|| credentialsArchive.AddString("key",
 				entry.key.String()) != B_OK) {
-			break;
+			credentialsArchive.MakeEmpty();
+			continue;
 		}
 		if (newMessage->AddMessage("credentials",
 				&credentialsArchive) != B_OK) {
-			break;
+			credentialsArchive.MakeEmpty();
+			continue;
 		}
 		credentialsArchive.MakeEmpty();
 	}
