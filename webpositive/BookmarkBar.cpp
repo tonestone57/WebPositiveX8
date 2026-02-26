@@ -150,10 +150,10 @@ BookmarkBar::MessageReceived(BMessage* message)
 			entry_ref ref;
 			if (message->FindInt64("node", &inode) == B_OK
 				&& message->FindRef("ref", &ref) == B_OK) {
-				const char* name = message->FindString("name");
+				const char* name;
 				bool isDirectory;
 
-				if (name != nullptr
+				if (message->FindString("name", &name) == B_OK
 					&& message->FindBool("isDirectory", &isDirectory) == B_OK) {
 					_AddItem(inode, &ref, name, isDirectory, icon);
 				} else {
@@ -169,8 +169,12 @@ BookmarkBar::MessageReceived(BMessage* message)
 
 		case B_NODE_MONITOR:
 		{
-			int32 opcode = message->FindInt32("opcode");
-			ino_t inode = message->FindInt64("node");
+			int32 opcode;
+			ino_t inode;
+			if (message->FindInt32("opcode", &opcode) != B_OK
+				|| message->FindInt64("node", &inode) != B_OK)
+				break;
+
 			switch (opcode) {
 				case B_ENTRY_CREATED:
 				{
@@ -211,9 +215,9 @@ BookmarkBar::MessageReceived(BMessage* message)
 						// Existing item. Check if it's a rename or a move
 						// to some other folder.
 						ino_t from, to;
-						message->FindInt64("to directory", &to);
-						message->FindInt64("from directory", &from);
-						if (from == to) {
+						if (message->FindInt64("to directory", &to) == B_OK
+							&& message->FindInt64("from directory", &from) == B_OK
+							&& from == to) {
 							const char* name;
 							if (message->FindString("name", &name) == B_OK)
 								it->second->SetLabel(name);
