@@ -177,9 +177,10 @@ BookmarkBar::MessageReceived(BMessage* message)
 					entry_ref ref;
 					const char* name;
 
-					message->FindInt32("device", &ref.device);
-					message->FindInt64("directory", &ref.directory);
-					message->FindString("name", &name);
+					if (message->FindInt32("device", &ref.device) != B_OK
+						|| message->FindInt64("directory", &ref.directory) != B_OK
+						|| message->FindString("name", &name) != B_OK)
+						break;
 					ref.set_name(name);
 
 					BEntry entry(&ref);
@@ -192,9 +193,10 @@ BookmarkBar::MessageReceived(BMessage* message)
 					entry_ref ref;
 					const char* name;
 
-					message->FindInt32("device", &ref.device);
-					message->FindInt64("to directory", &ref.directory);
-					message->FindString("name", &name);
+					if (message->FindInt32("device", &ref.device) != B_OK
+						|| message->FindInt64("to directory", &ref.directory) != B_OK
+						|| message->FindString("name", &name) != B_OK)
+						break;
 					ref.set_name(name);
 
 					BEntry entry(&ref);

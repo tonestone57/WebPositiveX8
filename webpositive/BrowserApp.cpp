@@ -314,11 +314,15 @@ BrowserApp::MessageReceived(BMessage* message)
 		BrowsingHistory::DefaultInstance();
 		break;
 	case MSG_COOKIES_LOADED: {
-		if (message->FindPointer("cookies", (void**)&fCookies) == B_OK) {
+		if (fCookies != NULL) {
 			BMessage cookieArchive;
 			cookieArchive = fCookies->GetValue("cookies", cookieArchive);
 			fContext->SetCookieJar(
 				BPrivate::Network::BNetworkCookieJar(&cookieArchive));
+
+			if (fCookieWindow != NULL)
+				fCookieWindow->SetCookieJar(fContext->GetCookieJar());
+
 			// Clean up thread handle as it finished
 			status_t exitValue;
 			wait_for_thread(fCookieLoaderThread, &exitValue);
@@ -705,16 +709,18 @@ BrowserApp::_CookieLoaderThread(void* data)
 		// so we can save new cookies later.
 	}
 
-	BMessage* message = new(std::nothrow) BMessage(MSG_COOKIES_LOADED);
-	if (message == NULL || message->AddPointer("cookies", cookies) != B_OK) {
+	if (self->Lock()) {
+		delete self->fCookies;
+		self->fCookies = cookies;
+		self->Unlock();
+	} else {
 		delete cookies;
-		delete message;
-		return B_NO_MEMORY;
+		return B_ERROR;
 	}
 
-	if (self->PostMessage(message) != B_OK) {
-		delete cookies;
-		delete message;
+	if (self->PostMessage(MSG_COOKIES_LOADED) != B_OK) {
+		// Even if posting fails, fCookies is already set, so it's not a leak.
+		// But we should return an error.
 		return B_ERROR;
 	}
 

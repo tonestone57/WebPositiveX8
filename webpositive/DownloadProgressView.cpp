@@ -521,10 +521,13 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			// the original context is long gone (possibly the browser was
 			// restarted). So we create a new window to restart the download
 			// in a fresh context.
-			BMessage* request = new BMessage(NEW_WINDOW);
-			request->AddString("url", fURL);
-			request->AddBool("forDownload", true);
-			be_app->PostMessage(request);
+			BMessage* request = new(std::nothrow) BMessage(NEW_WINDOW);
+			if (request != NULL) {
+				request->AddString("url", fURL);
+				request->AddBool("forDownload", true);
+				if (be_app->PostMessage(request) != B_OK)
+					delete request;
+			}
 			break;
 		}
 
