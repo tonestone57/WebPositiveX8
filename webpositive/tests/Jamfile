@@ -28,6 +28,8 @@ SimpleTest ConsoleWindowTest :
 	ConsoleWindowTest.cpp
 	:
 	be localestub
+;
+
 SimpleTest BrowsingHistoryTest :
 	BrowsingHistoryTest.cpp
 	BrowsingHistory.cpp
@@ -47,11 +49,15 @@ SimpleTest BookmarkBarTest :
 	BookmarkBarTest.cpp
 	:
 	be tracker network translation shared localestub
+;
+
 SimpleTest DownloadSpeedCalculatorTest :
 	DownloadSpeedCalculatorTest.cpp
 	DownloadSpeedCalculator.cpp
 	:
 	be
+;
+
 SimpleTest CookieWindowTest :
 	CookieWindowTest.cpp
 	:

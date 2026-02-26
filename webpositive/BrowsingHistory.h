@@ -54,14 +54,14 @@ public:
 
 			const BString&		URL() const { return fURL; }
 			const BDateTime&	DateTime() const { return fDateTime; }
-			uint32				InvokationCount() const {
-									return fInvokationCount; }
+			uint32				InvocationCount() const {
+									return fInvocationCount; }
 			void				Invoked();
 
 private:
 			BString				fURL;
 			BDateTime			fDateTime;
-			uint32				fInvokationCount;
+			uint32				fInvocationCount;
 };
 
 
