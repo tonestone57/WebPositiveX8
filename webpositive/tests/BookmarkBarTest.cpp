@@ -66,7 +66,6 @@ BookmarkBarTest::test_initialization()
 	entry_ref ref;
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", nullptr, &ref);
 
-	printf("DEBUG: bar->Name() = '%s'\n", bar->Name());
 	assert_true(strcmp(bar->Name(), "Bookmarks") == 0, "Bar name matches");
 	assert_int32(0, bar->CountItems(), "Initial bar is empty");
 
@@ -180,14 +179,8 @@ BookmarkBarTest::test_node_monitor_events()
 	moved.AddInt64("from directory", 1);
 	moved.AddInt64("to directory", 1);
 	moved.AddString("name", "renamed_bookmark");
-	printf("DEBUG: sending moved message opcode=%d node=999 from=1 to=1 name='renamed_bookmark'\n", B_ENTRY_MOVED);
 
 	bar->MessageReceived(&moved);
-	if (bar->fItemsMap.find(999) != bar->fItemsMap.end()) {
-		printf("DEBUG: item label = '%s'\n", bar->fItemsMap[999]->Label());
-	} else {
-		printf("DEBUG: item 999 not found in map after moved message\n");
-	}
 	assert_true(bar->fItemsMap.find(999) != bar->fItemsMap.end() && strcmp(bar->fItemsMap[999]->Label(), "renamed_bookmark") == 0, "Item was renamed");
 
 	// Test B_ENTRY_REMOVED
