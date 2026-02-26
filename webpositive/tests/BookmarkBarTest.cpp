@@ -175,12 +175,13 @@ BookmarkBarTest::test_node_monitor_events()
 	BMessage moved(B_NODE_MONITOR);
 	moved.AddInt32("opcode", B_ENTRY_MOVED);
 	moved.AddInt64("node", 999);
+	moved.AddInt32("device", 1);
 	moved.AddInt64("from directory", 1);
 	moved.AddInt64("to directory", 1);
 	moved.AddString("name", "renamed_bookmark");
 
 	bar->MessageReceived(&moved);
-	assert_true(strcmp(bar->fItemsMap[999]->Label(), "renamed_bookmark") == 0, "Item was renamed");
+	assert_true(bar->fItemsMap.find(999) != bar->fItemsMap.end() && strcmp(bar->fItemsMap[999]->Label(), "renamed_bookmark") == 0, "Item was renamed");
 
 	// Test B_ENTRY_REMOVED
 	BMessage removed(B_NODE_MONITOR);

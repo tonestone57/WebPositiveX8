@@ -1,5 +1,5 @@
-#ifndef WEB_WINDOW_H
-#define WEB_WINDOW_H
+#ifndef _WEB_WINDOW_H
+#define _WEB_WINDOW_H
 #include "Window.h"
 class BWebWindow : public BWindow {
 public:

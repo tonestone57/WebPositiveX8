@@ -1,49 +1,94 @@
 #ifndef _INTERFACE_DEFS_H
 #define _INTERFACE_DEFS_H
 #include "SupportDefs.h"
+#include <cmath>
+
+typedef enum {
+    B_OP_COPY,
+    B_OP_ALPHA,
+    B_SOLID_LOW,
+    B_SOLID_HIGH
+} drawing_mode;
 
 enum color_which {
-    B_LIST_SELECTED_ITEM_TEXT_COLOR,
-    B_LIST_SELECTED_BACKGROUND_COLOR,
-    B_LIST_ITEM_TEXT_COLOR,
-    B_LIST_BACKGROUND_COLOR,
-    B_CONTROL_HIGHLIGHT_COLOR
-};
-
-inline rgb_color ui_color(color_which which) {
-    rgb_color c = {0,0,0,255};
-    return c;
-}
-
-struct font_height {
-    float ascent, descent, leading;
-};
-
-#define B_NO_TINT 1.0f
-#define B_DARKEN_1_TINT 1.1f
-inline rgb_color tint_color(rgb_color c, float tint) { return c; }
-
-enum drawing_mode {
-    B_OP_COPY,
-    B_SOLID_LOW
+    B_PANEL_BACKGROUND_COLOR,
+    B_LIST_BACKGROUND_COLOR
 };
 
 enum orientation {
-    B_HORIZONTAL = 0,
-    B_VERTICAL = 1
+    B_HORIZONTAL,
+    B_VERTICAL
 };
 
-enum {
-    B_SECONDARY_MOUSE_BUTTON = 2
+enum alignment {
+    B_ALIGN_LEFT,
+    B_ALIGN_RIGHT,
+    B_ALIGN_CENTER,
+    B_ALIGN_MIDDLE = B_ALIGN_CENTER,
+    B_ALIGN_USE_FULL_WIDTH = B_ALIGN_CENTER,
+    B_ALIGN_USE_FULL_HEIGHT = B_ALIGN_CENTER
 };
 
-enum {
-    B_COPY = 'copy',
-    B_PASTE = 'pst ',
-    B_CUT = 'cut ',
-    B_SELECT_ALL = 'sall'
+struct BAlignment {
+    alignment horizontal;
+    alignment vertical;
+    BAlignment() : horizontal(B_ALIGN_LEFT), vertical(B_ALIGN_CENTER) {}
+    BAlignment(alignment h, alignment v) : horizontal(h), vertical(v) {}
 };
 
+struct font_height {
+    float ascent;
+    float descent;
+    float leading;
+};
+#define B_UTF8_ELLIPSIS "\xE2\x80\xA6"
+
+enum color_space {
+    B_RGBA32,
+    B_RGB32,
+    B_CMAP8
+};
+
+#define B_DARKEN_1_TINT 1.0f
+#define B_DARKEN_4_TINT 1.5f
+#define B_NO_TINT 0.0f
 #define B_V_SCROLL_BAR_WIDTH 15.0f
+
+enum {
+    B_LIST_SELECTED_ITEM_TEXT_COLOR,
+    B_LIST_SELECTED_BACKGROUND_COLOR,
+    B_LIST_ITEM_TEXT_COLOR,
+    B_PANEL_TEXT_COLOR
+};
+
+inline rgb_color ui_color(color_which color) { return {200, 200, 200, 255}; }
+inline rgb_color ui_color(int color) { return {200, 200, 200, 255}; }
+inline rgb_color tint_color(rgb_color color, float tint) { return color; }
+
+enum {
+    B_TRANSPARENT_COLOR = 0,
+    B_ALPHA_OVERLAY = 0,
+    B_FILTER_BITMAP_BILINEAR = 0
+};
+typedef enum {
+    B_PIXEL_ALPHA
+} source_alpha;
+
+enum {
+    B_CONTROL_ON = 1,
+    B_CONTROL_OFF = 0
+};
+
+enum {
+    B_INSIDE_VIEW,
+    B_OUTSIDE_VIEW,
+    B_ENTERED_VIEW,
+    B_EXITED_VIEW
+};
+
+#define B_COPY 'copy'
+#define B_USE_SMALL_SPACING 5.0f
+#define B_USE_DEFAULT_SPACING 10.0f
+#define B_MIME_TYPE 'mime'
 
 #endif

@@ -1,9 +1,10 @@
 #ifndef _NAV_MENU_H
 #define _NAV_MENU_H
-#include "PopUpMenu.h"
-class BNavMenu : public BPopUpMenu {
+#include "Menu.h"
+class BNavMenu : public BMenu {
 public:
-    BNavMenu(const char* name, const char* label, BMessenger target, BMessage* message = nullptr)
-        : BPopUpMenu(name) {}
+    BNavMenu(const char* name, uint32 what, BHandler* target) : BMenu(name) {}
+    BNavMenu(const char* name, uint32 what, BWindow* target) : BMenu(name) {}
+    void SetNavDir(const entry_ref* ref) {}
 };
 #endif

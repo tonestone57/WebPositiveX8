@@ -79,6 +79,7 @@ BrowserApp::BrowserApp()
 	fInitialized(false),
 	fSettings(NULL),
 	fCookies(NULL),
+	fCookiesLoaded(false),
 	fCookieLoaderThread(-1),
 	fSession(NULL),
 	fContext(NULL),
@@ -282,7 +283,6 @@ BrowserApp::ReadyToRun()
 
 					for (int j = 1; archivedWindow.FindString("tab", j, &url)
 						== B_OK; j++) {
-						printf("Create %d:%d\n", i, j);
 						_CreateNewTab(window, url, false);
 						pagesCreated++;
 					}
@@ -323,6 +323,8 @@ BrowserApp::MessageReceived(BMessage* message)
 
 			if (fCookieWindow != NULL)
 				fCookieWindow->SetCookieJar(fContext->GetCookieJar());
+
+			fCookiesLoaded = true;
 
 			// Clean up thread handle as it finished
 			status_t exitValue;
@@ -521,7 +523,7 @@ BrowserApp::QuitRequested()
 		// But we MUST check fCookies before dereferencing.
 	}
 
-	if (fCookies != NULL) {
+	if (fCookies != NULL && fCookiesLoaded) {
 		BMessage cookieArchive;
 		BPrivate::Network::BNetworkCookieJar& cookieJar = fContext->GetCookieJar();
 		cookieJar.PurgeForExit();

@@ -1,14 +1,17 @@
 #ifndef _ALERT_H
 #define _ALERT_H
-#include "Window.h"
+#include "SupportDefs.h"
+
+enum button_width { B_WIDTH_AS_USUAL };
+enum alert_type { B_INFO_ALERT, B_WARNING_ALERT };
+
 class BAlert {
 public:
     BAlert(const char* title, const char* text, const char* button1, const char* button2 = nullptr, const char* button3 = nullptr, button_width width = B_WIDTH_AS_USUAL, alert_type type = B_INFO_ALERT) {}
-    void Go(void* callback = nullptr) {}
-    void SetFlags(uint32 flags) {}
+    void SetShortcut(int32 index, uint32 key) {}
+    int32 Go(void* data = nullptr) { return 0; }
     uint32 Flags() const { return 0; }
+    void SetFlags(uint32 flags) {}
 };
-enum button_width { B_WIDTH_AS_USUAL };
-enum alert_type { B_INFO_ALERT, B_IDEA_ALERT, B_WARNING_ALERT, B_STOP_ALERT };
-#define B_CLOSE_ON_ESCAPE 0x1
+#define B_CLOSE_ON_ESCAPE 0x01
 #endif

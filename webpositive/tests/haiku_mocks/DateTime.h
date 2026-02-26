@@ -2,6 +2,9 @@
 #define _MOCK_DATETIME_H
 #include "SupportDefs.h"
 #include "Message.h"
+
+#define B_LOCAL_TIME 0
+
 class BDate {
 public:
     BDate() : fDays(0) {}
@@ -17,7 +20,7 @@ public:
 class BDateTime {
 public:
     BDateTime() : fTime(0) {}
-    BDateTime(BMessage* archive) : fTime(0) {}
+    BDateTime(const BMessage* archive) : fTime(0) {}
     static BDateTime CurrentDateTime(int32 time_zone) {
         static int32 mockTime = 10000;
         BDateTime dt;

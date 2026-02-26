@@ -44,8 +44,10 @@ BAutoCompleter::CompletionStyle::~CompletionStyle()
 void
 BAutoCompleter::CompletionStyle::SetEditView(EditView* view)
 {
-	delete fEditView;
-	fEditView = view;
+	if (fEditView != view) {
+		delete fEditView;
+		fEditView = view;
+	}
 }
 
 
@@ -53,24 +55,30 @@ void
 BAutoCompleter::CompletionStyle::SetPatternSelector(
 	PatternSelector* selector)
 {
-	delete fPatternSelector;
-	fPatternSelector = selector;
+	if (fPatternSelector != selector) {
+		delete fPatternSelector;
+		fPatternSelector = selector;
+	}
 }
 
 
 void
 BAutoCompleter::CompletionStyle::SetChoiceModel(ChoiceModel* model)
 {
-	delete fChoiceModel;
-	fChoiceModel = model;
+	if (fChoiceModel != model) {
+		delete fChoiceModel;
+		fChoiceModel = model;
+	}
 }
 
 
 void
 BAutoCompleter::CompletionStyle::SetChoiceView(ChoiceView* view)
 {
-	delete fChoiceView;
-	fChoiceView = view;
+	if (fChoiceView != view) {
+		delete fChoiceView;
+		fChoiceView = view;
+	}
 }
 
 
@@ -228,7 +236,9 @@ BAutoCompleter::SetChoiceView(ChoiceView* view)
 void
 BAutoCompleter::SetCompletionStyle(CompletionStyle* style)
 {
-	delete fCompletionStyle;
-	fCompletionStyle = style;
+	if (fCompletionStyle != style) {
+		delete fCompletionStyle;
+		fCompletionStyle = style;
+	}
 }
 

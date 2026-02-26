@@ -311,11 +311,12 @@ TabContainerView::SelectTab(TabView* tab)
 		fSelectedTab->Update();
 
 	int32 index = -1;
-	if (fSelectedTab != NULL)
+	if (fSelectedTab != NULL) {
 		index = GroupLayout()->IndexOfItem(tab->LayoutItem());
 
-	if (!tab->LayoutItem()->IsVisible())
-		SetFirstVisibleTabIndex(index);
+		if (!tab->LayoutItem()->IsVisible())
+			SetFirstVisibleTabIndex(index);
+	}
 
 	if (fController != NULL)
 		fController->UpdateSelection(index);

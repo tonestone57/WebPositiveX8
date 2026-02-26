@@ -1,5 +1,6 @@
 #ifndef _STRING_ITEM_H
 #define _STRING_ITEM_H
+
 #include "ListView.h"
 #include "String.h"
 

@@ -1,6 +1,7 @@
 #ifndef _SIZE_H
 #define _SIZE_H
 #define B_SIZE_UNSET -1.0f
+#define B_SIZE_UNLIMITED 10000.0f
 struct BSize {
     float width;
     float height;

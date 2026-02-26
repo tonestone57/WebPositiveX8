@@ -40,6 +40,7 @@ class ConsoleWindow;
 class CookieWindow;
 class DownloadWindow;
 class BrowserWindow;
+class BWindow;
 class SettingsMessage;
 class SettingsWindow;
 
@@ -85,6 +86,7 @@ private:
 
 			SettingsMessage*	fSettings;
 			SettingsMessage*	fCookies;
+			bool				fCookiesLoaded;
 			thread_id			fCookieLoaderThread;
 			SettingsMessage*	fSession;
 			BReference<BPrivate::Network::BUrlContext>	fContext;

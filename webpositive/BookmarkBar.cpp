@@ -196,6 +196,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 				{
 					entry_ref ref;
 					const char* name;
+					ino_t from;
 
 					if (message->FindInt32("device", &ref.device) != B_OK
 						|| message->FindInt64("to directory", &ref.directory) != B_OK
@@ -211,24 +212,18 @@ BookmarkBar::MessageReceived(BMessage* message)
 					if (it == fItemsMap.end()) {
 						_AddItem(inode, &entry);
 						break;
-					} else {
+					} else if (message->FindInt64("from directory", &from) == B_OK
+						&& from == (ino_t)ref.directory) {
 						// Existing item. Check if it's a rename or a move
 						// to some other folder.
-						ino_t from, to;
-						if (message->FindInt64("to directory", &to) == B_OK
-							&& message->FindInt64("from directory", &from) == B_OK
-							&& from == to) {
-							const char* name;
-							if (message->FindString("name", &name) == B_OK)
-								it->second->SetLabel(name);
+						it->second->SetLabel(name);
 
-							BMessage* itemMessage = new BMessage(
-								followedEntry.IsDirectory() ? kFolderMsg : B_REFS_RECEIVED);
-							itemMessage->AddRef("refs", &ref);
-							it->second->SetMessage(itemMessage);
+						BMessage* itemMessage = new BMessage(
+							followedEntry.IsDirectory() ? kFolderMsg : B_REFS_RECEIVED);
+						itemMessage->AddRef("refs", &ref);
+						it->second->SetMessage(itemMessage);
 
-							break;
-						}
+						break;
 					}
 
 					// fall through: the item was moved from here to
