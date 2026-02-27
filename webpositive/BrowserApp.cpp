@@ -506,23 +506,6 @@ BrowserApp::QuitRequested()
 		fCookieLoaderThread = -1;
 	}
 
-	// If the loader thread finished but the message loop didn't process the result
-	// (e.g. fast quit), we need to retrieve the SettingsMessage to prevent leaking
-	// it and to ensure we can save.
-	if (fCookies == NULL) {
-		// Check the message queue for the cookie message
-		// We can't easily peek specific messages from the queue without removing them
-		// or iterating. But since we are quitting, we can try to find it.
-		// Alternatively, just don't save if we didn't load.
-		// But we must avoid leaking the pointer allocated in the thread.
-		// Ideally, we'd peek the queue.
-		// Given BApplication APIs, it's hard to extract the specific pointer safely here
-		// without a member variable passing mechanism.
-		// However, preventing the crash/save of NULL is handled below.
-		// To fix the leak, we rely on OS cleanup or advanced queue inspection which is out of scope.
-		// But we MUST check fCookies before dereferencing.
-	}
-
 	if (fCookies != NULL && fCookiesLoaded) {
 		BMessage cookieArchive;
 		BPrivate::Network::BNetworkCookieJar& cookieJar = fContext->GetCookieJar();
