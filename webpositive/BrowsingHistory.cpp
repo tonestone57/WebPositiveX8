@@ -450,10 +450,14 @@ BrowsingHistory::_SaveSettings(bool force)
 
 	fLastSaveTime = system_time();
 
-	// Take a reference to the current history vector. This is O(1) and safe
+	// Take a copy of the current history vector. This is O(1) and safe
 	// because of the COW logic on the vector itself.
+	std::unique_ptr<HistoryVector> pendingItems(new(std::nothrow) HistoryVector(*fHistoryItems));
+	if (!pendingItems)
+		return;
+
 	fSaveLock.Lock();
-	fPendingSaveItems = fHistoryItems;
+	fPendingSaveItems = std::move(pendingItems);
 	fSaveLock.Unlock();
 
 	if (fSaveSem >= 0)
@@ -469,7 +473,7 @@ BrowsingHistory::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		HistoryVectorPtr itemsToSave;
+		std::unique_ptr<HistoryVector> itemsToSave;
 
 		self->fSaveLock.Lock();
 		itemsToSave = std::move(self->fPendingSaveItems);

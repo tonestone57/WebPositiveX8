@@ -2155,8 +2155,9 @@ BrowserWindow::AuthenticationChallenge(BString message, BString& inOutUser,
 	CredentialsStorage* sessionStorage
 		= CredentialsStorage::SessionInstance();
 
-	// TODO: Using the message as key here is not so smart.
-	HashString key(message);
+	BString keyString = baseURL(view->MainFrameURL());
+	keyString << ":" << message;
+	HashString key(keyString);
 
 	if (failureCount == 0) {
 		if (persistentStorage->Contains(key)) {
