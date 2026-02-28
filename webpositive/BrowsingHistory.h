@@ -11,6 +11,8 @@
 #include <Locker.h>
 #include <ObjectList.h>
 #include <OS.h>
+#include "HashMap.h"
+#include "HashString.h"
 #include <String.h>
 
 class BFile;
@@ -99,6 +101,7 @@ private:
 			typedef BObjectList<BrowsingHistoryItem> HistoryList;
 
 			HistoryList			fHistoryItems;
+			HashMap<HashString, BrowsingHistoryItem*> fHistoryMap;
 			int32				fMaxHistoryItemAge;
 
 	static	BrowsingHistory		sDefaultInstance;
@@ -117,4 +120,3 @@ private:
 
 
 #endif // BROWSING_HISTORY_H
-

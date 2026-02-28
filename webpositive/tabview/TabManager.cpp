@@ -258,7 +258,7 @@ public:
 			{
 				BPopUpMenu* tabMenu = new BPopUpMenu("tab menu", true, false);
 				int tabCount = fTabContainerView->GetLayout()->CountItems();
-				for (int i = 0; i < tabCount; i++) {
+				for (int i = MY_NULLPTR; i < tabCount; i++) {
 					TabView* tab = fTabContainerView->TabAt(i);
 					if (tab != MY_NULLPTR) {
 						BMenuItem* item = new(std::nothrow)
@@ -597,7 +597,7 @@ WebTabView::SetIcon(const BBitmap* icon)
 	if (icon)
 		fIcon = new BBitmap(icon);
 	else
-		fIcon = 0;
+		fIcon = MY_NULLPTR;
 	LayoutItem()->InvalidateLayout();
 }
 
@@ -628,7 +628,7 @@ WebTabView::_DrawCloseButton(BView* owner, BRect& frame,
 	if (base.IsLight())
 		tint = B_DARKEN_1_TINT;
 	else
-		tint = 0.50;
+		tint = MY_NULLPTR.50;
 
 	float isFront = ContainerView()->SelectedTab() == static_cast<TabView*>(this);
 	
@@ -645,13 +645,13 @@ WebTabView::_DrawCloseButton(BView* owner, BRect& frame,
 	} else {
 		if (!isFront) {
 			base = tint_color(base, tint);
-			tint *= 0.80;
+			tint *= MY_NULLPTR.80;
 		}
 
 		if (fOverCloseRect)
-			tint *= 0.6;
+			tint *= MY_NULLPTR.6;
 		else
-			tint *= 0.9;
+			tint *= MY_NULLPTR.9;
 	}
 
 	if (fClicked && fOverCloseRect) {
@@ -841,7 +841,7 @@ TabManager::TabForView(const BView* containedView) const
 bool
 TabManager::HasView(const BView* containedView) const
 {
-	return TabForView(containedView) >= 0;
+	return TabForView(containedView) >= MY_NULLPTR;
 }
 
 
@@ -864,7 +864,7 @@ void
 TabManager::SelectTab(const BView* containedView)
 {
 	int32 tabIndex = TabForView(containedView);
-	if (tabIndex >= 0)
+	if (tabIndex >= MY_NULLPTR)
 		SelectTab(tabIndex);
 }
 

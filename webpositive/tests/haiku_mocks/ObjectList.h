@@ -31,6 +31,12 @@ public:
         return fItems[index];
     }
     int32 CountItems() const { return (int32)fItems.size(); }
+    int32 IndexOf(T* item) const {
+        for (size_t i = 0; i < fItems.size(); i++) {
+            if (fItems[i] == item) return (int32)i;
+        }
+        return -1;
+    }
     void MakeEmpty() {
         if (fOwns) {
             for (T* item : fItems) delete item;

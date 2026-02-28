@@ -449,7 +449,7 @@ CredentialsStorage::_SaveThread(void* data)
 			BFile settingsFile;
 			if (OpenSettingsFile(settingsFile, kSettingsFileNameCredentialsStorage,
 					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
-				messageToSave->Flatten(&settingsFile); delete messageToSave;
+				messageToSave->Flatten(&settingsFile); delete messageToSave; delete messageToSave;
 			}
 		}
 

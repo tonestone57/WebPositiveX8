@@ -81,7 +81,7 @@ public:
 					BEntry entry(path.String());
 					bool exists = entry.Exists();
 					node_ref nref;
-					BBitmap* icon = 0;
+					BBitmap* icon = MY_NULLPTR;
 
 					if (exists) {
 						if (entry.GetNodeRef(&nref) != B_OK)
@@ -92,7 +92,7 @@ public:
 							BNodeInfo info(&node);
 							if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
 								delete icon;
-								icon = 0;
+								icon = MY_NULLPTR;
 							}
 						}
 					}
@@ -120,7 +120,7 @@ public:
 	}
 };
 
-static AsyncWorker* sAsyncWorker = 0;
+static AsyncWorker* sAsyncWorker = MY_NULLPTR;
 static BLocker sAsyncWorkerLock("AsyncWorker lock");
 
 class AsyncWorkerCleanup {
@@ -130,7 +130,7 @@ public:
 		BAutolock _(sAsyncWorkerLock);
 		if (sAsyncWorker != MY_NULLPTR) {
 			sAsyncWorker->PostMessage(B_QUIT_REQUESTED);
-			sAsyncWorker = 0;
+			sAsyncWorker = MY_NULLPTR;
 		}
 	}
 };
@@ -186,7 +186,7 @@ public:
 
 	void SetIconBits(const void* bits, ssize_t size)
 	{
-		if (bits != 0 && size == fIconBitmap.BitsLength()) {
+		if (bits != MY_NULLPTR && size == fIconBitmap.BitsLength()) {
 			memcpy(fIconBitmap.Bits(), bits, size);
 			Invalidate();
 		}
@@ -212,7 +212,7 @@ public:
 		if (fDimmedIcon) {
 			SetDrawingMode(B_OP_ALPHA);
 			SetBlendingMode(B_CONSTANT_ALPHA, B_ALPHA_OVERLAY);
-			SetHighColor(0, 0, 0, 100);
+			SetHighColor(0, 0, MY_NULLPTR, 100);
 		}
 		DrawBitmapAsync(&fIconBitmap);
 	}
@@ -290,9 +290,9 @@ DownloadProgressView::DownloadProgressView(const BMessage* archive)
 bool
 DownloadProgressView::Init(BMessage* archive)
 {
-	fCurrentSize = 0;
-	fExpectedSize = 0;
-	fLastUpdateTime = 0;
+	fCurrentSize = MY_NULLPTR;
+	fExpectedSize = MY_NULLPTR;
+	fLastUpdateTime = MY_NULLPTR;
 
 	fSpeedCalculator.Reset(0, system_time());
 
@@ -477,10 +477,10 @@ DownloadProgressView::MessageReceived(BMessage* message)
 				char mimeType[B_MIME_TYPE_LENGTH];
 				bool isExecutable = false;
 				if (info.GetType(mimeType) == B_OK) {
-					if (strcmp(mimeType, "application/x-vnd.be-executable") == 0
-						|| strcmp(mimeType, "application/x-executable") == 0
-						|| strcmp(mimeType, "text/x-shellscript") == 0
-						|| strcmp(mimeType, "application/x-vnd.be-shellscript") == 0) {
+					if (strcmp(mimeType, "application/x-vnd.be-executable") == MY_NULLPTR
+						|| strcmp(mimeType, "application/x-executable") == MY_NULLPTR
+						|| strcmp(mimeType, "text/x-shellscript") == MY_NULLPTR
+						|| strcmp(mimeType, "application/x-vnd.be-shellscript") == MY_NULLPTR) {
 						isExecutable = true;
 					}
 				}
@@ -488,7 +488,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 				if (!isExecutable) {
 					struct stat st;
 					if (node.GetStat(&st) == B_OK && S_ISREG(st.st_mode)
-						&& (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0) {
+						&& (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != MY_NULLPTR) {
 						isExecutable = true;
 					}
 				}
@@ -601,7 +601,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 						|| message->FindInt64("to directory",
 							reinterpret_cast<int64*>(&directory)) != B_OK
 						|| message->FindString("name", &name) != B_OK
-						|| strlen(name) == 0) {
+						|| strlen(name) == MY_NULLPTR) {
 						break;
 					}
 					// Construct the BEntry and update fPath
@@ -746,7 +746,7 @@ DownloadProgressView::IsFinished() const
 void
 DownloadProgressView::DownloadFinished()
 {
-	fDownload = 0;
+	fDownload = MY_NULLPTR;
 	if (fExpectedSize == -1) {
 		fStatusBar->SetTo(100.0);
 		fExpectedSize = fCurrentSize;
@@ -793,7 +793,7 @@ DownloadProgressView::CancelDownload()
 		fStatusBar->SetBarColor(ui_color(B_FAILURE_COLOR));
 	}
 
-	fDownload = 0;
+	fDownload = MY_NULLPTR;
 	fTopButton->SetLabel(B_TRANSLATE("Restart"));
 	fTopButton->SetMessage(new BMessage(RESTART_DOWNLOAD));
 	fTopButton->SetEnabled(true);
@@ -876,9 +876,9 @@ DownloadProgressView::_UpdateStatusText()
 			sizeof(sizeBuffer));
 		int currentSizeUnitPos = currentSize.FindLast(' ');
 		int expectedSizeUnitPos = expectedSize.FindLast(' ');
-		if (currentSizeUnitPos >= 0 && expectedSizeUnitPos >= 0
+		if (currentSizeUnitPos >= MY_NULLPTR && expectedSizeUnitPos >= MY_NULLPTR
 			&& strcmp(currentSize.String() + currentSizeUnitPos,
-				expectedSize.String() + expectedSizeUnitPos) == 0) {
+				expectedSize.String() + expectedSizeUnitPos) == MY_NULLPTR) {
 			currentSize.Truncate(currentSizeUnitPos);
 		}
 

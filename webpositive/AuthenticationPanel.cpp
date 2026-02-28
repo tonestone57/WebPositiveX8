@@ -85,7 +85,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		_UpdatePasswordVisibility();
 		break;
 	case kMsgJitter: {
-		if (m_jitterCount == 0) {
+		if (m_jitterCount == MY_NULLPTR) {
 			UpdateIfNeeded();
 			m_originalPos = Frame().LeftTop();
 			BMessage message(kMsgJitter);
@@ -93,7 +93,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 				15000, 20);
 		}
 
-		const float jitterOffsets[] = { -10, 0, 10, 0 };
+		const float jitterOffsets[] = { -10, 0, 10, MY_NULLPTR };
 		const int32 jitterOffsetCount = sizeof(jitterOffsets) / sizeof(float);
 
 		if (m_jitterCount < 20) {
@@ -103,8 +103,8 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		} else {
 			MoveTo(m_originalPos);
 			delete m_jitterRunner;
-			m_jitterRunner = 0;
-			m_jitterCount = 0;
+			m_jitterRunner = MY_NULLPTR;
+			m_jitterCount = MY_NULLPTR;
 		}
 		break;
 	}
@@ -129,8 +129,8 @@ AuthenticationPanel::_UpdatePasswordVisibility()
 	// current text and selection range, then restore them after toggling
 	// the hiding mode.
 	BString text = m_passwordTextControl->Text();
-	int32 selectionStart = 0;
-	int32 selectionEnd = 0;
+	int32 selectionStart = MY_NULLPTR;
+	int32 selectionEnd = MY_NULLPTR;
 	textView->GetSelection(&selectionStart, &selectionEnd);
 
 	textView->HideTyping(hide);
@@ -172,7 +172,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	float spacing = be_control_look->DefaultItemSpacing();
 	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
 		.Add(BGridLayoutBuilder(0, spacing)
-			.Add(textView, 0, 0, 2)
+			.Add(textView, 0, MY_NULLPTR, 2)
 			.Add(m_usernameTextControl->CreateLabelLayoutItem(), 0, 1)
 			.Add(m_usernameTextControl->CreateTextViewLayoutItem(), 1, 1)
 			.Add(m_passwordTextControl->CreateLabelLayoutItem(), 0, 2)

@@ -262,16 +262,16 @@ bool
 BrowsingHistory::RemoveItem(const BString& url)
 {
 	BAutolock _(this);
-	for (int32 i = 0; i < fHistoryItems.CountItems(); i++) {
-		BrowsingHistoryItem* item = fHistoryItems.ItemAt(i);
-		if (item->URL() == url) {
-			fHistoryItems.RemoveItem(i);
-			_SaveSettings();
-			return true;
-		}
-	}
+	BrowsingHistoryItem* item = fHistoryMap.Get(url);
+	if (item == MY_NULLPTR)
+		return false;
 
-	return false;
+	fHistoryMap.Remove(url);
+	fHistoryItems.RemoveItem(fHistoryItems.IndexOf(item));
+
+	_SaveSettings();
+
+	return true;
 }
 
 
@@ -338,28 +338,27 @@ void
 BrowsingHistory::_Clear()
 {
 	fHistoryItems.MakeEmpty();
+	fHistoryMap.RemoveAll();
 }
 
 
 bool
 BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 {
-	for (int32 i = 0; i < fHistoryItems.CountItems(); i++) {
-		BrowsingHistoryItem* existingItem = fHistoryItems.ItemAt(i);
-		if (existingItem->URL() == item.URL()) {
-			if (!internal) {
-				BReference<BrowsingHistoryItem> itemRef(existingItem);
-				fHistoryItems.RemoveItem(i, false);
+	BrowsingHistoryItem* existingItem = fHistoryMap.Get(item.URL());
+	if (existingItem != MY_NULLPTR) {
+		if (!internal) {
+			BReference<BrowsingHistoryItem> itemRef(existingItem);
+			fHistoryItems.RemoveItem(fHistoryItems.IndexOf(existingItem), false);
 
-				existingItem->Invoked();
+			existingItem->Invoked();
 
-				int32 insertionIndex = _InsertionIndex(existingItem);
-				fHistoryItems.AddItem(existingItem, insertionIndex);
+			int32 insertionIndex = _InsertionIndex(existingItem);
+			fHistoryItems.AddItem(existingItem, insertionIndex);
 
-				_SaveSettings();
-			}
-			return true;
+			_SaveSettings();
 		}
+		return true;
 	}
 
 	BrowsingHistoryItem* newItem = new(std::nothrow) BrowsingHistoryItem(item);
@@ -371,6 +370,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 
 	int32 insertionIndex = _InsertionIndex(newItem);
 	fHistoryItems.AddItem(newItem, insertionIndex);
+	fHistoryMap.Put(newItem->URL(), newItem);
 
 	if (!internal)
 		_SaveSettings();

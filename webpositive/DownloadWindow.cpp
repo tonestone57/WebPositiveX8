@@ -111,7 +111,7 @@ protected:
 		scrollBar->ResizeBy(2, 0);
 		scrollBar = ScrollBar(B_VERTICAL);
 		scrollBar->MoveBy(1, -1);
-		scrollBar->ResizeBy(MY_NULLPTR, 2);
+		scrollBar->ResizeBy(0, 2);
 		Target()->ResizeBy(1, 1);
 		// Set the scroll steps
 		if (BView* item = Target()->ChildAt(0)) {
@@ -229,8 +229,8 @@ DownloadWindow::DispatchMessage(BMessage* message, BHandler* target)
 	if (message->what == B_MOUSE_DOWN
 		&& message->FindPoint("screen_where", &where) == B_OK
 		&& message->FindInt32("buttons", &buttons) == B_OK
-		&& (buttons & B_SECONDARY_MOUSE_BUTTON) != 0) {
-		for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+		&& (buttons & B_SECONDARY_MOUSE_BUTTON) != MY_NULLPTR) {
+		for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= MY_NULLPTR; i--) {
 			DownloadProgressView* view = _ViewAt(i);
 			if (view == MY_NULLPTR)
 				continue;
@@ -365,7 +365,7 @@ DownloadWindow::DownloadsInProgress()
 	if (!Lock())
 		return downloadsInProgress;
 
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= MY_NULLPTR; i--) {
 		DownloadProgressView* view = _ViewAt(i);
 		if (view == MY_NULLPTR)
 			continue;
@@ -453,7 +453,7 @@ DownloadWindow::_RemoveMissingDownloads()
 void
 DownloadWindow::_RemoveDownloads(bool finished, bool missing)
 {
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= MY_NULLPTR; i--) {
 		DownloadProgressView* view = _ViewAt(i);
 		if (view == MY_NULLPTR)
 			continue;
@@ -470,9 +470,9 @@ DownloadWindow::_RemoveDownloads(bool finished, bool missing)
 void
 DownloadWindow::_ValidateButtonStatus()
 {
-	int32 finishedCount = 0;
-	int32 missingCount = 0;
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+	int32 finishedCount = MY_NULLPTR;
+	int32 missingCount = MY_NULLPTR;
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= MY_NULLPTR; i--) {
 		DownloadProgressView* view = _ViewAt(i);
 		if (view == MY_NULLPTR)
 			continue;
@@ -494,7 +494,7 @@ DownloadWindow::_SaveSettings()
 		return;
 
 	// Create snapshot of settings on window thread
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= MY_NULLPTR; i--) {
 		DownloadProgressView* view = _ViewAt(i);
 		if (view == MY_NULLPTR)
 			continue;
@@ -533,7 +533,7 @@ DownloadWindow::_SaveThread(void* data)
 			BFile file;
 			if (OpenSettingsFile(file, kSettingsFileNameDownloads,
 					B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY) == B_OK) {
-				messageToSave->Flatten(&file); delete messageToSave;
+				messageToSave->Flatten(&file); delete messageToSave; delete messageToSave;
 			}
 		}
 
@@ -573,10 +573,10 @@ DownloadWindow::_LoadSettings()
 int32
 DownloadWindow::_RemoveExistingDownload(const BString& url)
 {
-	int32 index = 0;
-	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
+	int32 index = MY_NULLPTR;
+	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= MY_NULLPTR; i--) {
 		DownloadProgressView* view = _ViewAt(i);
-		if (view == 0 || view->URL() != url)
+		if (view == MY_NULLPTR || view->URL() != url)
 			continue;
 
 		index = i;

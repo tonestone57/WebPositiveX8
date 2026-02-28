@@ -12,13 +12,21 @@ public:
         Value value;
     };
 
+    typedef typename std::map<Key, Value>::iterator MapIterator;
+    typedef typename std::map<Key, Value>::const_iterator ConstMapIterator;
+
     class Iterator {
     public:
-        Iterator(typename std::map<Key, Value>::iterator it, typename std::map<Key, Value>::iterator end)
-            : fIt(it), fEnd(end) {}
+        Iterator(MapIterator it, MapIterator end) : fIt(it), fEnd(end) {}
+
+        bool operator==(const Iterator& other) const { return fIt == other.fIt; }
+        bool operator!=(const Iterator& other) const { return fIt != other.fIt; }
+
+        Iterator& operator++() { ++fIt; return *this; }
+
+        MapIterator operator->() const { return fIt; }
 
         bool HasNext() const { return fIt != fEnd; }
-
         const Entry& Next() {
             fCurrentEntry.key = fIt->first;
             fCurrentEntry.value = fIt->second;
@@ -27,8 +35,8 @@ public:
         }
 
     private:
-        typename std::map<Key, Value>::iterator fIt;
-        typename std::map<Key, Value>::iterator fEnd;
+        MapIterator fIt;
+        MapIterator fEnd;
         Entry fCurrentEntry;
     };
 
@@ -42,7 +50,7 @@ public:
     }
 
     Value Get(const Key& key) const {
-        typename std::map<Key, Value>::const_iterator it = fMap.find(key);
+        ConstMapIterator it = fMap.find(key);
         if (it != fMap.end())
             return it->second;
         return Value();
@@ -60,13 +68,16 @@ public:
         return Iterator(fMap.begin(), fMap.end());
     }
 
-    // Add find for compatibility with existing code if needed
     Iterator find(const Key& key) {
         return Iterator(fMap.find(key), fMap.end());
     }
 
     Iterator end() {
         return Iterator(fMap.end(), fMap.end());
+    }
+
+    Value& operator[](const Key& key) {
+        return fMap[key];
     }
 
 private:

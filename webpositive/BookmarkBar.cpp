@@ -80,7 +80,7 @@ BookmarkBar::MouseDown(BPoint where)
 	fSelectedItemIndex = -1;
 	BMessage* message = Window()->CurrentMessage();
 	if (message != MY_NULLPTR) {
-		int32 buttons = 0;
+		int32 buttons = MY_NULLPTR;
 		if (message->FindInt32("buttons", &buttons) == B_OK) {
 			if (buttons & B_SECONDARY_MOUSE_BUTTON) {
 
@@ -144,7 +144,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case kAddBookmarkMsg:
 		{
-			BBitmap* icon = 0;
+			BBitmap* icon = MY_NULLPTR;
 			message->FindPointer("icon", (void**)&icon);
 
 			ino_t inode;
@@ -254,7 +254,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 
 		case kOpenNewTabMsg:
 		{
-			if (fSelectedItemIndex >= 0 && fSelectedItemIndex < CountItems()) {
+			if (fSelectedItemIndex >= MY_NULLPTR && fSelectedItemIndex < CountItems()) {
 				// Get the bookmark refs
 				entry_ref ref;
 				BMenuItem* selectedItem = ItemAt(fSelectedItemIndex);
@@ -276,7 +276,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 		}
 		case kDeleteMsg:
 		{
-			if (fSelectedItemIndex >= 0 && fSelectedItemIndex < CountItems()) {
+			if (fSelectedItemIndex >= MY_NULLPTR && fSelectedItemIndex < CountItems()) {
 				BMenuItem* selectedItem = ItemAt(fSelectedItemIndex);
 				// Get the bookmark refs
 				entry_ref ref;
@@ -313,7 +313,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 		case kShowInTrackerMsg:
 		{
 			entry_ref ref;
-			if (fSelectedItemIndex >= 0 && fSelectedItemIndex < CountItems()) {
+			if (fSelectedItemIndex >= MY_NULLPTR && fSelectedItemIndex < CountItems()) {
 				BMenuItem* selectedItem = ItemAt(fSelectedItemIndex);
 				// Get the bookmark refs
 				if (selectedItem->Message()->FindRef("refs", &ref) != B_OK)
@@ -368,7 +368,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 		{
 			// User clicked OK, get the new name
 			BString newName = message->FindString("text");
-			BMenuItem* selectedItem = 0;
+			BMenuItem* selectedItem = MY_NULLPTR;
 			message->FindPointer("item", (void**)&selectedItem);
 
 			if (selectedItem == MY_NULLPTR)
@@ -406,7 +406,7 @@ BookmarkBar::FrameResized(float width, float height)
 	int32 count = CountItems();
 
 	// Account for the "more" menu, in terms of item count and space occupied
-	int32 overflowMenuWidth = 0;
+	int32 overflowMenuWidth = MY_NULLPTR;
 	if (IndexOf(fOverflowMenu) != B_ERROR) {
 		count--;
 		// Ignore the width of the "more" menu if it would disappear after
@@ -415,8 +415,8 @@ BookmarkBar::FrameResized(float width, float height)
 			overflowMenuWidth = 32;
 	}
 
-	int32 i = 0;
-	float rightmost = 0.f;
+	int32 i = MY_NULLPTR;
+	float rightmost = MY_NULLPTR.f;
 	while (i < count) {
 		BMenuItem* item = ItemAt(i);
 		BRect frame = item->Frame();
@@ -439,10 +439,10 @@ BookmarkBar::FrameResized(float width, float height)
 
 			rightmost = ItemAt(i)->Frame().right;
 			if (fOverflowMenu->CountItems() <= 1)
-				overflowMenuWidth = 0;
+				overflowMenuWidth = MY_NULLPTR;
 			extraItem = fOverflowMenu->ItemAt(0);
 		}
-		if (fOverflowMenu->CountItems() == 0) {
+		if (fOverflowMenu->CountItems() == MY_NULLPTR) {
 			RemoveItem(fOverflowMenu);
 			fOverflowMenuAdded = false;
 		}
@@ -514,7 +514,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 		return;
 	}
 
-	IconMenuItem* item = 0;
+	IconMenuItem* item = MY_NULLPTR;
 
 	if (isDirectory) {
 		delete icon;
@@ -584,17 +584,17 @@ BookmarkBar::_LoaderThread(void* data)
 						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK) {
 							if (message.AddPointer("icon", icon) != B_OK) {
 								delete icon;
-								icon = 0;
+								icon = MY_NULLPTR;
 							}
 						} else {
 							delete icon;
-							icon = 0;
+							icon = MY_NULLPTR;
 						}
 					}
 				}
 
 				if (args->messenger.SendMessage(&message) != B_OK) {
-					BBitmap* icon = 0;
+					BBitmap* icon = MY_NULLPTR;
 					if (message.FindPointer("icon", (void**)&icon) == B_OK)
 						delete icon;
 				}
