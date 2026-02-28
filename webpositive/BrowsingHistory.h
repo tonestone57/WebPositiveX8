@@ -129,7 +129,8 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			HistoryVectorPtr	fPendingSaveItems;
+			std::unique_ptr<HistoryVector>
+								fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 

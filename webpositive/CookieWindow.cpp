@@ -231,6 +231,9 @@ CookieWindow::_BuildDomainList()
 	}
 	fDomains->MakeEmpty();
 
+	if (fCookieJar == NULL)
+		return;
+
 	// Populate the domain list and cookie cache
 	BPrivate::Network::BNetworkCookieJar::Iterator it = fCookieJar->GetIterator();
 
@@ -394,6 +397,9 @@ CookieWindow::_RemoveCookieFromMap(const BPrivate::Network::BNetworkCookie& cook
 void
 CookieWindow::_DeleteCookies()
 {
+	if (fCookieJar == NULL)
+		return;
+
 	CookieRow* row;
 	CookieRow* prevRow;
 
