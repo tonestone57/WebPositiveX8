@@ -21,6 +21,7 @@
 #include <ScrollView.h>
 #include <StringView.h>
 
+#include <new>
 
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "Cookie Manager"
@@ -209,6 +210,15 @@ CookieWindow::QuitRequested()
 }
 
 
+CookieWindow::~CookieWindow()
+{
+	CookieMap::Iterator iterator = fCookieMap.GetIterator();
+	while (iterator.HasNext()) {
+		delete iterator.Next().value;
+	}
+}
+
+
 void
 CookieWindow::SetCookieJar(BPrivate::Network::BNetworkCookieJar& jar)
 {
@@ -233,10 +243,16 @@ CookieWindow::_BuildDomainList()
 	if (fCookieJar == MY_NULLPTR)
 		return;
 
+	// Empty the cookie cache
+	CookieMap::Iterator iterator = fCookieMap.GetIterator();
+	while (iterator.HasNext()) {
+		delete iterator.Next().value;
+	}
+	fCookieMap.RemoveAll();
+
 	// Populate the domain list and cookie cache
 	BPrivate::Network::BNetworkCookieJar::Iterator it = fCookieJar->GetIterator();
 
-	fCookieMap.clear();
 	const BPrivate::Network::BNetworkCookie* cookie;
 	BString lastDomain;
 	bool first = true;
@@ -247,7 +263,14 @@ CookieWindow::_BuildDomainList()
 			lastDomain = domain;
 			first = false;
 		}
-		fCookieMap[domain].push_back(*cookie);
+		CookieList* list = fCookieMap.Get(domain);
+		if (list == MY_NULLPTR) {
+			list = new(std::nothrow) CookieList(10, true);
+			if (list != MY_NULLPTR)
+				fCookieMap.Put(domain, list);
+		}
+		if (list != MY_NULLPTR)
+			list->AddItem(new(std::nothrow) BPrivate::Network::BNetworkCookie(*cookie));
 	}
 
 	int i = 0;
@@ -368,13 +391,13 @@ CookieWindow::_ShowCookiesForDomain(BString domain)
 	fCookies->Clear();
 
 	// Populate the cookie list from the cache
-	auto it = fCookieMap.find(domain);
+	CookieList* list = fCookieMap.Get(domain);
 
-	if (it == fCookieMap.end())
+	if (list == MY_NULLPTR)
 		return;
 
-	for (const auto& cookie : it->second) {
-		new CookieRow(fCookies, cookie);
+	for (int32 i = 0; i < list->CountItems(); i++) {
+		new CookieRow(fCookies, *list->ItemAt(i));
 	}
 }
 
@@ -382,14 +405,14 @@ CookieWindow::_ShowCookiesForDomain(BString domain)
 void
 CookieWindow::_RemoveCookieFromMap(const BPrivate::Network::BNetworkCookie& cookie)
 {
-	auto it = fCookieMap.find(cookie.Domain());
-	if (it == fCookieMap.end())
+	CookieList* list = fCookieMap.Get(cookie.Domain());
+	if (list == MY_NULLPTR)
 		return;
 
-	auto& cookies = it->second;
-	for (auto vecIt = cookies.begin(); vecIt != cookies.end(); ++vecIt) {
-		if (vecIt->Name() == cookie.Name() && vecIt->Path() == cookie.Path()) {
-			cookies.erase(vecIt);
+	for (int32 i = 0; i < list->CountItems(); i++) {
+		BPrivate::Network::BNetworkCookie* c = list->ItemAt(i);
+		if (c->Name() == cookie.Name() && c->Path() == cookie.Path()) {
+			list->RemoveItem(i);
 			break;
 		}
 	}

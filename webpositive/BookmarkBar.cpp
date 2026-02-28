@@ -208,7 +208,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 					BEntry entry(&ref);
 					BEntry followedEntry(&ref, true); // traverse in case it's a symlink
 
-					std::map<ino_t, BPrivate::IconMenuItem*>::iterator it
+					HashMap<ino_t, BPrivate::IconMenuItem*>::Iterator it
 						= fItemsMap.find(inode);
 					if (it == fItemsMap.end()) {
 						_AddItem(inode, &entry);
@@ -232,7 +232,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 				}
 				case B_ENTRY_REMOVED:
 				{
-					std::map<ino_t, BPrivate::IconMenuItem*>::iterator it
+					HashMap<ino_t, BPrivate::IconMenuItem*>::Iterator it
 						= fItemsMap.find(inode);
 					if (it == fItemsMap.end())
 						break;
@@ -530,7 +530,6 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 
 		if (icon != MY_NULLPTR) {
 			item = new IconMenuItem(name, message, icon, B_MINI_ICON);
-			delete icon;
 		} else {
 			BEntry followedLink(ref, true);
 			BNode node(&followedLink);

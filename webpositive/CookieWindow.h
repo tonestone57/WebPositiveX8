@@ -13,8 +13,9 @@
 
 #include <NetworkCookieJar.h>
 
-#include <map>
-#include <vector>
+#include "HashMap.h"
+#include "HashString.h"
+#include <ObjectList.h>
 
 #include <String.h>
 
@@ -34,6 +35,7 @@ public:
 	virtual	void				MessageReceived(BMessage* message);
 	virtual void				Show();
 	virtual	bool				QuitRequested();
+	virtual						~CookieWindow();
 
 			void				SetCookieJar(
 									BPrivate::Network::BNetworkCookieJar& jar);
@@ -53,8 +55,9 @@ private:
 
 	BPrivate::Network::BNetworkCookieJar*	fCookieJar;
 
-	std::map<BString, std::vector<BPrivate::Network::BNetworkCookie>>
-								fCookieMap;
+	typedef BObjectList<BPrivate::Network::BNetworkCookie> CookieList;
+typedef HashMap<HashString, CookieList*> CookieMap;
+CookieMap fCookieMap;
 };
 
 

@@ -153,9 +153,9 @@ CookieWindowTest::test_build_domain_list()
 	assert_string("example.com", item1->Text(), "Second item should be example.com");
 
 	// Check if cookie map is populated
-	assert_int32(1, (int32)window->fCookieMap["example.com"].size(), "example.com should have 1 cookie in map");
-	assert_int32(1, (int32)window->fCookieMap["sub.example.com"].size(), "sub.example.com should have 1 cookie in map");
-	assert_int32(1, (int32)window->fCookieMap["google.com"].size(), "google.com should have 1 cookie in map");
+	assert_int32(1, window->fCookieMap.Get("example.com")->CountItems(), "example.com should have 1 cookie in map");
+	assert_int32(1, window->fCookieMap.Get("sub.example.com")->CountItems(), "sub.example.com should have 1 cookie in map");
+	assert_int32(1, window->fCookieMap.Get("google.com")->CountItems(), "google.com should have 1 cookie in map");
 
 	window->Lock();
 	window->Quit();

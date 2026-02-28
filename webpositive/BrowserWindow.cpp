@@ -75,7 +75,7 @@
 #include <TextControl.h>
 #include <UnicodeChar.h>
 #include <map>
-#include <memory>
+
 #include <new>
 #include <stdio.h>
 #include <stdlib.h>
@@ -2320,15 +2320,14 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 			// This string is only present if the message originated from Tracker (drag and drop).
 			fileName = "";
 		}
-		std::unique_ptr<BBitmap> miniIcon;
-		std::unique_ptr<BBitmap> largeIcon;
+		BBitmap* miniIcon = MY_NULLPTR;
+		BBitmap* largeIcon = MY_NULLPTR;
 
 		const void* bits;
 		ssize_t length;
 		if (originatorData.FindData("miniIcon", B_COLOR_8_BIT_TYPE, &bits,
 				&length) == B_OK) {
-			miniIcon.reset(new(std::nothrow) BBitmap(BRect(0, 0, 15, 15),
-				B_BITMAP_NO_SERVER_LINK, B_CMAP8));
+			miniIcon = new(std::nothrow) BBitmap(BRect(0, 0, 15, 15), B_BITMAP_NO_SERVER_LINK, B_CMAP8);
 			if (miniIcon != 0 && miniIcon->InitCheck() == B_OK
 				&& length == (ssize_t)miniIcon->BitsLength()) {
 				memcpy(miniIcon->Bits(), bits, length);
@@ -2336,8 +2335,7 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 		}
 		if (originatorData.FindData("largeIcon", B_COLOR_8_BIT_TYPE, &bits,
 				&length) == B_OK) {
-			largeIcon.reset(new(std::nothrow) BBitmap(BRect(0, 0, 31, 31),
-				B_BITMAP_NO_SERVER_LINK, B_CMAP8));
+			largeIcon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK, B_CMAP8);
 			if (largeIcon != 0 && largeIcon->InitCheck() == B_OK
 				&& length == (ssize_t)largeIcon->BitsLength()) {
 				memcpy(largeIcon->Bits(), bits, length);
@@ -2345,8 +2343,9 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 		}
 
 		if (validData == true) {
-			_CreateBookmark(BPath(&ref), BString(fileName), BString(title),
-				BString(url), miniIcon.get(), largeIcon.get());
+			_CreateBookmark(BPath(&ref), BString(fileName), BString(title), BString(url), miniIcon, largeIcon);
+delete miniIcon;
+delete largeIcon;
 		} else {
 			BString message(B_TRANSLATE("There was an error setting up "
 				"the bookmark."));
@@ -2371,22 +2370,24 @@ BrowserWindow::_CreateBookmark()
 	BPath path;
 	status_t status = _BookmarkPath(path);
 
-	std::unique_ptr<BBitmap> miniIcon;
-	std::unique_ptr<BBitmap> largeIcon;
+	BBitmap* miniIcon = MY_NULLPTR;
+	BBitmap* largeIcon = MY_NULLPTR;
 	PageUserData* userData = static_cast<PageUserData*>(CurrentWebView()->GetUserData());
 	if (userData != MY_NULLPTR) {
 		if (userData->PageIcon() != MY_NULLPTR) {
-			miniIcon.reset(new BBitmap(BRect(0, 0, 15, 15), B_CMAP8));
+			miniIcon = new BBitmap(BRect(0, 0, 15, 15), B_CMAP8);
 			miniIcon->ImportBits(userData->PageIcon());
 		}
 		if (userData->PageLargeIcon() != MY_NULLPTR) {
-			largeIcon.reset(new BBitmap(BRect(0, 0, 31, 31), B_CMAP8));
+			largeIcon = new BBitmap(BRect(0, 0, 31, 31), B_CMAP8);
 			largeIcon->ImportBits(userData->PageLargeIcon());
 		}
 	}
 
 	if (status == B_OK)
-		_CreateBookmark(path, fileName, title, url, miniIcon.get(), largeIcon.get());
+		_CreateBookmark(path, fileName, title, url, miniIcon, largeIcon);
+delete miniIcon;
+delete largeIcon;
 	else {
 		BString message(B_TRANSLATE_COMMENT("There was an error retrieving "
 			"the bookmark folder.\n\nError: %error", "Don't translate the "
@@ -3006,7 +3007,7 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 {
 	if (data == MY_NULLPTR)
 		return B_BAD_VALUE;
-	std::unique_ptr<BMessage> message(static_cast<BMessage*>(data));
+	BMessage* message = static_cast<BMessage*>(data);
 
 	BPath pathToPageSource;
 
@@ -3116,7 +3117,8 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		alert->Go(0);
 	}
 
-	return B_OK;
+	delete message;
+return B_OK;
 }
 
 

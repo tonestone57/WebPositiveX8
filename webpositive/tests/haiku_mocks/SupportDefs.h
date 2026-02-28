@@ -82,4 +82,14 @@ typedef struct {
 
 typedef struct { int32 id; } screen_id;
 
+class BReferenceable {
+public:
+    BReferenceable() : fReferenceCount(1) {}
+    virtual ~BReferenceable() {}
+    void AcquireReference() { fReferenceCount++; }
+    void ReleaseReference() { if (--fReferenceCount == 0) delete this; }
+private:
+    int32 fReferenceCount;
+};
+
 #endif

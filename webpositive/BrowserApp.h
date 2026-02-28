@@ -36,9 +36,6 @@
 #include <Rect.h>
 #include <UrlContext.h>
 
-#include <memory>
-
-
 class ConsoleWindow;
 class CookieWindow;
 class DownloadWindow;
@@ -84,18 +81,14 @@ private:
 private:
 			int					fWindowCount;
 			BRect				fLastWindowFrame;
-			std::unique_ptr<BMessage>
-								fLaunchRefsMessage;
+			BMessage*			fLaunchRefsMessage;
 			bool				fInitialized;
 
-			std::unique_ptr<SettingsMessage>
-								fSettings;
-			std::unique_ptr<SettingsMessage>
-								fCookies;
+			SettingsMessage*	fSettings;
+			SettingsMessage*	fCookies;
 			bool				fCookiesLoaded;
 			thread_id			fCookieLoaderThread;
-			std::unique_ptr<SettingsMessage>
-								fSession;
+			SettingsMessage*	fSession;
 			BReference<BPrivate::Network::BUrlContext>	fContext;
 
 			DownloadWindow*		fDownloadWindow;

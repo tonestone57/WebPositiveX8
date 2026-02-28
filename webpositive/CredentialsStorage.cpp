@@ -398,8 +398,8 @@ CredentialsStorage::_SaveSettings()
 	if (!fPersistent)
 		return;
 
-	std::unique_ptr<BMessage> newMessage(new(std::nothrow) BMessage());
-	if (!newMessage)
+	BMessage* newMessage = new(std::nothrow) BMessage();
+	if (newMessage == MY_NULLPTR)
 		return;
 
 	BMessage credentialsArchive;
@@ -421,7 +421,7 @@ CredentialsStorage::_SaveSettings()
 	}
 
 	fSaveLock.Lock();
-	fPendingSaveMessage = std::move(newMessage);
+	delete fPendingSaveMessage; fPendingSaveMessage = newMessage;
 	fSaveLock.Unlock();
 
 	release_sem(fSaveSem);
@@ -436,20 +436,20 @@ CredentialsStorage::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		std::unique_ptr<BMessage> messageToSave;
+		BMessage* messageToSave = MY_NULLPTR;
 
 		self->fSaveLock.Lock();
-		messageToSave = std::move(self->fPendingSaveMessage);
+		messageToSave = self->fPendingSaveMessage; self->fPendingSaveMessage = MY_NULLPTR;
 		self->fSaveLock.Unlock();
 
 		if (self->fQuitting && !messageToSave)
 			break;
 
-		if (messageToSave) {
+		if (messageToSave != MY_NULLPTR) {
 			BFile settingsFile;
 			if (OpenSettingsFile(settingsFile, kSettingsFileNameCredentialsStorage,
 					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
-				messageToSave->Flatten(&settingsFile);
+				messageToSave->Flatten(&settingsFile); delete messageToSave;
 			}
 		}
 

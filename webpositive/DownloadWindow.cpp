@@ -489,8 +489,8 @@ DownloadWindow::_ValidateButtonStatus()
 void
 DownloadWindow::_SaveSettings()
 {
-	std::unique_ptr<BMessage> newMessage(new(std::nothrow) BMessage());
-	if (!newMessage)
+	BMessage* newMessage = new(std::nothrow) BMessage();
+	if (newMessage == MY_NULLPTR)
 		return;
 
 	// Create snapshot of settings on window thread
@@ -505,7 +505,7 @@ DownloadWindow::_SaveSettings()
 	}
 
 	fSaveLock.Lock();
-	fPendingSaveMessage = std::move(newMessage);
+	delete fPendingSaveMessage; fPendingSaveMessage = newMessage;
 	fSaveLock.Unlock();
 
 	release_sem(fSaveSem);
@@ -520,20 +520,20 @@ DownloadWindow::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		std::unique_ptr<BMessage> messageToSave;
+		BMessage* messageToSave = MY_NULLPTR;
 
 		self->fSaveLock.Lock();
-		messageToSave = std::move(self->fPendingSaveMessage);
+		messageToSave = self->fPendingSaveMessage; self->fPendingSaveMessage = MY_NULLPTR;
 		self->fSaveLock.Unlock();
 
 		if (self->fQuitting && !messageToSave)
 			break;
 
-		if (messageToSave) {
+		if (messageToSave != MY_NULLPTR) {
 			BFile file;
 			if (OpenSettingsFile(file, kSettingsFileNameDownloads,
 					B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY) == B_OK) {
-				messageToSave->Flatten(&file);
+				messageToSave->Flatten(&file); delete messageToSave;
 			}
 		}
 
