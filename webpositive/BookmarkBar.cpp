@@ -542,10 +542,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 	if (IndexOf(fOverflowMenu) != B_ERROR)
 		count--;
 
-	if (!BMenuBar::AddItem(item, count)) {
-		delete item;
-		return;
-	}
+	BMenuBar::AddItem(item, count);
 	fItemsMap[inode] = item;
 
 	// Move the item to the "more" menu if it overflows.
