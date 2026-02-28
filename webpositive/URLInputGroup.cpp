@@ -3,6 +3,7 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
+#include "BeOSCompatibility.h"
 #include "URLInputGroup.h"
 
 #include <Bitmap.h>
@@ -410,8 +411,8 @@ public:
 	PageIconView()
 		:
 		BView("page icon view", B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE),
-		fIcon(nullptr),
-		fLargeIcon(nullptr),
+		fIcon(MY_NULLPTR),
+		fLargeIcon(MY_NULLPTR),
 		fClickPoint(-1, 0),
 		fPageIconSet(false)
 	{
@@ -428,7 +429,7 @@ public:
 
 	virtual void Draw(BRect updateRect)
 	{
-		if (fIcon == nullptr)
+		if (fIcon == MY_NULLPTR)
 			return;
 
 		BRect bounds(Bounds());
@@ -476,7 +477,7 @@ public:
 
 	virtual void MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 	{
-		if (dragMessage != nullptr)
+		if (dragMessage != MY_NULLPTR)
 			return;
 
 		if (fClickPoint.x >= 0
@@ -503,7 +504,7 @@ public:
 			miniIcon.ImportBits(fIcon);
 
 			BBitmap largeIcon(BRect(0, 0, 31, 31), B_CMAP8);
-			if (fLargeIcon != nullptr)
+			if (fLargeIcon != MY_NULLPTR)
 				largeIcon.ImportBits(fLargeIcon);
 			else
 				largeIcon.ImportBits(fIcon);
@@ -539,12 +540,12 @@ public:
 	{
 		delete fIcon;
 		delete fLargeIcon;
-		fLargeIcon = nullptr;
+		fLargeIcon = MY_NULLPTR;
 
 		if (icon) {
 			fIcon = new BBitmap(icon);
 			fPageIconSet = true;
-			if (largeIcon != nullptr)
+			if (largeIcon != MY_NULLPTR)
 				fLargeIcon = new BBitmap(largeIcon);
 		} else {
 			fIcon = new BBitmap(BRect(0, 0, 15, 15), B_RGB32);
@@ -584,7 +585,7 @@ URLInputGroup::URLInputGroup(BMessage* goMessage)
 
 // TODO: Fix in Haiku, no in-built support for archived BBitmaps from
 // resources?
-//	fGoButton = new BitmapButton("kActionGo", nullptr);
+//	fGoButton = new BitmapButton("kActionGo", MY_NULLPTR);
 	fGoButton = new BBitmapButton(kGoBitmapBits, kGoBitmapWidth,
 		kGoBitmapHeight, kGoBitmapFormat, goMessage);
 	GroupLayout()->AddView(fGoButton, 0.0f);

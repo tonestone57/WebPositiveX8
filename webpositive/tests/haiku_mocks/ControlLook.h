@@ -16,7 +16,7 @@ public:
     void DrawTabFrame(BView* owner, BRect& rect, const BRect& updateRect, rgb_color base, uint32 borders = 0, uint32 flags = 0, uint32 side = 0) {}
     void DrawActiveTab(BView* owner, BRect& rect, const BRect& updateRect, rgb_color base, uint32 flags = 0, uint32 borders = 0, uint32 side = 0, int32 index = 0, int32 selected = -1, int32 first = 0, int32 last = 0) {}
     void DrawInactiveTab(BView* owner, BRect& rect, const BRect& updateRect, rgb_color base, uint32 flags = 0, uint32 borders = 0, uint32 side = 0, int32 index = 0, int32 selected = -1, int32 first = 0, int32 last = 0) {}
-    void DrawLabel(BView* owner, const char* label, BRect rect, const BRect& updateRect, rgb_color base, uint32 flags, const BAlignment& alignment, const rgb_color* textColor = nullptr) {}
+    void DrawLabel(BView* owner, const char* label, BRect rect, const BRect& updateRect, rgb_color base, uint32 flags, const BAlignment& alignment, const rgb_color* textColor = MY_NULLPTR) {}
 
     uint32 Flags(BView* view) const { return 0; }
 

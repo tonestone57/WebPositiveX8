@@ -3,6 +3,7 @@
  * Copyright 2019, Haiku, Inc.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
+#include "BeOSCompatibility.h"
 #include "SettingsWindow.h"
 
 #include <new>
@@ -97,7 +98,7 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 	fRevertButton = new BButton(B_TRANSLATE("Revert"),
 		new BMessage(MSG_REVERT));
 
-	fOpenFilePanel = nullptr;
+	fOpenFilePanel = MY_NULLPTR;
 
 	float spacing = be_control_look->DefaultItemSpacing();
 
@@ -347,7 +348,7 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	BPopUpMenu* searchPageMenu = new BPopUpMenu("Search page:");
 	searchPageMenu->SetRadioMode(true);
 
-	for (int i = 0; kSearchEngines[i].url != nullptr; i++) {
+	for (int i = 0; kSearchEngines[i].url != MY_NULLPTR; i++) {
 		BMessage* message = new BMessage(MSG_SEARCH_PAGE_CHANGED_MENU);
 		message->AddString("searchstring", kSearchEngines[i].url);
 		searchPageMenu->AddItem(new BMenuItem(kSearchEngines[i].name, message));
@@ -1071,10 +1072,10 @@ SettingsWindow::_RevertSettings()
 void
 SettingsWindow::_ChooseDownloadFolder(const BMessage* message)
 {
-	if (fOpenFilePanel == nullptr) {
+	if (fOpenFilePanel == MY_NULLPTR) {
 		BMessenger target(this);
 		fOpenFilePanel = new (std::nothrow) BFilePanel(B_OPEN_PANEL,
-			&target, nullptr, B_DIRECTORY_NODE);
+			&target, MY_NULLPTR, B_DIRECTORY_NODE);
 	}
 	BMessage panelMessage(MSG_HANDLE_DOWNLOAD_FOLDER);
 	fOpenFilePanel->SetMessage(&panelMessage);

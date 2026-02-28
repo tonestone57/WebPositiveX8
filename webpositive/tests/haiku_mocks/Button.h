@@ -9,6 +9,6 @@ public:
     virtual void SetEnabled(bool enabled) {}
     virtual void SetValue(int32 value) {}
     virtual int32 Value() const { return 0; }
-    virtual void Invoke(BMessage* message = nullptr) {}
+    virtual void Invoke(BMessage* message = MY_NULLPTR) {}
 };
 #endif

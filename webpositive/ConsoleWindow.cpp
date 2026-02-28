@@ -6,6 +6,7 @@
  *		Zhuowei Zhang
  *		Humdinger
  */
+#include "BeOSCompatibility.h"
 #include "ConsoleWindow.h"
 
 #include <Catalog.h>
@@ -102,7 +103,7 @@ ConsoleWindow::MessageReceived(BMessage* message)
 					if (index >= 0) {
 						BStringItem* item = static_cast<BStringItem*>(
 							fMessagesListView->ItemAt(index));
-						if (item != nullptr) {
+						if (item != MY_NULLPTR) {
 							item->SetText(finalText.String());
 							fMessagesListView->InvalidateItem(index);
 							break;
@@ -155,14 +156,14 @@ ConsoleWindow::_CopyToClipboard()
 		for (int32 i = 0; i < fMessagesListView->CountItems(); i++) {
 			BStringItem* item = static_cast<BStringItem*>(
 				fMessagesListView->ItemAt(i));
-			if (item != nullptr)
+			if (item != MY_NULLPTR)
 				text << item->Text();
 		}
 	} else {
 		for (int32 i = 0; (index = fMessagesListView->CurrentSelection(i)) >= 0; i++) {
 			BStringItem* item = static_cast<BStringItem*>(
 				fMessagesListView->ItemAt(index));
-			if (item != nullptr)
+			if (item != MY_NULLPTR)
 				text << item->Text();
 		}
 	}
@@ -171,7 +172,7 @@ ConsoleWindow::_CopyToClipboard()
 	if (be_clipboard->Lock()) {
 		be_clipboard->Clear();
 		BMessage* clip = be_clipboard->Data();
-		if (clip != nullptr) {
+		if (clip != MY_NULLPTR) {
 			clip->AddData("text/plain", B_MIME_TYPE, text.String(), textLen);
 			be_clipboard->Commit();
 		}

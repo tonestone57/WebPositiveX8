@@ -4,6 +4,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -16,7 +17,7 @@ static const char* sMockSettingsPath = "/boot/home/config/settings";
 
 static status_t
 my_find_directory(directory_which which, BPath* path, bool create_it = false,
-	const BVolume* volume = nullptr)
+	const BVolume* volume = MY_NULLPTR)
 {
 	if (which == B_USER_SETTINGS_DIRECTORY) {
 		if (sFindDirectoryResult == B_OK)
@@ -51,12 +52,12 @@ assert_status(status_t expected, status_t actual, const char* message)
 static void
 assert_string(const char* expected, const char* actual, const char* message)
 {
-	if ((expected == nullptr && actual == nullptr) ||
-		(expected != nullptr && actual != nullptr && strcmp(expected, actual) == 0)) {
+	if ((expected == MY_NULLPTR && actual == MY_NULLPTR) ||
+		(expected != MY_NULLPTR && actual != MY_NULLPTR && strcmp(expected, actual) == 0)) {
 		printf("PASS: %s\n", message);
 	} else {
 		printf("FAIL: %s (expected %s, got %s)\n", message,
-			expected ? expected : "nullptr", actual ? actual : "nullptr");
+			expected ? expected : "MY_NULLPTR", actual ? actual : "MY_NULLPTR");
 		gTestFailures++;
 	}
 }
@@ -81,11 +82,11 @@ test_get_settings_path_basic()
 static void
 test_get_settings_path_null_filename()
 {
-	printf("Testing GetSettingsPath with nullptr filename...\n");
+	printf("Testing GetSettingsPath with MY_NULLPTR filename...\n");
 	BPath path;
 	sFindDirectoryResult = B_OK;
-	assert_status(B_OK, GetSettingsPath(path, nullptr),
-		"GetSettingsPath(nullptr) returns B_OK");
+	assert_status(B_OK, GetSettingsPath(path, MY_NULLPTR),
+		"GetSettingsPath(MY_NULLPTR) returns B_OK");
 
 	BString expectedPath(sMockSettingsPath);
 	expectedPath << "/" << kApplicationName;

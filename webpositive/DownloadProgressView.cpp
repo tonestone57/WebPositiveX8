@@ -4,6 +4,7 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
+#include "BeOSCompatibility.h"
 #include "DownloadProgressView.h"
 
 #include <new>
@@ -80,7 +81,7 @@ public:
 					BEntry entry(path.String());
 					bool exists = entry.Exists();
 					node_ref nref;
-					BBitmap* icon = nullptr;
+					BBitmap* icon = MY_NULLPTR;
 
 					if (exists) {
 						if (entry.GetNodeRef(&nref) != B_OK)
@@ -91,7 +92,7 @@ public:
 							BNodeInfo info(&node);
 							if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
 								delete icon;
-								icon = nullptr;
+								icon = MY_NULLPTR;
 							}
 						}
 					}
@@ -119,7 +120,7 @@ public:
 	}
 };
 
-static AsyncWorker* sAsyncWorker = nullptr;
+static AsyncWorker* sAsyncWorker = MY_NULLPTR;
 static BLocker sAsyncWorkerLock("AsyncWorker lock");
 
 class AsyncWorkerCleanup {
@@ -127,9 +128,9 @@ public:
 	~AsyncWorkerCleanup()
 	{
 		BAutolock _(sAsyncWorkerLock);
-		if (sAsyncWorker != nullptr) {
+		if (sAsyncWorker != MY_NULLPTR) {
 			sAsyncWorker->PostMessage(B_QUIT_REQUESTED);
-			sAsyncWorker = nullptr;
+			sAsyncWorker = MY_NULLPTR;
 		}
 	}
 };
@@ -139,7 +140,7 @@ static AsyncWorker*
 GetAsyncWorker()
 {
 	BAutolock _(sAsyncWorkerLock);
-	if (sAsyncWorker == nullptr)
+	if (sAsyncWorker == MY_NULLPTR)
 		sAsyncWorker = new AsyncWorker();
 	return sAsyncWorker;
 }
@@ -185,7 +186,7 @@ public:
 
 	void SetIconBits(const void* bits, ssize_t size)
 	{
-		if (bits != nullptr && size == fIconBitmap.BitsLength()) {
+		if (bits != MY_NULLPTR && size == fIconBitmap.BitsLength()) {
 			memcpy(fIconBitmap.Bits(), bits, size);
 			Invalidate();
 		}
@@ -245,7 +246,7 @@ private:
 
 class SmallButton : public BButton {
 public:
-	SmallButton(const char* label, BMessage* message = nullptr)
+	SmallButton(const char* label, BMessage* message = MY_NULLPTR)
 		:
 		BButton(label, message)
 	{
@@ -274,7 +275,7 @@ DownloadProgressView::DownloadProgressView(BWebDownload* download)
 DownloadProgressView::DownloadProgressView(const BMessage* archive)
 	:
 	BGroupView(B_HORIZONTAL, 8),
-	fDownload(nullptr),
+	fDownload(MY_NULLPTR),
 	fURL(),
 	fPath()
 {
@@ -319,7 +320,7 @@ DownloadProgressView::Init(BMessage* archive)
 	} else {
 		fTopButton = new SmallButton(B_TRANSLATE("Open"),
 			new BMessage(OPEN_DOWNLOAD));
-		fTopButton->SetEnabled(fDownload == nullptr);
+		fTopButton->SetEnabled(fDownload == MY_NULLPTR);
 	}
 	if (fDownload) {
 		fBottomButton = new SmallButton(B_TRANSLATE("Cancel"),
@@ -327,7 +328,7 @@ DownloadProgressView::Init(BMessage* archive)
 	} else {
 		fBottomButton = new SmallButton(B_TRANSLATE("Remove"),
 			new BMessage(REMOVE_DOWNLOAD));
-		fBottomButton->SetEnabled(fDownload == nullptr);
+		fBottomButton->SetEnabled(fDownload == MY_NULLPTR);
 	}
 
 	fInfoView = new BStringView("info view", "");
@@ -497,7 +498,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 						"Are you sure you want to run it?"));
 					text.ReplaceFirst("%name%", fPath.Leaf());
 					BAlert* alert = new BAlert(B_TRANSLATE("Open executable"), text,
-						B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), nullptr,
+						B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), MY_NULLPTR,
 						B_WIDTH_AS_USUAL, B_WARNING_ALERT);
 					alert->SetShortcut(0, B_ESCAPE);
 					if (alert->Go() != 1)
@@ -511,7 +512,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 					B_TRANSLATE("The download could not be opened."),
 					B_TRANSLATE("OK"));
 				alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-				alert->Go(nullptr);
+				alert->Go(MY_NULLPTR);
 			}
 			break;
 		}
@@ -523,7 +524,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			// restarted). So we create a new window to restart the download
 			// in a fresh context.
 			BMessage* request = new(std::nothrow) BMessage(NEW_WINDOW);
-			if (request != nullptr) {
+			if (request != MY_NULLPTR) {
 				request->AddString("url", fURL);
 				request->AddBool("forDownload", true);
 				if (be_app->PostMessage(request) != B_OK)
@@ -654,7 +655,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 		case COPY_URL_TO_CLIPBOARD:
 			if (be_clipboard->Lock()) {
 				BMessage* data = be_clipboard->Data();
-				if (data != nullptr) {
+				if (data != MY_NULLPTR) {
 					be_clipboard->Clear();
 					data->AddData("text/plain", B_MIME_TYPE, fURL.String(),
 						fURL.Length());
@@ -745,7 +746,7 @@ DownloadProgressView::IsFinished() const
 void
 DownloadProgressView::DownloadFinished()
 {
-	fDownload = nullptr;
+	fDownload = MY_NULLPTR;
 	if (fExpectedSize == -1) {
 		fStatusBar->SetTo(100.0);
 		fExpectedSize = fCurrentSize;
@@ -792,7 +793,7 @@ DownloadProgressView::CancelDownload()
 		fStatusBar->SetBarColor(ui_color(B_FAILURE_COLOR));
 	}
 
-	fDownload = nullptr;
+	fDownload = MY_NULLPTR;
 	fTopButton->SetLabel(B_TRANSLATE("Restart"));
 	fTopButton->SetMessage(new BMessage(RESTART_DOWNLOAD));
 	fTopButton->SetEnabled(true);

@@ -4,6 +4,7 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
+#include "BeOSCompatibility.h"
 #include "BrowsingHistory.h"
 
 #include <algorithm>
@@ -191,7 +192,7 @@ BrowsingHistory::BrowsingHistory(bool startThreads)
 	fMaxHistoryItemAge(7),
 	fSettingsLoaded(false),
 	fQuitting(false),
-	fPendingSaveItems(nullptr),
+	fPendingSaveItems(MY_NULLPTR),
 	fSaveLock("browsing history save lock"),
 	fFileLock("browsing history file lock"),
 	fLastSaveTime(0)
@@ -305,7 +306,7 @@ const BrowsingHistoryItem*
 BrowsingHistory::ItemAt(int32 index) const
 {
 	if (index < 0 || index >= (int32)fHistoryItems->size())
-		return nullptr;
+		return MY_NULLPTR;
 	return (*fHistoryItems)[index].get();
 }
 

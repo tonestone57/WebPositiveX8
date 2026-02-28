@@ -4,6 +4,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 
 #include <Message.h>
@@ -82,11 +83,11 @@ main()
 		assert_true(c.Password() == "", "Unarchived password is empty");
 	}
 
-	// BMessage constructor with nullptr
+	// BMessage constructor with MY_NULLPTR
 	{
-		Credentials c(nullptr);
-		assert_true(c.Username() == "", "Username from nullptr archive is empty");
-		assert_true(c.Password() == "", "Password from nullptr archive is empty");
+		Credentials c(MY_NULLPTR);
+		assert_true(c.Username() == "", "Username from MY_NULLPTR archive is empty");
+		assert_true(c.Password() == "", "Password from MY_NULLPTR archive is empty");
 	}
 
 	// Archive (insecure)
@@ -121,11 +122,11 @@ main()
 		assert_true(username == "user", "Archived username matches");
 	}
 
-	// Archive with nullptr
+	// Archive with MY_NULLPTR
 	{
 		Credentials c("user", "pass");
-		assert_status(B_BAD_VALUE, c.Archive(nullptr),
-			"Archive with nullptr returns B_BAD_VALUE");
+		assert_status(B_BAD_VALUE, c.Archive(MY_NULLPTR),
+			"Archive with MY_NULLPTR returns B_BAD_VALUE");
 	}
 
 	// Assignment operator

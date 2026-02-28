@@ -13,9 +13,9 @@ public:
     BGroupLayoutBuilder& AddGlue() { return *this; }
     BGroupLayoutBuilder& SetInsets(float left, float top, float right, float bottom) { return *this; }
     BGroupLayoutBuilder& End() { return *this; }
-    BView* TopView() { return nullptr; }
-    operator BView*() { return nullptr; }
-    operator BLayoutItem*() { return nullptr; }
+    BView* TopView() { return MY_NULLPTR; }
+    operator BView*() { return MY_NULLPTR; }
+    operator BLayoutItem*() { return MY_NULLPTR; }
 };
 
 namespace BLayoutBuilder {
@@ -29,7 +29,7 @@ namespace BLayoutBuilder {
         Group& AddGlue() { return *this; }
         Group& SetInsets(float left, float top, float right, float bottom) { return *this; }
         Group& End() { return *this; }
-        operator BView*() { return nullptr; }
+        operator BView*() { return MY_NULLPTR; }
     };
 }
 

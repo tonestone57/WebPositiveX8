@@ -1,6 +1,14 @@
 #ifndef _SUPPORT_DEFS_H
 #define _SUPPORT_DEFS_H
 
+#ifndef MY_NULLPTR
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#define MY_NULLPTR nullptr
+#else
+#define MY_NULLPTR NULL
+#endif
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,18 +53,18 @@ struct entry_ref {
     dev_t device;
     ino_t directory;
     char* name;
-    entry_ref() : device(0), directory(0), name(nullptr) {}
-    entry_ref(dev_t d, ino_t dir, const char* n) : device(d), directory(dir), name(n ? strdup(n) : nullptr) {}
+    entry_ref() : device(0), directory(0), name(MY_NULLPTR) {}
+    entry_ref(dev_t d, ino_t dir, const char* n) : device(d), directory(dir), name(n ? strdup(n) : MY_NULLPTR) {}
     ~entry_ref() { free(name); }
-    entry_ref(const entry_ref& other) : device(other.device), directory(other.directory), name(other.name ? strdup(other.name) : nullptr) {}
+    entry_ref(const entry_ref& other) : device(other.device), directory(other.directory), name(other.name ? strdup(other.name) : MY_NULLPTR) {}
     entry_ref& operator=(const entry_ref& other) {
         if (this != &other) {
             device = other.device; directory = other.directory;
-            free(name); name = other.name ? strdup(other.name) : nullptr;
+            free(name); name = other.name ? strdup(other.name) : MY_NULLPTR;
         }
         return *this;
     }
-    void set_name(const char* n) { free(name); name = n ? strdup(n) : nullptr; }
+    void set_name(const char* n) { free(name); name = n ? strdup(n) : MY_NULLPTR; }
 };
 
 typedef struct {

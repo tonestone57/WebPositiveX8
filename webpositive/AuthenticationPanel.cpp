@@ -3,6 +3,7 @@
  *
  * All rights reserved. Distributed under the terms of the MIT License.
  */
+#include "BeOSCompatibility.h"
 #include "AuthenticationPanel.h"
 
 #include <Button.h>
@@ -37,20 +38,20 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 			| B_NOT_ZOOMABLE | B_CLOSE_ON_ESCAPE | B_AUTO_UPDATE_SIZE_LIMITS),
 	m_parentWindowFrame(parentFrame),
 	m_usernameTextControl(new BTextControl("user", B_TRANSLATE("Username:"),
-		"", nullptr)),
+		"", MY_NULLPTR)),
 	m_passwordTextControl(new BTextControl("pass", B_TRANSLATE("Password:"),
-		"", nullptr)),
+		"", MY_NULLPTR)),
 	m_hidePasswordCheckBox(new BCheckBox("hide", B_TRANSLATE("Hide password "
 		"text"), new BMessage(kHidePassword))),
 	m_rememberCredentialsCheckBox(new BCheckBox("remember",
-		B_TRANSLATE("Remember username and password for this site"), nullptr)),
+		B_TRANSLATE("Remember username and password for this site"), MY_NULLPTR)),
 	m_okButton(new BButton("ok", B_TRANSLATE("OK"),
 		new BMessage(kMsgPanelOK))),
 	m_cancelButton(new BButton("cancel", B_TRANSLATE("Cancel"),
 		new BMessage(B_QUIT_REQUESTED))),
 	m_cancelled(false),
 	m_exitSemaphore(create_sem(0, "Authentication Panel")),
-	m_jitterRunner(nullptr),
+	m_jitterRunner(MY_NULLPTR),
 	m_jitterCount(0)
 {
 }
@@ -102,7 +103,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		} else {
 			MoveTo(m_originalPos);
 			delete m_jitterRunner;
-			m_jitterRunner = nullptr;
+			m_jitterRunner = MY_NULLPTR;
 			m_jitterCount = 0;
 		}
 		break;
@@ -214,7 +215,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	// Block calling thread
 	// Get the originating window, if it exists, to let it redraw itself.
 	BWindow* window = dynamic_cast<BWindow*>
-		(BLooper::LooperForThread(find_thread(nullptr)));
+		(BLooper::LooperForThread(find_thread(MY_NULLPTR)));
 	if (window) {
 		status_t err;
 		for (;;) {

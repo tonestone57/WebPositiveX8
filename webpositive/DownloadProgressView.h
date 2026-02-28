@@ -7,6 +7,7 @@
 #define DOWNLOAD_PROGRESS_VIEW_H
 
 
+#include "BeOSCompatibility.h"
 #include <GroupView.h>
 #include <Path.h>
 #include <String.h>
@@ -31,7 +32,7 @@ public:
 								DownloadProgressView(BWebDownload* download);
 								DownloadProgressView(const BMessage* archive);
 
-			bool				Init(BMessage* archive = nullptr);
+			bool				Init(BMessage* archive = MY_NULLPTR);
 
 			status_t			SaveSettings(BMessage* archive);
 	virtual	void				AttachedToWindow();

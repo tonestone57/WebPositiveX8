@@ -4,6 +4,7 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
+#include "BeOSCompatibility.h"
 #include "CredentialsStorage.h"
 
 #include <new>
@@ -55,7 +56,7 @@ Credentials::Credentials(const BMessage* archive)
 	:
 	fIsSecure(false)
 {
-	if (archive == nullptr)
+	if (archive == MY_NULLPTR)
 		return;
 	archive->FindString("username", &fUsername);
 }
@@ -69,7 +70,7 @@ Credentials::~Credentials()
 status_t
 Credentials::Archive(BMessage* archive) const
 {
-	if (archive == nullptr)
+	if (archive == MY_NULLPTR)
 		return B_BAD_VALUE;
 	status_t status = archive->AddString("username", fUsername);
 	if (status == B_OK && !fIsSecure && fPassword.Length() > 0)
@@ -158,7 +159,7 @@ CredentialsStorage::CredentialsStorage(bool persistent)
 	fIsLoading(false),
 	fPersistent(persistent),
 	fQuitting(false),
-	fPendingSaveMessage(nullptr),
+	fPendingSaveMessage(MY_NULLPTR),
 	fSaveLock("credentials save lock")
 {
 	fSaveSem = create_sem(0, "credentials save sem");

@@ -4,6 +4,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include "BookmarkBar.h"
 
 #include <Alert.h>
@@ -78,7 +79,7 @@ BookmarkBar::MouseDown(BPoint where)
 {
 	fSelectedItemIndex = -1;
 	BMessage* message = Window()->CurrentMessage();
-	if (message != nullptr) {
+	if (message != MY_NULLPTR) {
 		int32 buttons = 0;
 		if (message->FindInt32("buttons", &buttons) == B_OK) {
 			if (buttons & B_SECONDARY_MOUSE_BUTTON) {
@@ -122,7 +123,7 @@ BookmarkBar::AttachedToWindow()
 
 	// Enumerate initial directory content in a background thread
 	LoaderArgs* args = new(std::nothrow) LoaderArgs;
-	if (args == nullptr)
+	if (args == MY_NULLPTR)
 		return;
 
 	args->messenger = BMessenger(this);
@@ -143,7 +144,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case kAddBookmarkMsg:
 		{
-			BBitmap* icon = nullptr;
+			BBitmap* icon = MY_NULLPTR;
 			message->FindPointer("icon", (void**)&icon);
 
 			ino_t inode;
@@ -367,10 +368,10 @@ BookmarkBar::MessageReceived(BMessage* message)
 		{
 			// User clicked OK, get the new name
 			BString newName = message->FindString("text");
-			BMenuItem* selectedItem = nullptr;
+			BMenuItem* selectedItem = MY_NULLPTR;
 			message->FindPointer("item", (void**)&selectedItem);
 
-			if (selectedItem == nullptr)
+			if (selectedItem == MY_NULLPTR)
 				break;
 
 			// Sanitize the name to avoid path traversal
@@ -429,7 +430,7 @@ BookmarkBar::FrameResized(float width, float height)
 		// See if we can move some items from the "more" menu in the remaining
 		// space.
 		BMenuItem* extraItem = fOverflowMenu->ItemAt(0);
-		while (extraItem != nullptr) {
+		while (extraItem != MY_NULLPTR) {
 			BRect frame = extraItem->Frame();
 			if (frame.Width() + rightmost > width - overflowMenuWidth)
 				break;
@@ -499,7 +500,7 @@ BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 	BEntry followedLink(&ref, true);
 	bool isDirectory = followedLink.IsDirectory();
 
-	_AddItem(inode, &ref, name, isDirectory, nullptr);
+	_AddItem(inode, &ref, name, isDirectory, MY_NULLPTR);
 }
 
 
@@ -513,7 +514,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 		return;
 	}
 
-	IconMenuItem* item = nullptr;
+	IconMenuItem* item = MY_NULLPTR;
 
 	if (isDirectory) {
 		delete icon;
@@ -527,7 +528,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 		BMessage* message = new BMessage(B_REFS_RECEIVED);
 		message->AddRef("refs", ref);
 
-		if (icon != nullptr) {
+		if (icon != MY_NULLPTR) {
 			item = new IconMenuItem(name, message, icon, B_MINI_ICON);
 			delete icon;
 		} else {
@@ -580,21 +581,21 @@ BookmarkBar::_LoaderThread(void* data)
 					float iconSize = be_control_look->ComposeIconSize(B_MINI_ICON);
 					BBitmap* icon = new(std::nothrow) BBitmap(
 						BRect(0, 0, iconSize - 1, iconSize - 1), B_RGBA32);
-					if (icon != nullptr) {
+					if (icon != MY_NULLPTR) {
 						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK) {
 							if (message.AddPointer("icon", icon) != B_OK) {
 								delete icon;
-								icon = nullptr;
+								icon = MY_NULLPTR;
 							}
 						} else {
 							delete icon;
-							icon = nullptr;
+							icon = MY_NULLPTR;
 						}
 					}
 				}
 
 				if (args->messenger.SendMessage(&message) != B_OK) {
-					BBitmap* icon = nullptr;
+					BBitmap* icon = MY_NULLPTR;
 					if (message.FindPointer("icon", (void**)&icon) == B_OK)
 						delete icon;
 				}

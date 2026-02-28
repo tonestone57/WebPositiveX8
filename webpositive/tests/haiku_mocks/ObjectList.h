@@ -20,7 +20,7 @@ public:
         return item;
     }
     T* ItemAt(int32 index) const {
-        if (index < 0 || index >= (int32)fItems.size()) return nullptr;
+        if (index < 0 || index >= (int32)fItems.size()) return MY_NULLPTR;
         return fItems[index];
     }
     int32 CountItems() const { return (int32)fItems.size(); }

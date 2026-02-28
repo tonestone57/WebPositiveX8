@@ -5,6 +5,7 @@
 #ifndef URL_INPUT_GROUP_H
 #define URL_INPUT_GROUP_H
 
+#include "BeOSCompatibility.h"
 #include <GroupView.h>
 
 class BButton;
@@ -28,7 +29,7 @@ public:
 			BButton*			GoButton() const;
 
 			void				SetPageIcon(const BBitmap* icon,
-									const BBitmap* largeIcon = nullptr);
+									const BBitmap* largeIcon = MY_NULLPTR);
 
 			bool				IsURLInputLocked() const;
 	virtual	void				LockURLInput(bool lock = true);

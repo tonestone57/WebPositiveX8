@@ -2,7 +2,7 @@
 #define _MOCK_URL_CONTEXT_H
 template<typename T> class BReference {
 public:
-    T* Get() const { return nullptr; }
+    T* Get() const { return MY_NULLPTR; }
 };
 namespace BPrivate { namespace Network { class BUrlContext {}; } }
 #endif

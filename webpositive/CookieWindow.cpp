@@ -7,6 +7,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include "CookieWindow.h"
 
 #include <Button.h>
@@ -45,7 +46,7 @@ public:
 
 	void DrawField(BField* field, BRect rect, BView* parent) {
 		BDateField* dateField = static_cast<BDateField*>(field);
-		if (dateField != nullptr && dateField->UnixTime() == -1) {
+		if (dateField != MY_NULLPTR && dateField->UnixTime() == -1) {
 			DrawString(B_TRANSLATE("Session cookie"), parent, rect);
 		} else {
 			BDateColumn::DrawField(field, rect, parent);
@@ -149,9 +150,9 @@ CookieWindow::CookieWindow(BRect frame,
 			.SetInsets(5, 5, 5, 5)
 #if 0
 			.Add(new BButton("import", B_TRANSLATE("Import" B_UTF8_ELLIPSIS),
-				nullptr))
+				MY_NULLPTR))
 			.Add(new BButton("export", B_TRANSLATE("Export" B_UTF8_ELLIPSIS),
-				nullptr))
+				MY_NULLPTR))
 #endif
 			.AddGlue()
 			.Add(new BButton("delete", B_TRANSLATE("Delete"),
@@ -171,7 +172,7 @@ CookieWindow::MessageReceived(BMessage* message)
 			if (message->FindInt32("index", &index) != B_OK)
 				break;
 			BStringItem* item = static_cast<BStringItem*>(fDomains->ItemAt(index));
-			if (item != nullptr) {
+			if (item != MY_NULLPTR) {
 				BString domain = item->Text();
 				_ShowCookiesForDomain(domain);
 			}
@@ -231,7 +232,7 @@ CookieWindow::_BuildDomainList()
 	}
 	fDomains->MakeEmpty();
 
-	if (fCookieJar == nullptr)
+	if (fCookieJar == MY_NULLPTR)
 		return;
 
 	// Populate the domain list and cookie cache
@@ -241,7 +242,7 @@ CookieWindow::_BuildDomainList()
 	const BPrivate::Network::BNetworkCookie* cookie;
 	BString lastDomain;
 	bool first = true;
-	while ((cookie = it.Next()) != nullptr) {
+	while ((cookie = it.Next()) != MY_NULLPTR) {
 		BString domain = cookie->Domain();
 		if (first || domain != lastDomain) {
 			_AddDomain(domain, false);
@@ -258,7 +259,7 @@ CookieWindow::_BuildDomainList()
 	{
 		DomainItem* item = static_cast<DomainItem*>(
 			fDomains->FullListItemAt(i));
-		if (item != nullptr && item->fEmpty == true) {
+		if (item != MY_NULLPTR && item->fEmpty == true) {
 			if (fDomains->CountItemsUnder(item, true) == 1) {
 				// The item has no cookies, and only a single child. We can
 				// remove it and move its child one level up in the tree.
@@ -295,7 +296,7 @@ CookieWindow::_BuildDomainList()
 BStringItem*
 CookieWindow::_AddDomain(BString domain, bool fake)
 {
-	BStringItem* parent = nullptr;
+	BStringItem* parent = MY_NULLPTR;
 	int firstDot = domain.FindFirst('.');
 	if (firstDot >= 0) {
 		BString parentDomain(domain);
@@ -313,7 +314,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		int mid = (low + high) / 2;
 		BStringItem* midItem = static_cast<BStringItem*>(
 			fDomains->ItemUnderAt(parent, true, mid));
-		if (midItem == nullptr)
+		if (midItem == MY_NULLPTR)
 			break;
 		int cmp = strcmp(midItem->Text(), domain.String());
 		if (cmp == 0) {
@@ -331,7 +332,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 
 	// Insert the new item, keeping the list alphabetically sorted
 	BStringItem* domainItem = new DomainItem(domain, fake);
-	domainItem->SetOutlineLevel(parent != nullptr ? parent->OutlineLevel() + 1 : 0);
+	domainItem->SetOutlineLevel(parent != MY_NULLPTR ? parent->OutlineLevel() + 1 : 0);
 
 	if (insertIndex < siblingCount) {
 		BListItem* nextSibling = fDomains->ItemUnderAt(parent, true,
@@ -348,7 +349,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 				+ fDomains->CountItemsUnder(lastSibling, false) + 1);
 		} else {
 			// There were no siblings, insert right after the parent
-			int32 index = parent != nullptr ? fDomains->FullListIndexOf(parent) + 1
+			int32 index = parent != MY_NULLPTR ? fDomains->FullListIndexOf(parent) + 1
 				: fDomains->FullListCountItems();
 			fDomains->AddItem(domainItem, index);
 		}
@@ -400,22 +401,22 @@ CookieWindow::_RemoveCookieFromMap(const BPrivate::Network::BNetworkCookie& cook
 void
 CookieWindow::_DeleteCookies()
 {
-	if (fCookieJar == nullptr)
+	if (fCookieJar == MY_NULLPTR)
 		return;
 
 	CookieRow* row;
 	CookieRow* prevRow;
 
-	for (prevRow = nullptr; ; prevRow = row) {
+	for (prevRow = MY_NULLPTR; ; prevRow = row) {
 		row = static_cast<CookieRow*>(fCookies->CurrentSelection(prevRow));
 
-		if (prevRow != nullptr) {
+		if (prevRow != MY_NULLPTR) {
 			_RemoveCookieFromMap(prevRow->Cookie());
 			fCookies->RemoveRow(prevRow);
 			delete prevRow;
 		}
 
-		if (row == nullptr)
+		if (row == MY_NULLPTR)
 			break;
 
 		// delete this cookie
@@ -425,12 +426,12 @@ CookieWindow::_DeleteCookies()
 	}
 
 	// A domain was selected in the domain list
-	if (prevRow == nullptr) {
+	if (prevRow == MY_NULLPTR) {
 		while (true) {
 			// Clear the first cookie continuously
 			row = static_cast<CookieRow*>(fCookies->RowAt(0));
 
-			if (row == nullptr)
+			if (row == MY_NULLPTR)
 				break;
 
 			BPrivate::Network::BNetworkCookie& cookie = row->Cookie();

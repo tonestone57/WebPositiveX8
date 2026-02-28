@@ -6,9 +6,9 @@
 
 class BMessenger {
 public:
-    BMessenger() : fHandler(nullptr) {}
-    BMessenger(const char* signature, team_id team = -1, status_t* error = nullptr) : fHandler(nullptr) {}
-    BMessenger(BHandler* handler, BLooper* looper = nullptr, status_t* error = nullptr) : fHandler(handler) {}
+    BMessenger() : fHandler(MY_NULLPTR) {}
+    BMessenger(const char* signature, team_id team = -1, status_t* error = MY_NULLPTR) : fHandler(MY_NULLPTR) {}
+    BMessenger(BHandler* handler, BLooper* looper = MY_NULLPTR, status_t* error = MY_NULLPTR) : fHandler(handler) {}
     status_t SendMessage(uint32 what) const {
         BMessage msg(what);
         return SendMessage(&msg);
