@@ -82,11 +82,11 @@ main()
 		assert_true(c.Password() == "", "Unarchived password is empty");
 	}
 
-	// BMessage constructor with NULL
+	// BMessage constructor with nullptr
 	{
 		Credentials c(nullptr);
-		assert_true(c.Username() == "", "Username from NULL archive is empty");
-		assert_true(c.Password() == "", "Password from NULL archive is empty");
+		assert_true(c.Username() == "", "Username from nullptr archive is empty");
+		assert_true(c.Password() == "", "Password from nullptr archive is empty");
 	}
 
 	// Archive (insecure)
@@ -121,11 +121,11 @@ main()
 		assert_true(username == "user", "Archived username matches");
 	}
 
-	// Archive with NULL
+	// Archive with nullptr
 	{
 		Credentials c("user", "pass");
 		assert_status(B_BAD_VALUE, c.Archive(nullptr),
-			"Archive with NULL returns B_BAD_VALUE");
+			"Archive with nullptr returns B_BAD_VALUE");
 	}
 
 	// Assignment operator

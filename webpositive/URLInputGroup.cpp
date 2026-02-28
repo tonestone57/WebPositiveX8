@@ -410,8 +410,8 @@ public:
 	PageIconView()
 		:
 		BView("page icon view", B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE),
-		fIcon(NULL),
-		fLargeIcon(NULL),
+		fIcon(nullptr),
+		fLargeIcon(nullptr),
 		fClickPoint(-1, 0),
 		fPageIconSet(false)
 	{
@@ -428,7 +428,7 @@ public:
 
 	virtual void Draw(BRect updateRect)
 	{
-		if (fIcon == NULL)
+		if (fIcon == nullptr)
 			return;
 
 		BRect bounds(Bounds());
@@ -476,7 +476,7 @@ public:
 
 	virtual void MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 	{
-		if (dragMessage != NULL)
+		if (dragMessage != nullptr)
 			return;
 
 		if (fClickPoint.x >= 0
@@ -503,7 +503,7 @@ public:
 			miniIcon.ImportBits(fIcon);
 
 			BBitmap largeIcon(BRect(0, 0, 31, 31), B_CMAP8);
-			if (fLargeIcon != NULL)
+			if (fLargeIcon != nullptr)
 				largeIcon.ImportBits(fLargeIcon);
 			else
 				largeIcon.ImportBits(fIcon);
@@ -539,12 +539,12 @@ public:
 	{
 		delete fIcon;
 		delete fLargeIcon;
-		fLargeIcon = NULL;
+		fLargeIcon = nullptr;
 
 		if (icon) {
 			fIcon = new BBitmap(icon);
 			fPageIconSet = true;
-			if (largeIcon != NULL)
+			if (largeIcon != nullptr)
 				fLargeIcon = new BBitmap(largeIcon);
 		} else {
 			fIcon = new BBitmap(BRect(0, 0, 15, 15), B_RGB32);
@@ -584,7 +584,7 @@ URLInputGroup::URLInputGroup(BMessage* goMessage)
 
 // TODO: Fix in Haiku, no in-built support for archived BBitmaps from
 // resources?
-//	fGoButton = new BitmapButton("kActionGo", NULL);
+//	fGoButton = new BitmapButton("kActionGo", nullptr);
 	fGoButton = new BBitmapButton(kGoBitmapBits, kGoBitmapWidth,
 		kGoBitmapHeight, kGoBitmapFormat, goMessage);
 	GroupLayout()->AddView(fGoButton, 0.0f);

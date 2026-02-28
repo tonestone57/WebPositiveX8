@@ -31,10 +31,10 @@ BrowsingHistoryChoiceModel::FetchChoicesFor(const BString& pattern)
 	fChoices.MakeEmpty();
 
 	// Search through BrowsingHistory for any matches.
-	BrowsingHistory* history = fHistory != NULL
+	BrowsingHistory* history = fHistory != nullptr
 		? fHistory : BrowsingHistory::DefaultInstance();
 
-	if (history == NULL || !history->Lock())
+	if (history == nullptr || !history->Lock())
 		return;
 
 	BString lastBaseURL;
@@ -43,7 +43,7 @@ BrowsingHistoryChoiceModel::FetchChoicesFor(const BString& pattern)
 	int32 count = history->CountItems();
 	for (int32 i = 0; i < count; i++) {
 		const BrowsingHistoryItem* item = history->ItemAt(i);
-		if (item == NULL)
+		if (item == nullptr)
 			continue;
 		const BString& choiceText = item->URL();
 		int32 matchPos = choiceText.IFindFirst(pattern);

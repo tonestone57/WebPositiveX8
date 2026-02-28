@@ -18,8 +18,8 @@ class BTextView;
 class TextViewCompleter : protected BAutoCompleter, public BMessageFilter {
 public:
 								TextViewCompleter(BTextView* textView,
-									ChoiceModel* choiceModel = NULL,
-									PatternSelector* patternSelector = NULL);
+									ChoiceModel* choiceModel = nullptr,
+									PatternSelector* patternSelector = nullptr);
 	virtual						~TextViewCompleter();
 
 			void				SetModificationsReported(bool reported);

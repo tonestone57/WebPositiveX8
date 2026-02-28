@@ -39,12 +39,12 @@ int main() {
     assert_int32(0, start, "Start should be 0 regardless of caret position");
     assert_int32(text3.Length(), length, "Length should be full text length regardless of caret position");
 
-    // Test case 4: NULL pointers (should not crash)
-    printf("Testing NULL pointers (should not crash)...\n");
-    selector.SelectPatternBounds(text1, 0, NULL, &length);
-    selector.SelectPatternBounds(text1, 0, &start, NULL);
-    selector.SelectPatternBounds(text1, 0, NULL, NULL);
-    printf("PASS: NULL pointers handled without crash\n");
+    // Test case 4: nullptr pointers (should not crash)
+    printf("Testing nullptr pointers (should not crash)...\n");
+    selector.SelectPatternBounds(text1, 0, nullptr, &length);
+    selector.SelectPatternBounds(text1, 0, &start, nullptr);
+    selector.SelectPatternBounds(text1, 0, nullptr, nullptr);
+    printf("PASS: nullptr pointers handled without crash\n");
 
     if (gTestFailures > 0) {
         printf("\nFinished running tests: %d failures\n", gTestFailures);

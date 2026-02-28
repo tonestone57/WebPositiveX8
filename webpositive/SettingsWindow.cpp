@@ -97,7 +97,7 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 	fRevertButton = new BButton(B_TRANSLATE("Revert"),
 		new BMessage(MSG_REVERT));
 
-	fOpenFilePanel = NULL;
+	fOpenFilePanel = nullptr;
 
 	float spacing = be_control_look->DefaultItemSpacing();
 
@@ -347,7 +347,7 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	BPopUpMenu* searchPageMenu = new BPopUpMenu("Search page:");
 	searchPageMenu->SetRadioMode(true);
 
-	for (int i = 0; kSearchEngines[i].url != NULL; i++) {
+	for (int i = 0; kSearchEngines[i].url != nullptr; i++) {
 		BMessage* message = new BMessage(MSG_SEARCH_PAGE_CHANGED_MENU);
 		message->AddString("searchstring", kSearchEngines[i].url);
 		searchPageMenu->AddItem(new BMenuItem(kSearchEngines[i].name, message));
@@ -1071,10 +1071,10 @@ SettingsWindow::_RevertSettings()
 void
 SettingsWindow::_ChooseDownloadFolder(const BMessage* message)
 {
-	if (fOpenFilePanel == NULL) {
+	if (fOpenFilePanel == nullptr) {
 		BMessenger target(this);
 		fOpenFilePanel = new (std::nothrow) BFilePanel(B_OPEN_PANEL,
-			&target, NULL, B_DIRECTORY_NODE);
+			&target, nullptr, B_DIRECTORY_NODE);
 	}
 	BMessage panelMessage(MSG_HANDLE_DOWNLOAD_FOLDER);
 	fOpenFilePanel->SetMessage(&panelMessage);

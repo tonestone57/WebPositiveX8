@@ -29,7 +29,7 @@ class FontSelectionView : public BHandler {
 public:
 								FontSelectionView(const char* name,
 									const char* label, bool separateStyles,
-									const BFont* font = NULL);
+									const BFont* font = nullptr);
 	virtual						~FontSelectionView();
 
 			void				AttachedToLooper();

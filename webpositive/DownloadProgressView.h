@@ -31,7 +31,7 @@ public:
 								DownloadProgressView(BWebDownload* download);
 								DownloadProgressView(const BMessage* archive);
 
-			bool				Init(BMessage* archive = NULL);
+			bool				Init(BMessage* archive = nullptr);
 
 			status_t			SaveSettings(BMessage* archive);
 	virtual	void				AttachedToWindow();

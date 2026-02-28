@@ -27,7 +27,7 @@
 
 TabView::TabView()
 	:
-	fContainerView(NULL),
+	fContainerView(nullptr),
 	fLayoutItem(new TabLayoutItem(this)),
 	fLabel()
 {
@@ -37,7 +37,7 @@ TabView::TabView()
 TabView::~TabView()
 {
 	// The layout item is deleted for us by the layout which contains it.
-	if (fContainerView == NULL)
+	if (fContainerView == nullptr)
 		delete fLayoutItem;
 }
 
@@ -260,7 +260,7 @@ TabLayoutItem::SetFrame(BRect frame)
 BView*
 TabLayoutItem::View()
 {
-	return NULL;
+	return nullptr;
 }
 
 

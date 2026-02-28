@@ -529,6 +529,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 
 		if (icon != nullptr) {
 			item = new IconMenuItem(name, message, icon, B_MINI_ICON);
+			delete icon;
 		} else {
 			BEntry followedLink(ref, true);
 			BNode node(&followedLink);
@@ -541,7 +542,10 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 	if (IndexOf(fOverflowMenu) != B_ERROR)
 		count--;
 
-	BMenuBar::AddItem(item, count);
+	if (!BMenuBar::AddItem(item, count)) {
+		delete item;
+		return;
+	}
 	fItemsMap[inode] = item;
 
 	// Move the item to the "more" menu if it overflows.
@@ -581,14 +585,22 @@ BookmarkBar::_LoaderThread(void* data)
 						BRect(0, 0, iconSize - 1, iconSize - 1), B_RGBA32);
 					if (icon != nullptr) {
 						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK) {
-							if (message.AddPointer("icon", icon) != B_OK)
+							if (message.AddPointer("icon", icon) != B_OK) {
 								delete icon;
-						} else
+								icon = nullptr;
+							}
+						} else {
 							delete icon;
+							icon = nullptr;
+						}
 					}
 				}
 
-				args->messenger.SendMessage(&message);
+				if (args->messenger.SendMessage(&message) != B_OK) {
+					BBitmap* icon = nullptr;
+					if (message.FindPointer("icon", (void**)&icon) == B_OK)
+						delete icon;
+				}
 			}
 		}
 	}

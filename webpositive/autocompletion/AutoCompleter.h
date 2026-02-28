@@ -125,7 +125,7 @@ public:
 
 protected:
 								BAutoCompleter(
-									CompletionStyle* completionStyle = NULL);
+									CompletionStyle* completionStyle = nullptr);
 								BAutoCompleter(EditView* editView,
 									ChoiceModel* choiceModel,
 									ChoiceView* choiceView,

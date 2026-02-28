@@ -16,7 +16,7 @@ static const char* sMockSettingsPath = "/boot/home/config/settings";
 
 static status_t
 my_find_directory(directory_which which, BPath* path, bool create_it = false,
-	const BVolume* volume = NULL)
+	const BVolume* volume = nullptr)
 {
 	if (which == B_USER_SETTINGS_DIRECTORY) {
 		if (sFindDirectoryResult == B_OK)
@@ -51,12 +51,12 @@ assert_status(status_t expected, status_t actual, const char* message)
 static void
 assert_string(const char* expected, const char* actual, const char* message)
 {
-	if ((expected == NULL && actual == NULL) ||
-		(expected != NULL && actual != NULL && strcmp(expected, actual) == 0)) {
+	if ((expected == nullptr && actual == nullptr) ||
+		(expected != nullptr && actual != nullptr && strcmp(expected, actual) == 0)) {
 		printf("PASS: %s\n", message);
 	} else {
 		printf("FAIL: %s (expected %s, got %s)\n", message,
-			expected ? expected : "NULL", actual ? actual : "NULL");
+			expected ? expected : "nullptr", actual ? actual : "nullptr");
 		gTestFailures++;
 	}
 }
@@ -81,11 +81,11 @@ test_get_settings_path_basic()
 static void
 test_get_settings_path_null_filename()
 {
-	printf("Testing GetSettingsPath with NULL filename...\n");
+	printf("Testing GetSettingsPath with nullptr filename...\n");
 	BPath path;
 	sFindDirectoryResult = B_OK;
-	assert_status(B_OK, GetSettingsPath(path, NULL),
-		"GetSettingsPath(NULL) returns B_OK");
+	assert_status(B_OK, GetSettingsPath(path, nullptr),
+		"GetSettingsPath(nullptr) returns B_OK");
 
 	BString expectedPath(sMockSettingsPath);
 	expectedPath << "/" << kApplicationName;

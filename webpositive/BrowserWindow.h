@@ -103,7 +103,7 @@ public:
 								BrowserWindow(BRect frame, SettingsMessage* appSettings,
 									const BString& url, BPrivate::Network::BUrlContext* context,
 									uint32 interfaceElements = INTERFACE_ELEMENT_ALL,
-									BWebView* webView = NULL,
+									BWebView* webView = nullptr,
 									uint32 workspaces = B_CURRENT_WORKSPACE,
 									bool forDownload = false);
 	virtual						~BrowserWindow();

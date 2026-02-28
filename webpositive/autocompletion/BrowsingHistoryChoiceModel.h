@@ -13,7 +13,7 @@ class BrowsingHistory;
 class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
 public:
 								BrowsingHistoryChoiceModel(
-									BrowsingHistory* history = NULL);
+									BrowsingHistory* history = nullptr);
 	virtual						~BrowsingHistoryChoiceModel();
 
 	virtual void				FetchChoicesFor(const BString& pattern);
