@@ -17,13 +17,13 @@ class TabContainerView : public BGroupView {
 public:
 	class Controller {
 	public:
-		virtual	void			UpdateSelection(int32 index) =  0;
-		virtual	bool			HasFrames() =  0;
-		virtual	TabView*		CreateTabView() =  0;
-		virtual	void			DoubleClickOutsideTabs() =  0;
+		virtual	void			UpdateSelection(int32 index) = 0;
+		virtual	bool			HasFrames() = 0;
+		virtual	TabView*		CreateTabView() = 0;
+		virtual	void			DoubleClickOutsideTabs() = 0;
 		virtual	void			UpdateTabScrollability(bool canScrollLeft,
-									bool canScrollRight) =  0;
-		virtual	void			SetToolTip(const BString& text) =  0;
+									bool canScrollRight) = 0;
+		virtual	void			SetToolTip(const BString& text) = 0;
 	};
 
 public:

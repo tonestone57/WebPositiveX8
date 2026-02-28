@@ -33,7 +33,7 @@ my_find_directory(directory_which which, BPath* path, bool create_it = false,
 // Define kApplicationName for the test as it is typically defined in BrowserApp.cpp
 const char* kApplicationName = "WebPositive";
 
-int gTestFailures =  0;
+int gTestFailures = 0;
 
 
 static void

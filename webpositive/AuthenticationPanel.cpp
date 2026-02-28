@@ -51,7 +51,7 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 		new BMessage(B_QUIT_REQUESTED))),
 	m_cancelled(false),
 	m_exitSemaphore(create_sem(0, "Authentication Panel")),
-	m_jitterRunner(0),
+	m_jitterRunner(MY_NULLPTR),
 	m_jitterCount(0)
 {
 }
@@ -129,8 +129,8 @@ AuthenticationPanel::_UpdatePasswordVisibility()
 	// current text and selection range, then restore them after toggling
 	// the hiding mode.
 	BString text = m_passwordTextControl->Text();
-	int32 selectionStart =  0;
-	int32 selectionEnd =  0;
+	int32 selectionStart = 0;
+	int32 selectionEnd = 0;
 	textView->GetSelection(&selectionStart, &selectionEnd);
 
 	textView->HideTyping(hide);
@@ -147,7 +147,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 {
 	// Configure panel and layout controls.
 	rgb_color infoColor = ui_color(B_PANEL_TEXT_COLOR);
-	BRect textBounds(MY_NULLPTR, 0, 250, 200);
+	BRect textBounds(0, 0, 250, 200);
 	BTextView* textView = new BTextView(textBounds, "text", textBounds,
 		be_plain_font, &infoColor, B_FOLLOW_NONE, B_WILL_DRAW
 			| B_SUPPORTS_LAYOUT);
@@ -171,7 +171,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	SetLayout(new BGroupLayout(B_VERTICAL, 0.0));
 	float spacing = be_control_look->DefaultItemSpacing();
 	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
-		.Add(BGridLayoutBuilder(MY_NULLPTR, spacing)
+		.Add(BGridLayoutBuilder(0, spacing)
 			.Add(textView, 0, 0, 2)
 			.Add(m_usernameTextControl->CreateLabelLayoutItem(), 0, 1)
 			.Add(m_usernameTextControl->CreateTextViewLayoutItem(), 1, 1)

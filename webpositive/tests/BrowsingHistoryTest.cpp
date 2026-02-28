@@ -7,7 +7,7 @@
 
 const char* kApplicationName = "WebPositive";
 
-int gTestFailures =  0;
+int gTestFailures = 0;
 
 void assert_int_equal(int32 expected, int32 actual, const char* message) {
     if (expected == actual) {

@@ -34,7 +34,7 @@ public:
 	static void test_node_monitor_events();
 };
 
-int gTestFailures =  0;
+int gTestFailures = 0;
 
 static void
 assert_true(bool condition, const char* message)

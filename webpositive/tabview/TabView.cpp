@@ -100,7 +100,7 @@ void
 TabView::DrawBackground(BView* owner, BRect frame, const BRect& updateRect)
 {
 	rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
-	uint32 flags =  0;
+	uint32 flags = 0;
 	uint32 borders = BControlLook::B_TOP_BORDER
 		| BControlLook::B_BOTTOM_BORDER;
 

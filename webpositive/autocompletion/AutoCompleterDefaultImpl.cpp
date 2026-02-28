@@ -373,7 +373,7 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 
 	fListView = new ListView(completer);
 	int32 count = choiceModel->CountChoices();
-	for(int32 i =  0; i<count; ++i) {
+	for(int32 i = 0; i<count; ++i) {
 		fListView->AddItem(
 			new ListItem(choiceModel->ChoiceAt(i))
 		);

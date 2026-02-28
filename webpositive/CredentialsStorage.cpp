@@ -349,7 +349,7 @@ CredentialsStorage::_LoadSettings()
 	BKeyStore keyStore;
 	bool migrationOccurred = false;
 	BMessage credentialsArchive;
-	for (int32 i =  0; settingsArchive.FindMessage("credentials", i,
+	for (int32 i = 0; settingsArchive.FindMessage("credentials", i,
 			&credentialsArchive) == B_OK; i++) {
 		BString key;
 		if (credentialsArchive.FindString("key", &key) == B_OK) {

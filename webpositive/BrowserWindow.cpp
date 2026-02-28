@@ -301,16 +301,16 @@ private:
 					uint32 srcBPR = miniIcon->BytesPerRow();
 					uint8* dst = static_cast<uint8*>(substituteLargeIcon.Bits());
 					uint32 dstBPR = substituteLargeIcon.BytesPerRow();
-					for (uint32 y =  0; y < 16; y++) {
+					for (uint32 y = 0; y < 16; y++) {
 						const uint8* s = src;
 						uint8* d = dst;
-						for (uint32 x =  0; x < 16; x++) {
+						for (uint32 x = 0; x < 16; x++) {
 							*d++ = *s;
 							*d++ = *s++;
 						}
 						dst += dstBPR;
 						s = src;
-						for (uint32 x =  0; x < 16; x++) {
+						for (uint32 x = 0; x < 16; x++) {
 							*d++ = *s;
 							*d++ = *s++;
 						}
@@ -950,7 +950,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	if (keymap.GetModifiedCharacters("+", B_SHIFT_KEY, 0, unmodified)
 			== B_OK) {
 		int32 count = unmodified.CountStrings();
-		for (int32 i =  0; i < count; i++) {
+		for (int32 i = 0; i < count; i++) {
 			uint32 key = BUnicodeChar::FromUTF8(unmodified.StringAt(i));
 			if (!HasShortcut(key, 0)) {
 				// Add semantic zoom in shortcut, bug #7428
@@ -1179,10 +1179,10 @@ BrowserWindow::MessageReceived(BMessage* message)
 			// For clicks on sub-folders in the bookmarks menu, we have Tracker
 			// open the corresponding folder.
 			entry_ref ref;
-			uint32 addedCount =  0;
-			for (int32 i =  0; message->FindRef("refs", i, &ref) == B_OK; i++) {
+			uint32 addedCount = 0;
+			for (int32 i = 0; message->FindRef("refs", i, &ref) == B_OK; i++) {
 				BEntry entry(&ref);
-				uint32 addedSubCount =  0;
+				uint32 addedSubCount = 0;
 				if (entry.IsDirectory()) {
 					BDirectory directory(&entry);
 					_AddBookmarkURLsRecursively(directory, message,
@@ -1516,7 +1516,7 @@ BrowserWindow::Archive(BMessage* archive, bool deep) const
 	if (status == B_OK)
 		status = archive->AddUInt32("window workspaces", Workspaces());
 
-	for (int i =  0; i < fTabManager->CountTabs(); i++) {
+	for (int i = 0; i < fTabManager->CountTabs(); i++) {
 		BWebView* view = dynamic_cast<BWebView*>(fTabManager->ViewForTab(i));
 		if (view == MY_NULLPTR) {
 			continue;
@@ -1589,7 +1589,7 @@ viewIsChild(const BView* parent, const BView* view)
 		return true;
 
 	int32 count = parent->CountChildren();
-	for (int32 i =  0; i < count; i++) {
+	for (int32 i = 0; i < count; i++) {
 		BView* child = parent->ChildAt(i);
 		if (viewIsChild(child, view))
 			return true;
@@ -1937,7 +1937,7 @@ BrowserWindow::MainDocumentError(const BString& failingURL,
 
 		bool handled = false;
 
-		for (unsigned int i =  0; i < sizeof(kHandledProtocols) / sizeof(kHandledProtocols[0]);
+		for (unsigned int i = 0; i < sizeof(kHandledProtocols) / sizeof(kHandledProtocols[0]);
 				i++) {
 			handled = (proto == kHandledProtocols[i]);
 			if (handled)
@@ -2598,7 +2598,7 @@ BrowserWindow::_UpdateHistoryMenu()
 		fiveDaysAgoStart.Date().LongDayName().String());
 	BMenu* earlierMenu = new BMenu(B_TRANSLATE("Earlier"));
 
-	for (int32 i =  0; i < count; i++) {
+	for (int32 i = 0; i < count; i++) {
 		const BrowsingHistoryItem* historyItem = history->ItemAt(i);
 		if (historyItem == MY_NULLPTR)
 			continue;
@@ -2841,7 +2841,7 @@ BrowserWindow::_EncodeURIComponent(const BString& search)
 	BString result = search;
 	char hexcode[4];
 
-	for (int32 i =  0; i < result.Length(); i++) {
+	for (int32 i = 0; i < result.Length(); i++) {
 		if (escCharList.FindFirst(result[i]) != B_ERROR) {
 			snprintf(hexcode, sizeof(hexcode), "%02X",
 				(unsigned int)(unsigned char)result[i]);
@@ -2875,7 +2875,7 @@ BrowserWindow::_VisitSearchEngine(const BString& search)
 	BString engine(fSearchPageURL);
 
 	// Check if the string starts with one of the search engine shortcuts
-	for (int i =  0; kSearchEngines[i].url != 0; i++) {
+	for (int i = 0; kSearchEngines[i].url != 0; i++) {
 		if (kSearchEngines[i].shortcut == searchPrefix) {
 			engine = kSearchEngines[i].url;
 			searchQuery.Remove(0, 2);
@@ -2926,7 +2926,7 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 		bool handled = false;
 
 		// First try the built-in supported ones
-		for (unsigned int i =  0; i < sizeof(kHandledProtocols) / sizeof(kHandledProtocols[0]);
+		for (unsigned int i = 0; i < sizeof(kHandledProtocols) / sizeof(kHandledProtocols[0]);
 				i++) {
 			handled = (proto == kHandledProtocols[i]);
 			if (handled)
@@ -2972,7 +2972,7 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 			// the first /, ?, or # in the URL.
 			bool isURL = false;
 
-			for (int32 i =  0; i < url.Length(); i++) {
+			for (int32 i = 0; i < url.Length(); i++) {
 				if (url[i] == '.')
 					isURL = true;
 				else if (url[i] == '/' || url[i] == '?' || url[i] == '#')

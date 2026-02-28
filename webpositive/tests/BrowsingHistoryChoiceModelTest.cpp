@@ -9,7 +9,7 @@
 
 const char* kApplicationName = "WebPositive";
 
-int gTestFailures =  0;
+int gTestFailures = 0;
 
 void assert_true(bool condition, const char* message) {
     if (condition) {

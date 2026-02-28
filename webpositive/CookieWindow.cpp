@@ -250,7 +250,7 @@ CookieWindow::_BuildDomainList()
 		fCookieMap[domain].push_back(*cookie);
 	}
 
-	int i =  0;
+	int i = 0;
 	int firstNotEmpty = i;
 	// Collapse empty items to keep the list short
 	while (i < fDomains->FullListCountItems())
@@ -264,7 +264,7 @@ CookieWindow::_BuildDomainList()
 
 				int count = fDomains->CountItemsUnder(item, false);
 				int index = fDomains->FullListIndexOf(item) + 1;
-				for (int j =  0; j < count; j++) {
+				for (int j = 0; j < count; j++) {
 					BListItem* child = fDomains->FullListItemAt(index + j);
 					child->SetOutlineLevel(child->OutlineLevel() - 1);
 				}
@@ -303,7 +303,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 	}
 
 	int siblingCount = fDomains->CountItemsUnder(parent, true);
-	int low =  0;
+	int low = 0;
 	int high = siblingCount - 1;
 	int insertIndex = siblingCount;
 

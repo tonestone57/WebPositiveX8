@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "URLChoice.h"
 
-int gTestFailures =  0;
+int gTestFailures = 0;
 
 void assert_bool(bool expected, bool actual, const char* message) {
     if (actual == expected) {

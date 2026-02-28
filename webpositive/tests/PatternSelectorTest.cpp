@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "AutoCompleterDefaultImpl.h"
 
-int gTestFailures =  0;
+int gTestFailures = 0;
 
 void assert_int32(int32 expected, int32 actual, const char* message) {
     if (actual == expected) {

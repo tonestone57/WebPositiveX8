@@ -348,7 +348,7 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	BPopUpMenu* searchPageMenu = new BPopUpMenu("Search page:");
 	searchPageMenu->SetRadioMode(true);
 
-	for (int i =  0; kSearchEngines[i].url != 0; i++) {
+	for (int i = 0; kSearchEngines[i].url != 0; i++) {
 		BMessage* message = new BMessage(MSG_SEARCH_PAGE_CHANGED_MENU);
 		message->AddString("searchstring", kSearchEngines[i].url);
 		searchPageMenu->AddItem(new BMenuItem(kSearchEngines[i].name, message));
@@ -955,7 +955,7 @@ SettingsWindow::_RevertSettings()
 	BMenu* searchMenu = fSearchPageMenu->Menu();
 	int32 itemCount = searchMenu->CountItems() - 2;
 		// Ignore the two last items: separator and "custom"
-	for (int i =  0; i < itemCount; i++) {
+	for (int i = 0; i < itemCount; i++) {
 		BMenuItem* item = searchMenu->ItemAt(i);
 		BMessage* message = item->Message();
 		if (message->FindString("searchstring") == searchPage) {
@@ -1166,7 +1166,7 @@ SettingsWindow::_FindDefaultSerifFont() const
 	BFont serifFont(*be_plain_font);
 	font_family family;
 	int32 familyCount = count_font_families();
-	for (int32 i =  0; i < familyCount; i++) {
+	for (int32 i = 0; i < familyCount; i++) {
 		if (get_font_family(i, &family) == B_OK) {
 			BString familyString(family);
 			if (familyString.IFindFirst("sans") >= 0)

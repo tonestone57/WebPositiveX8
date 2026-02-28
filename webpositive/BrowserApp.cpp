@@ -245,7 +245,7 @@ BrowserApp::ReadyToRun()
 
 	fInitialized = true;
 
-	int32 pagesCreated =  0;
+	int32 pagesCreated = 0;
 	bool fullscreen = false;
 
 	// Handle startup session / page
@@ -263,7 +263,7 @@ BrowserApp::ReadyToRun()
 		} else {
 			// otherwise, restore previous session
 			BMessage archivedWindow;
-			for (int i =  0; fSession->FindMessage("window", i, &archivedWindow)
+			for (int i = 0; fSession->FindMessage("window", i, &archivedWindow)
 				== B_OK; i++) {
 				BRect frame = archivedWindow.FindRect("window frame");
 				uint32 workspaces = B_CURRENT_WORKSPACE;
@@ -385,7 +385,7 @@ BrowserApp::MessageReceived(BMessage* message)
 
 	case B_DOWNLOAD_ADDED:
 	{
-		for (int i =  0; BWindow* window = WindowAt(i); i++) {
+		for (int i = 0; BWindow* window = WindowAt(i); i++) {
 			if (dynamic_cast<BrowserWindow*>(window)) {
 				BMessage* copy = new(std::nothrow) BMessage(*message);
 				if (copy != MY_NULLPTR)
@@ -452,7 +452,7 @@ BrowserApp::QuitRequested()
 	if (ret == B_OK) {
 		fSession->AddMessage("window", &windowMessage);
 	} else {
-		for (int i =  0; BWindow* window = WindowAt(i); i++) {
+		for (int i = 0; BWindow* window = WindowAt(i); i++) {
 			BrowserWindow* webWindow = dynamic_cast<BrowserWindow*>(window);
 			if (!webWindow)
 				continue;
@@ -517,7 +517,7 @@ void
 BrowserApp::_RefsReceived(BMessage* message, int32* _pagesCreated,
 	bool* _fullscreen)
 {
-	int32 pagesCreated =  0;
+	int32 pagesCreated = 0;
 	if (_pagesCreated != MY_NULLPTR)
 		pagesCreated = *_pagesCreated;
 
@@ -530,7 +530,7 @@ BrowserApp::_RefsReceived(BMessage* message, int32* _pagesCreated,
 		fullscreen = false;
 
 	entry_ref ref;
-	for (int32 i =  0; message->FindRef("refs", i, &ref) == B_OK; i++) {
+	for (int32 i = 0; message->FindRef("refs", i, &ref) == B_OK; i++) {
 		BEntry entry(&ref, true);
 		if (!entry.Exists())
 			continue;
@@ -544,7 +544,7 @@ BrowserApp::_RefsReceived(BMessage* message, int32* _pagesCreated,
 	}
 
 	BString url;
-	for (int32 i =  0; message->FindString("url", i, &url) == B_OK; i++) {
+	for (int32 i = 0; message->FindString("url", i, &url) == B_OK; i++) {
 		window = _CreateNewPage(url, window, fullscreen, pagesCreated == 0);
 		pagesCreated++;
 	}
@@ -562,7 +562,7 @@ BrowserApp::_FindWindowOnCurrentWorkspace()
 	BrowserWindow* windowOnCurrentWorkspace = 0;
 	uint32 workspace = 1 << current_workspace();
 
-	for (int i =  0; BWindow* window = WindowAt(i); i++) {
+	for (int i = 0; BWindow* window = WindowAt(i); i++) {
 		BrowserWindow* webWindow = dynamic_cast<BrowserWindow*>(window);
 		if (webWindow == MY_NULLPTR)
 			continue;

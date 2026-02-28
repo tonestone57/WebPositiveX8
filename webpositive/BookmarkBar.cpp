@@ -80,12 +80,12 @@ BookmarkBar::MouseDown(BPoint where)
 	fSelectedItemIndex = -1;
 	BMessage* message = Window()->CurrentMessage();
 	if (message != MY_NULLPTR) {
-		int32 buttons =  0;
+		int32 buttons = 0;
 		if (message->FindInt32("buttons", &buttons) == B_OK) {
 			if (buttons & B_SECONDARY_MOUSE_BUTTON) {
 
 				bool foundItem = false;
-				for (int32 i =  0; i < CountItems(); i++) {
+				for (int32 i = 0; i < CountItems(); i++) {
 					BRect itemBounds = ItemAt(i)->Frame();
 					if (itemBounds.Contains(where)) {
 						foundItem = true;
@@ -406,7 +406,7 @@ BookmarkBar::FrameResized(float width, float height)
 	int32 count = CountItems();
 
 	// Account for the "more" menu, in terms of item count and space occupied
-	int32 overflowMenuWidth =  0;
+	int32 overflowMenuWidth = 0;
 	if (IndexOf(fOverflowMenu) != B_ERROR) {
 		count--;
 		// Ignore the width of the "more" menu if it would disappear after
@@ -415,7 +415,7 @@ BookmarkBar::FrameResized(float width, float height)
 			overflowMenuWidth = 32;
 	}
 
-	int32 i =  0;
+	int32 i = 0;
 	float rightmost = 0.f;
 	while (i < count) {
 		BMenuItem* item = ItemAt(i);

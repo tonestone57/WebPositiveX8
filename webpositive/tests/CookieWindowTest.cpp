@@ -29,7 +29,7 @@ public:
 	static void test_build_domain_list();
 };
 
-int gTestFailures =  0;
+int gTestFailures = 0;
 
 
 static void

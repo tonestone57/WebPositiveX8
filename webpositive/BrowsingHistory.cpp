@@ -498,7 +498,7 @@ BrowsingHistory::_SaveThread(void* data)
 
 				BMessage historyItemArchive;
 				int32 count = (int32)itemsToSave->size();
-				for (int32 i =  0; i < count; i++) {
+				for (int32 i = 0; i < count; i++) {
 					const BrowsingHistoryItemPtr& item = (*itemsToSave)[i];
 					if (item && item->Archive(&historyItemArchive) == B_OK) {
 						settingsArchive.AddMessage("history item", &historyItemArchive);
@@ -554,7 +554,7 @@ BrowsingHistory::_LoadThread(void* data)
 	oldestAllowedDateTime.Date().AddDays(-self->fMaxHistoryItemAge);
 
 	BMessage historyItemArchive;
-	for (int32 i =  0; settingsArchive.FindMessage("history item", i,
+	for (int32 i = 0; settingsArchive.FindMessage("history item", i,
 			&historyItemArchive) == B_OK; i++) {
 		BrowsingHistoryItem item(&historyItemArchive);
 		if (oldestAllowedDateTime < item.DateTime())

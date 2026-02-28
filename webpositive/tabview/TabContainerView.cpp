@@ -88,7 +88,7 @@ TabContainerView::Draw(BRect updateRect)
 	// draw tabs on top of frame
 	BGroupLayout* layout = GroupLayout();
 	int32 count = layout->CountItems() - 1;
-	for (int32 i =  0; i < count; i++) {
+	for (int32 i = 0; i < count; i++) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(layout->ItemAt(i));
 		if (item == 0 || !item->IsVisible())
 			continue;
@@ -417,7 +417,7 @@ TabContainerView::_TabAt(const BPoint& where) const
 {
 	BGroupLayout* layout = GroupLayout();
 	int32 count = layout->CountItems() - 1;
-	for (int32 i =  0; i < count; i++) {
+	for (int32 i = 0; i < count; i++) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(layout->ItemAt(i));
 		if (item == 0 || !item->IsVisible())
 			continue;
@@ -484,7 +484,7 @@ TabContainerView::_UpdateTabVisibility()
 
 	BGroupLayout* layout = GroupLayout();
 	int32 count = layout->CountItems() - 1;
-	for (int32 i =  0; i < count; i++) {
+	for (int32 i = 0; i < count; i++) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(
 			layout->ItemAt(i));
 		if (i < fFirstVisibleTabIndex)

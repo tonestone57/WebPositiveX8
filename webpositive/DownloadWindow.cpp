@@ -470,8 +470,8 @@ DownloadWindow::_RemoveDownloads(bool finished, bool missing)
 void
 DownloadWindow::_ValidateButtonStatus()
 {
-	int32 finishedCount =  0;
-	int32 missingCount =  0;
+	int32 finishedCount = 0;
+	int32 missingCount = 0;
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
 		if (view == MY_NULLPTR)
@@ -556,7 +556,7 @@ DownloadWindow::_LoadSettings()
 	if (message.Unflatten(&file) != B_OK)
 		return;
 	BMessage downloadArchive;
-	for (int32 i =  0;
+	for (int32 i = 0;
 			message.FindMessage("download", i, &downloadArchive) == B_OK;
 			i++) {
 		DownloadProgressView* view = new DownloadProgressView(
@@ -573,7 +573,7 @@ DownloadWindow::_LoadSettings()
 int32
 DownloadWindow::_RemoveExistingDownload(const BString& url)
 {
-	int32 index =  0;
+	int32 index = 0;
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
 		if (view == 0 || view->URL() != url)
@@ -633,7 +633,7 @@ DownloadWindow::_FindView(BWebDownload* download)
 	if (download == MY_NULLPTR)
 		return MY_NULLPTR;
 
-	for (int32 i =  0; DownloadProgressView* view = _ViewAt(i); i++) {
+	for (int32 i = 0; DownloadProgressView* view = _ViewAt(i); i++) {
 		if (view->Download() == download)
 			return view;
 	}

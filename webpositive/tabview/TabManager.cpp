@@ -258,7 +258,7 @@ public:
 			{
 				BPopUpMenu* tabMenu = new BPopUpMenu("tab menu", true, false);
 				int tabCount = fTabContainerView->GetLayout()->CountItems();
-				for (int i =  0; i < tabCount; i++) {
+				for (int i = 0; i < tabCount; i++) {
 					TabView* tab = fTabContainerView->TabAt(i);
 					if (tab != MY_NULLPTR) {
 						BMenuItem* item = new(std::nothrow)
@@ -829,7 +829,7 @@ int32
 TabManager::TabForView(const BView* containedView) const
 {
 	int32 count = fCardLayout->CountItems();
-	for (int32 i =  0; i < count; i++) {
+	for (int32 i = 0; i < count; i++) {
 		BLayoutItem* item = fCardLayout->ItemAt(i);
 		if (item->View() == containedView)
 			return i;

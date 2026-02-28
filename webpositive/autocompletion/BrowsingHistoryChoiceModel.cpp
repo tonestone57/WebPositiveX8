@@ -42,7 +42,7 @@ BrowsingHistoryChoiceModel::FetchChoicesFor(const BString& pattern)
 	int32 priority = INT_MAX;
 
 	int32 count = history->CountItems();
-	for (int32 i =  0; i < count; i++) {
+	for (int32 i = 0; i < count; i++) {
 		const BrowsingHistoryItem* item = history->ItemAt(i);
 		if (item == MY_NULLPTR)
 			continue;

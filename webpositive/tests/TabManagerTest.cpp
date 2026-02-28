@@ -17,7 +17,7 @@
 #include "TabManager.h"
 
 
-int gTestFailures =  0;
+int gTestFailures = 0;
 
 
 static void

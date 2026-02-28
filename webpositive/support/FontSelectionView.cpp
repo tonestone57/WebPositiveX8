@@ -349,7 +349,7 @@ FontSelectionView::UpdateFontsMenu()
 	font_style currentStyle;
 	font.GetFamilyAndStyle(&currentFamily, &currentStyle);
 
-	for (int32 i =  0; i < numFamilies; i++) {
+	for (int32 i = 0; i < numFamilies; i++) {
 		font_family family;
 		uint32 flags;
 		if (get_font_family(i, &family, &flags) != B_OK)
@@ -517,7 +517,7 @@ FontSelectionView::_BuildSizesMenu()
 	const int32 sizes[] = {7, 8, 9, 10, 11, 12, 13, 14, 18, 21, 24, 0};
 
 	// build size menu
-	for (int32 i =  0; sizes[i]; i++) {
+	for (int32 i = 0; sizes[i]; i++) {
 		int32 size = sizes[i];
 		if (size < kMinSize || size > kMaxSize)
 			continue;
@@ -552,7 +552,7 @@ FontSelectionView::_AddStylesToMenu(const BFont& font, BMenu* stylesMenu) const
 
 	int32 numStyles = count_font_styles(family);
 
-	for (int32 j =  0; j < numStyles; j++) {
+	for (int32 j = 0; j < numStyles; j++) {
 		if (get_font_style(family, j, &style) != B_OK)
 			continue;
 
