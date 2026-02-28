@@ -6,7 +6,7 @@ public:
     BAutolock(BLocker* locker) : fLocker(locker) { if (fLocker) fLocker->Lock(); }
     BAutolock(BLocker& locker) : fLocker(&locker) { fLocker->Lock(); }
     ~BAutolock() { if (fLocker) fLocker->Unlock(); }
-    bool IsLocked() const { return fLocker != NULL; }
+    bool IsLocked() const { return fLocker != MY_NULLPTR; }
 private:
     BLocker* fLocker;
 };

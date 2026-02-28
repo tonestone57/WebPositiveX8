@@ -37,11 +37,11 @@ public:
     }
     virtual int32 CountItems() const { return (int32)fItems.size(); }
     virtual BLayoutItem* ItemAt(int32 index) const {
-        if (index < 0 || index >= (int32)fItems.size()) return nullptr;
+        if (index < 0 || index >= (int32)fItems.size()) return MY_NULLPTR;
         return fItems[index];
     }
     virtual BLayoutItem* RemoveItem(int32 index) {
-        if (index < 0 || index >= (int32)fItems.size()) return nullptr;
+        if (index < 0 || index >= (int32)fItems.size()) return MY_NULLPTR;
         BLayoutItem* item = fItems[index];
         fItems.erase(fItems.begin() + index);
         // NOTE: In Haiku, removing from layout does NOT remove from view hierarchy.

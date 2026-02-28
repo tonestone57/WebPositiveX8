@@ -5,7 +5,7 @@
 class BLooper;
 class BHandler {
 public:
-    BHandler(const char* name = nullptr) : fName(name ? name : ""), fLooper(nullptr) {}
+    BHandler(const char* name = MY_NULLPTR) : fName(name ? name : ""), fLooper(MY_NULLPTR) {}
     virtual ~BHandler() {}
     virtual void MessageReceived(BMessage* message) {}
     BLooper* Looper() const { return fLooper; }

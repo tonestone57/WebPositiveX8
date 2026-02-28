@@ -4,6 +4,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include "BookmarkBar.h"
 
 #include <Alert.h>
@@ -78,7 +79,7 @@ BookmarkBar::MouseDown(BPoint where)
 {
 	fSelectedItemIndex = -1;
 	BMessage* message = Window()->CurrentMessage();
-	if (message != nullptr) {
+	if (message != MY_NULLPTR) {
 		int32 buttons = 0;
 		if (message->FindInt32("buttons", &buttons) == B_OK) {
 			if (buttons & B_SECONDARY_MOUSE_BUTTON) {
@@ -122,7 +123,7 @@ BookmarkBar::AttachedToWindow()
 
 	// Enumerate initial directory content in a background thread
 	LoaderArgs* args = new(std::nothrow) LoaderArgs;
-	if (args == nullptr)
+	if (args == MY_NULLPTR)
 		return;
 
 	args->messenger = BMessenger(this);
@@ -143,7 +144,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case kAddBookmarkMsg:
 		{
-			BBitmap* icon = nullptr;
+			BBitmap* icon = 0;
 			message->FindPointer("icon", (void**)&icon);
 
 			ino_t inode;
@@ -207,7 +208,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 					BEntry entry(&ref);
 					BEntry followedEntry(&ref, true); // traverse in case it's a symlink
 
-					std::map<ino_t, BPrivate::IconMenuItem*>::iterator it
+					HashMap<ino_t, BPrivate::IconMenuItem*>::Iterator it
 						= fItemsMap.find(inode);
 					if (it == fItemsMap.end()) {
 						_AddItem(inode, &entry);
@@ -231,7 +232,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 				}
 				case B_ENTRY_REMOVED:
 				{
-					std::map<ino_t, BPrivate::IconMenuItem*>::iterator it
+					HashMap<ino_t, BPrivate::IconMenuItem*>::Iterator it
 						= fItemsMap.find(inode);
 					if (it == fItemsMap.end())
 						break;
@@ -367,10 +368,10 @@ BookmarkBar::MessageReceived(BMessage* message)
 		{
 			// User clicked OK, get the new name
 			BString newName = message->FindString("text");
-			BMenuItem* selectedItem = nullptr;
+			BMenuItem* selectedItem = 0;
 			message->FindPointer("item", (void**)&selectedItem);
 
-			if (selectedItem == nullptr)
+			if (selectedItem == MY_NULLPTR)
 				break;
 
 			// Sanitize the name to avoid path traversal
@@ -429,7 +430,7 @@ BookmarkBar::FrameResized(float width, float height)
 		// See if we can move some items from the "more" menu in the remaining
 		// space.
 		BMenuItem* extraItem = fOverflowMenu->ItemAt(0);
-		while (extraItem != nullptr) {
+		while (extraItem != MY_NULLPTR) {
 			BRect frame = extraItem->Frame();
 			if (frame.Width() + rightmost > width - overflowMenuWidth)
 				break;
@@ -499,7 +500,7 @@ BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 	BEntry followedLink(&ref, true);
 	bool isDirectory = followedLink.IsDirectory();
 
-	_AddItem(inode, &ref, name, isDirectory, nullptr);
+	_AddItem(inode, &ref, name, isDirectory, 0);
 }
 
 
@@ -513,7 +514,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 		return;
 	}
 
-	IconMenuItem* item = nullptr;
+	IconMenuItem* item = 0;
 
 	if (isDirectory) {
 		delete icon;
@@ -527,7 +528,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 		BMessage* message = new BMessage(B_REFS_RECEIVED);
 		message->AddRef("refs", ref);
 
-		if (icon != nullptr) {
+		if (icon != MY_NULLPTR) {
 			item = new IconMenuItem(name, message, icon, B_MINI_ICON);
 		} else {
 			BEntry followedLink(ref, true);
@@ -579,16 +580,24 @@ BookmarkBar::_LoaderThread(void* data)
 					float iconSize = be_control_look->ComposeIconSize(B_MINI_ICON);
 					BBitmap* icon = new(std::nothrow) BBitmap(
 						BRect(0, 0, iconSize - 1, iconSize - 1), B_RGBA32);
-					if (icon != nullptr) {
+					if (icon != MY_NULLPTR) {
 						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK) {
-							if (message.AddPointer("icon", icon) != B_OK)
+							if (message.AddPointer("icon", icon) != B_OK) {
 								delete icon;
-						} else
+								icon = 0;
+							}
+						} else {
 							delete icon;
+							icon = 0;
+						}
 					}
 				}
 
-				args->messenger.SendMessage(&message);
+				if (args->messenger.SendMessage(&message) != B_OK) {
+					BBitmap* icon = 0;
+					if (message.FindPointer("icon", (void**)&icon) == B_OK)
+						delete icon;
+				}
 			}
 		}
 	}

@@ -24,7 +24,7 @@ public:
         return BListView::AddItem(item, index);
     }
     virtual bool AddItem(BListItem* item, BListItem* parent) {
-        if (parent == nullptr) {
+        if (parent == MY_NULLPTR) {
             return AddItem(item);
         } else {
             int32 parentIndex = FullListIndexOf(parent);
@@ -64,7 +64,7 @@ public:
     int32 FullListCountItems() const { return (int32)fItems.size(); }
     BListItem* FullListItemAt(int32 index) const {
         if (index >= 0 && index < (int32)fItems.size()) return fItems[index];
-        return nullptr;
+        return MY_NULLPTR;
     }
     int32 FullListIndexOf(BListItem* item) const {
         for (size_t i = 0; i < fItems.size(); ++i) {
@@ -76,7 +76,7 @@ public:
     int32 CountItemsUnder(BListItem* item, bool oneLevelOnly) const {
         int32 index = -1;
         int32 level = -1;
-        if (item != nullptr) {
+        if (item != MY_NULLPTR) {
             index = FullListIndexOf(item);
             if (index < 0) return 0;
             level = (int32)item->OutlineLevel();
@@ -94,9 +94,9 @@ public:
     BListItem* ItemUnderAt(BListItem* item, bool oneLevelOnly, int32 index) const {
         int32 parentIndex = -1;
         int32 level = -1;
-        if (item != nullptr) {
+        if (item != MY_NULLPTR) {
             parentIndex = FullListIndexOf(item);
-            if (parentIndex < 0) return nullptr;
+            if (parentIndex < 0) return MY_NULLPTR;
             level = (int32)item->OutlineLevel();
         }
 
@@ -108,7 +108,7 @@ public:
                 current++;
             }
         }
-        return nullptr;
+        return MY_NULLPTR;
     }
 
     virtual void MakeEmpty() {

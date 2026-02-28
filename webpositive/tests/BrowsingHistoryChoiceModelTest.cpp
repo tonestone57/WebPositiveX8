@@ -1,3 +1,4 @@
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <limits.h>
 #include <DateTime.h>

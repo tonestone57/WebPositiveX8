@@ -1,0 +1,74 @@
+g++ -I. -Ihaiku_mocks -I../autocompletion -I../support -I.. -Wall -Wno-multichar BookmarkBarTest.cpp haiku_mocks/Mocks.cpp -o BookmarkBarTest
+In file included from BookmarkBarTest.cpp:25:
+../BookmarkBar.cpp: In member function ‘virtual void BookmarkBar::MessageReceived(BMessage*)’:
+../BookmarkBar.cpp:213:48: error: no match for ‘operator==’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  213 |                                         if (it == fItemsMap.end()) {
+      |                                             ~~ ^~ ~~~~~~~~~~~~~~~
+      |                                             |                  |
+      |                                             |                  Iterator<[...],[...]>
+      |                                             Iterator<[...],[...]>
+../BookmarkBar.cpp:220:51: error: base operand of ‘->’ has non-pointer type ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’
+  220 |                                                 it->second->SetLabel(name);
+      |                                                   ^~
+../BookmarkBar.cpp:225:51: error: base operand of ‘->’ has non-pointer type ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’
+  225 |                                                 it->second->SetMessage(itemMessage);
+      |                                                   ^~
+../BookmarkBar.cpp:237:48: error: no match for ‘operator==’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  237 |                                         if (it == fItemsMap.end())
+      |                                             ~~ ^~ ~~~~~~~~~~~~~~~
+      |                                             |                  |
+      |                                             |                  Iterator<[...],[...]>
+      |                                             Iterator<[...],[...]>
+../BookmarkBar.cpp:240:64: error: base operand of ‘->’ has non-pointer type ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’
+  240 |                                         IconMenuItem* item = it->second;
+      |                                                                ^~
+../BookmarkBar.cpp:243:51: error: ‘class HashMap<long unsigned int, BPrivate::IconMenuItem*>’ has no member named ‘erase’
+  243 |                                         fItemsMap.erase(it);
+      |                                                   ^~~~~
+../BookmarkBar.cpp: In member function ‘void BookmarkBar::_AddItem(ino_t, BEntry*)’:
+../BookmarkBar.cpp:491:35: error: no match for ‘operator!=’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  491 |         if (fItemsMap.find(inode) != fItemsMap.end())
+      |             ~~~~~~~~~~~~~~~~~~~~~ ^~ ~~~~~~~~~~~~~~~
+      |                           |                       |
+      |                           Iterator<[...],[...]>   Iterator<[...],[...]>
+../BookmarkBar.cpp: In member function ‘void BookmarkBar::_AddItem(ino_t, const entry_ref*, const char*, bool, BBitmap*)’:
+../BookmarkBar.cpp:512:35: error: no match for ‘operator!=’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  512 |         if (fItemsMap.find(inode) != fItemsMap.end()) {
+      |             ~~~~~~~~~~~~~~~~~~~~~ ^~ ~~~~~~~~~~~~~~~
+      |                           |                       |
+      |                           Iterator<[...],[...]>   Iterator<[...],[...]>
+../BookmarkBar.cpp:547:18: error: no match for ‘operator[]’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>’ and ‘ino_t’ {aka ‘long unsigned int’})
+  547 |         fItemsMap[inode] = item;
+      |                  ^
+BookmarkBarTest.cpp: In static member function ‘static void BookmarkBarTest::test_add_item_logic()’:
+BookmarkBarTest.cpp:131:47: error: no match for ‘operator!=’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  131 |         assert_true(bar->fItemsMap.find(1234) != bar->fItemsMap.end(), "Item added to the map");
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~~ ^~ ~~~~~~~~~~~~~~~~~~~~
+      |                                        |                           |
+      |                                        Iterator<[...],[...]>       Iterator<[...],[...]>
+BookmarkBarTest.cpp: In static member function ‘static void BookmarkBarTest::test_add_bookmark_message()’:
+BookmarkBarTest.cpp:155:47: error: no match for ‘operator!=’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  155 |         assert_true(bar->fItemsMap.find(1234) != bar->fItemsMap.end(), "Item added via message");
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~~ ^~ ~~~~~~~~~~~~~~~~~~~~
+      |                                        |                           |
+      |                                        Iterator<[...],[...]>       Iterator<[...],[...]>
+BookmarkBarTest.cpp: In static member function ‘static void BookmarkBarTest::test_node_monitor_events()’:
+BookmarkBarTest.cpp:173:46: error: no match for ‘operator!=’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  173 |         assert_true(bar->fItemsMap.find(999) != bar->fItemsMap.end(), "Item added");
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~ ^~ ~~~~~~~~~~~~~~~~~~~~
+      |                                        |                          |
+      |                                        Iterator<[...],[...]>      Iterator<[...],[...]>
+BookmarkBarTest.cpp:185:46: error: no match for ‘operator!=’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  185 |         assert_true(bar->fItemsMap.find(999) != bar->fItemsMap.end() && strcmp(bar->fItemsMap[999]->Label(), "renamed_bookmark") == 0, "Item was renamed");
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~ ^~ ~~~~~~~~~~~~~~~~~~~~
+      |                                        |                          |
+      |                                        Iterator<[...],[...]>      Iterator<[...],[...]>
+BookmarkBarTest.cpp:185:94: error: no match for ‘operator[]’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>’ and ‘int’)
+  185 |         assert_true(bar->fItemsMap.find(999) != bar->fItemsMap.end() && strcmp(bar->fItemsMap[999]->Label(), "renamed_bookmark") == 0, "Item was renamed");
+      |                                                                                              ^
+BookmarkBarTest.cpp:194:46: error: no match for ‘operator==’ (operand types are ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’ and ‘HashMap<long unsigned int, BPrivate::IconMenuItem*>::Iterator’)
+  194 |         assert_true(bar->fItemsMap.find(999) == bar->fItemsMap.end(), "Item removed from map");
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~ ^~ ~~~~~~~~~~~~~~~~~~~~
+      |                                        |                          |
+      |                                        Iterator<[...],[...]>      Iterator<[...],[...]>
+make: *** [Makefile:44: BookmarkBarTest] Error 1

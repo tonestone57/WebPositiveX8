@@ -13,6 +13,7 @@
 #define FONT_SELECTION_VIEW_H
 
 
+#include "BeOSCompatibility.h"
 #include <Font.h>
 #include <Handler.h>
 
@@ -29,7 +30,7 @@ class FontSelectionView : public BHandler {
 public:
 								FontSelectionView(const char* name,
 									const char* label, bool separateStyles,
-									const BFont* font = NULL);
+									const BFont* font = MY_NULLPTR);
 	virtual						~FontSelectionView();
 
 			void				AttachedToLooper();

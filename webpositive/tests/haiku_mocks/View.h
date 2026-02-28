@@ -39,9 +39,9 @@ class BToolTip {};
 
 class BView : public BHandler {
 public:
-    BView() : BHandler(nullptr), fParent(nullptr), fWindow(nullptr), fFrame(0, 0, -1, -1), fLayout(nullptr) {}
-    BView(const char* name, uint32 flags = 0) : BHandler(name), fParent(nullptr), fWindow(nullptr), fFrame(0, 0, -1, -1), fLayout(nullptr) {}
-    BView(BRect frame, const char* name, uint32 resizingMode, uint32 flags) : BHandler(name), fParent(nullptr), fWindow(nullptr), fFrame(frame), fLayout(nullptr) {}
+    BView() : BHandler(MY_NULLPTR), fParent(MY_NULLPTR), fWindow(MY_NULLPTR), fFrame(0, 0, -1, -1), fLayout(MY_NULLPTR) {}
+    BView(const char* name, uint32 flags = 0) : BHandler(name), fParent(MY_NULLPTR), fWindow(MY_NULLPTR), fFrame(0, 0, -1, -1), fLayout(MY_NULLPTR) {}
+    BView(BRect frame, const char* name, uint32 resizingMode, uint32 flags) : BHandler(name), fParent(MY_NULLPTR), fWindow(MY_NULLPTR), fFrame(frame), fLayout(MY_NULLPTR) {}
     virtual ~BView(); // Defined in Mocks.cpp or here if no other dependency
 
     virtual void AttachedToWindow() {}
@@ -64,7 +64,7 @@ public:
     bool RemoveChild(BView* child);
     BView* ChildAt(int32 index) const {
         if (index >= 0 && index < (int32)fChildren.size()) return fChildren[index];
-        return nullptr;
+        return MY_NULLPTR;
     }
     int32 CountChildren() const { return (int32)fChildren.size(); }
     BView* Parent() const { return fParent; }
@@ -137,7 +137,7 @@ public:
     void DrawString(const char* s, BPoint p) {}
     void DrawString(const char* s, BView* owner, BRect r) {}
     void SetLayout(BLayout* layout);
-    BLayoutItem* LayoutItem() const { return nullptr; }
+    BLayoutItem* LayoutItem() const { return MY_NULLPTR; }
     void HideToolTip() {}
     void SetToolTip(const char* text) {}
     void SetToolTip(void* toolTip) {}

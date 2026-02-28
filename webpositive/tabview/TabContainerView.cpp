@@ -5,6 +5,7 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
+#include "BeOSCompatibility.h"
 #include "TabContainerView.h"
 
 #include <stdio.h>
@@ -34,10 +35,10 @@ static const float kRightTabInset = 10;
 TabContainerView::TabContainerView(Controller* controller)
 	:
 	BGroupView(B_HORIZONTAL, 0.0),
-	fLastMouseEventTab(NULL),
+	fLastMouseEventTab(0),
 	fMouseDown(false),
 	fClickCount(0),
-	fSelectedTab(NULL),
+	fSelectedTab(0),
 	fController(controller),
 	fFirstVisibleTabIndex(0)
 {
@@ -89,7 +90,7 @@ TabContainerView::Draw(BRect updateRect)
 	int32 count = layout->CountItems() - 1;
 	for (int32 i = 0; i < count; i++) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(layout->ItemAt(i));
-		if (item == NULL || !item->IsVisible())
+		if (item == 0 || !item->IsVisible())
 			continue;
 		item->Parent()->Draw(item->Frame());
 	}
@@ -99,11 +100,11 @@ TabContainerView::Draw(BRect updateRect)
 void
 TabContainerView::MouseDown(BPoint where)
 {
-	if (Window() == NULL)
+	if (Window() == MY_NULLPTR)
 		return;
 
 	BMessage* currentMessage = Window()->CurrentMessage();
-	if (currentMessage == NULL)
+	if (currentMessage == MY_NULLPTR)
 		return;
 
 	uint32 buttons;
@@ -117,7 +118,7 @@ TabContainerView::MouseDown(BPoint where)
 	fMouseDown = true;
 	SetMouseEventMask(B_POINTER_EVENTS, B_LOCK_WINDOW_FOCUS);
 
-	if (fLastMouseEventTab != NULL)
+	if (fLastMouseEventTab != MY_NULLPTR)
 		fLastMouseEventTab->MouseDown(where, buttons);
 	else {
 		if ((buttons & B_TERTIARY_MOUSE_BUTTON) != 0) {
@@ -140,7 +141,7 @@ TabContainerView::MouseUp(BPoint where)
 		fClickCount = 0;
 	} else if (fClickCount > 1) {
 		// NOTE: fClickCount is >= 1 only if the first click was outside
-		// any tab. So even if fLastMouseEventTab has been reset to NULL
+		// any tab. So even if fLastMouseEventTab has been reset to MY_NULLPTR
 		// because this tab was removed during mouse down, we wouldn't
 		// run the "outside tabs" code below.
 		fController->DoubleClickOutsideTabs();
@@ -173,7 +174,7 @@ void
 TabContainerView::AddTab(const char* label, int32 index)
 {
 	TabView* tab;
-	if (fController != NULL)
+	if (fController != MY_NULLPTR)
 		tab = fController->CreateTabView();
 	else
 		tab = new TabView();
@@ -195,14 +196,14 @@ TabContainerView::AddTab(TabView* tab, int32 index)
 
 	GroupLayout()->AddItem(index, tab->LayoutItem());
 
-	if (fSelectedTab == NULL)
+	if (fSelectedTab == MY_NULLPTR)
 		SelectTab(tab);
 
 	bool isLast = index == GroupLayout()->CountItems() - 1;
 	if (isLast) {
 		TabLayoutItem* item
 			= dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index - 1));
-		if (item != NULL)
+		if (item != MY_NULLPTR)
 			item->Parent()->Update();
 	}
 
@@ -217,36 +218,36 @@ TabContainerView::RemoveTab(int32 index)
 {
 	TabLayoutItem* item
 		= dynamic_cast<TabLayoutItem*>(GroupLayout()->RemoveItem(index));
-	if (item == NULL)
-		return NULL;
+	if (item == MY_NULLPTR)
+		return MY_NULLPTR;
 
 	BRect dirty(Bounds());
 	dirty.left = item->Frame().left;
 	TabView* removedTab = item->Parent();
-	removedTab->SetContainerView(NULL);
+	removedTab->SetContainerView(0);
 
 	if (removedTab == fLastMouseEventTab)
-		fLastMouseEventTab = NULL;
+		fLastMouseEventTab = 0;
 
 	// Update tabs after or before the removed tab.
 	item = dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index));
-	if (item != NULL) {
+	if (item != MY_NULLPTR) {
 		// This tab is behind the removed tab.
 		TabView* tab = item->Parent();
 		tab->Update();
 		if (removedTab == fSelectedTab) {
-			fSelectedTab = NULL;
+			fSelectedTab = 0;
 			SelectTab(tab);
-		} else if (fController != NULL && tab == fSelectedTab)
+		} else if (fController != 0 && tab == fSelectedTab)
 			fController->UpdateSelection(index);
 	} else {
 		// The removed tab was the last tab.
 		item = dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index - 1));
-		if (item != NULL) {
+		if (item != MY_NULLPTR) {
 			TabView* tab = item->Parent();
 			tab->Update();
 			if (removedTab == fSelectedTab) {
-				fSelectedTab = NULL;
+				fSelectedTab = 0;
 				SelectTab(tab);
 			}
 		}
@@ -264,17 +265,17 @@ TabContainerView::TabAt(int32 index) const
 {
 	TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(
 		GroupLayout()->ItemAt(index));
-	if (item != NULL)
+	if (item != MY_NULLPTR)
 		return item->Parent();
 
-	return NULL;
+	return MY_NULLPTR;
 }
 
 
 int32
 TabContainerView::IndexOf(TabView* tab) const
 {
-	if (tab == NULL || GroupLayout() == NULL)
+	if (tab == 0 || GroupLayout() == MY_NULLPTR)
 		return -1;
 
 	return GroupLayout()->IndexOfItem(tab->LayoutItem());
@@ -284,10 +285,10 @@ TabContainerView::IndexOf(TabView* tab) const
 void
 TabContainerView::SelectTab(int32 index)
 {
-	TabView* tab = NULL;
+	TabView* tab = 0;
 	TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(
 		GroupLayout()->ItemAt(index));
-	if (item != NULL)
+	if (item != MY_NULLPTR)
 		tab = item->Parent();
 
 	SelectTab(tab);
@@ -301,24 +302,24 @@ TabContainerView::SelectTab(TabView* tab)
 		return;
 
 	// update old selected tab
-	if (fSelectedTab != NULL)
+	if (fSelectedTab != MY_NULLPTR)
 		fSelectedTab->Update();
 
 	fSelectedTab = tab;
 
 	// update new selected tab
-	if (fSelectedTab != NULL)
+	if (fSelectedTab != MY_NULLPTR)
 		fSelectedTab->Update();
 
 	int32 index = -1;
-	if (fSelectedTab != NULL) {
+	if (fSelectedTab != MY_NULLPTR) {
 		index = GroupLayout()->IndexOfItem(tab->LayoutItem());
 
 		if (!tab->LayoutItem()->IsVisible())
 			SetFirstVisibleTabIndex(index);
 	}
 
-	if (fController != NULL)
+	if (fController != MY_NULLPTR)
 		fController->UpdateSelection(index);
 }
 
@@ -328,7 +329,7 @@ TabContainerView::SetTabLabel(int32 index, const char* label)
 {
 	TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(
 		GroupLayout()->ItemAt(index));
-	if (item == NULL)
+	if (item == MY_NULLPTR)
 		return;
 
 	item->Parent()->SetLabel(label);
@@ -371,7 +372,7 @@ TabContainerView::MaxFirstVisibleTabIndex() const
 	for (; i >= 0; i--) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(
 			layout->ItemAt(i));
-		if (item == NULL)
+		if (item == MY_NULLPTR)
 			continue;
 
 		float itemWidth = item->MinSize().width;
@@ -418,7 +419,7 @@ TabContainerView::_TabAt(const BPoint& where) const
 	int32 count = layout->CountItems() - 1;
 	for (int32 i = 0; i < count; i++) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(layout->ItemAt(i));
-		if (item == NULL || !item->IsVisible())
+		if (item == 0 || !item->IsVisible())
 			continue;
 		// Account for the fact that the tab frame does not contain the
 		// visible bottom border.
@@ -427,7 +428,7 @@ TabContainerView::_TabAt(const BPoint& where) const
 		if (frame.Contains(where))
 			return item->Parent();
 	}
-	return NULL;
+	return MY_NULLPTR;
 }
 
 
@@ -444,7 +445,7 @@ TabContainerView::_MouseMoved(BPoint where, uint32 _transit,
 		return;
 	}
 
-	if (fLastMouseEventTab != NULL && fLastMouseEventTab == tab)
+	if (fLastMouseEventTab != 0 && fLastMouseEventTab == tab)
 		fLastMouseEventTab->MouseMoved(where, B_INSIDE_VIEW, dragMessage);
 	else {
 		if (fLastMouseEventTab)
@@ -506,7 +507,7 @@ TabContainerView::_AvailableWidthForTabs() const
 {
 	float left;
 	float right;
-	GroupLayout()->GetInsets(&left, NULL, &right, NULL);
+	GroupLayout()->GetInsets(&left, 0, &right, 0);
 	float width = Bounds().Width() - left - right;
 
 	return width;
@@ -520,5 +521,5 @@ TabContainerView::_SendFakeMouseMoved()
 	uint32 buttons;
 	GetMouse(&where, &buttons, false);
 	if (Bounds().Contains(where))
-		_MouseMoved(where, B_INSIDE_VIEW, NULL);
+		_MouseMoved(where, B_INSIDE_VIEW, 0);
 }

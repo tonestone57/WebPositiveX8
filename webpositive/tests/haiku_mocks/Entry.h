@@ -6,7 +6,7 @@
 
 class BEntry {
 public:
-    BEntry() : fIsDirectory(false), fRef(0, 0, nullptr) {}
+    BEntry() : fIsDirectory(false), fRef(0, 0, MY_NULLPTR) {}
     BEntry(const char* path) : fIsDirectory(false), fRef(0, 0, path) {}
     BEntry(const entry_ref* ref, bool traverse = false) : fIsDirectory(false) {
         if (ref) fRef = *ref;

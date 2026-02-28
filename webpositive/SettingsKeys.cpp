@@ -10,6 +10,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include "SettingsKeys.h"
 
 
@@ -60,5 +61,5 @@ const struct SearchEngine kSearchEngines[] = {
 	{ "Wikipedia",  "https://en.wikipedia.org/w/index.php?search=%s", "w " },
 	{ "Yandex",     "https://yandex.com/search/?text=%s",             "y " },
 	{ "Yahoo",      "https://search.yahoo.com/search?p=%s",           "z " },
-	{ NULL, NULL, NULL }
+	{ MY_NULLPTR, 0, MY_NULLPTR }
 };

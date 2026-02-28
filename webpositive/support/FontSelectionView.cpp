@@ -10,6 +10,7 @@
  *		Stephan Aßmus <superstippi@gmx.de>
  */
 
+#include "BeOSCompatibility.h"
 #include "FontSelectionView.h"
 
 #include "private/interface/FontPrivate.h"
@@ -53,10 +54,10 @@ FontSelectionView::FontSelectionView(const char* name, const char* label,
 		bool separateStyles, const BFont* currentFont)
 	:
 	BHandler(name),
-	fMessage(NULL),
-	fTarget(NULL)
+	fMessage(0),
+	fTarget(0)
 {
-	if (currentFont == NULL)
+	if (currentFont == MY_NULLPTR)
 		fCurrentFont = _DefaultFont();
 	else
 		fCurrentFont = *currentFont;
@@ -76,8 +77,8 @@ FontSelectionView::FontSelectionView(const char* name, const char* label,
 		fStylesMenuField = new BMenuField("styles", B_TRANSLATE("Style:"),
 			fStylesMenu, B_WILL_DRAW);
 	} else {
-		fStylesMenu = NULL;
-		fStylesMenuField = NULL;
+		fStylesMenu = 0;
+		fStylesMenuField = 0;
 	}
 
 	// size menu
@@ -177,27 +178,27 @@ FontSelectionView::MessageReceived(BMessage* message)
 				break;
 
 			font_style style;
-			fCurrentFont.GetFamilyAndStyle(NULL, &style);
+			fCurrentFont.GetFamilyAndStyle(MY_NULLPTR, &style);
 
 			BMenuItem* familyItem = fFontsMenu->FindItem(family);
-			if (familyItem != NULL) {
+			if (familyItem != MY_NULLPTR) {
 				_SelectCurrentFont(false);
 
 				BMenuItem* styleItem;
-				if (fStylesMenuField != NULL)
+				if (fStylesMenuField != MY_NULLPTR)
 					styleItem = fStylesMenuField->Menu()->FindMarked();
 				else {
 					styleItem = familyItem->Submenu()->FindItem(style);
-					if (styleItem == NULL)
+					if (styleItem == MY_NULLPTR)
 						styleItem = familyItem->Submenu()->ItemAt(0);
 				}
 
-				if (styleItem != NULL) {
+				if (styleItem != MY_NULLPTR) {
 					styleItem->SetMarked(true);
 					fCurrentFont.SetFamilyAndStyle(family, styleItem->Label());
 					_UpdateFontPreview();
 				}
-				if (fStylesMenuField != NULL)
+				if (fStylesMenuField != MY_NULLPTR)
 					_AddStylesToMenu(fCurrentFont, fStylesMenuField->Menu());
 			}
 
@@ -368,7 +369,7 @@ FontSelectionView::UpdateFontsMenu()
 		message->AddString("name", Name());
 
 		BMenuItem* familyItem;
-		if (fStylesMenuField != NULL) {
+		if (fStylesMenuField != MY_NULLPTR) {
 			familyItem = new BMenuItem(family, message);
 		} else {
 			// Each family item has a submenu with all styles for that font.
@@ -383,7 +384,7 @@ FontSelectionView::UpdateFontsMenu()
 	}
 
 	// Separate styles menu for only the current font.
-	if (fStylesMenuField != NULL)
+	if (fStylesMenuField != MY_NULLPTR)
 		_AddStylesToMenu(fCurrentFont, fStylesMenuField->Menu());
 }
 
@@ -424,7 +425,7 @@ FontSelectionView::CreateStylesLabelLayoutItem()
 {
 	if (fStylesMenuField)
 		return fStylesMenuField->CreateLabelLayoutItem();
-	return NULL;
+	return MY_NULLPTR;
 }
 
 
@@ -433,7 +434,7 @@ FontSelectionView::CreateStylesMenuBarLayoutItem()
 {
 	if (fStylesMenuField)
 		return fStylesMenuField->CreateMenuBarLayoutItem();
-	return NULL;
+	return MY_NULLPTR;
 }
 
 
@@ -450,7 +451,7 @@ FontSelectionView::PreviewBox() const
 void
 FontSelectionView::_Invoke()
 {
-	if (fTarget != NULL && fTarget->Looper() != NULL && fMessage != NULL) {
+	if (fTarget != 0 && fTarget->Looper() != 0 && fMessage != MY_NULLPTR) {
 		BMessage message(*fMessage);
 		fTarget->Looper()->PostMessage(&message, fTarget);
 	}
@@ -477,12 +478,12 @@ FontSelectionView::_SelectCurrentFont(bool select)
 	fCurrentFont.GetFamilyAndStyle(&family, &style);
 
 	BMenuItem *item = fFontsMenu->FindItem(family);
-	if (item != NULL) {
+	if (item != MY_NULLPTR) {
 		item->SetMarked(select);
 
-		if (item->Submenu() != NULL) {
+		if (item->Submenu() != MY_NULLPTR) {
 			item = item->Submenu()->FindItem(style);
-			if (item != NULL)
+			if (item != MY_NULLPTR)
 				item->SetMarked(select);
 		}
 	}
@@ -496,7 +497,7 @@ FontSelectionView::_SelectCurrentSize(bool select)
 	snprintf(label, sizeof(label), "%" B_PRId32, (int32)fCurrentFont.Size());
 
 	BMenuItem* item = fSizesMenu->FindItem(label);
-	if (item != NULL)
+	if (item != MY_NULLPTR)
 		item->SetMarked(select);
 }
 

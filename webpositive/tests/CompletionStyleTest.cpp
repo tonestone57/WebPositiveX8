@@ -1,3 +1,4 @@
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <vector>
 #include <string.h>
@@ -75,7 +76,7 @@ public:
     virtual const BAutoCompleter::Choice* ChoiceAt(int32 index) const {
         if (index >= 0 && index < (int32)fChoices.size())
             return fChoices[index];
-        return NULL;
+        return MY_NULLPTR;
     }
 
     void AddChoice(const char* text) {
@@ -285,27 +286,27 @@ void testSingleChoice() {
 void testEdgeCases() {
     printf("Testing BDefaultCompletionStyle edge cases...\n");
 
-    // NULL ChoiceModel
+    // MY_NULLPTR ChoiceModel
     {
         // CompletionStyle takes ownership and deletes these in its destructor
         MockEditView* editView = new MockEditView();
         MockChoiceView* choiceView = new MockChoiceView();
         MockPatternSelector* patternSelector = new MockPatternSelector();
-        BDefaultCompletionStyle style(editView, NULL, choiceView, patternSelector);
-        assert_bool(false, style.SelectNext(), "SelectNext should return false when ChoiceModel is NULL");
-        assert_bool(false, style.SelectPrevious(), "SelectPrevious should return false when ChoiceModel is NULL");
+        BDefaultCompletionStyle style(editView, 0, choiceView, patternSelector);
+        assert_bool(false, style.SelectNext(), "SelectNext should return false when ChoiceModel is MY_NULLPTR");
+        assert_bool(false, style.SelectPrevious(), "SelectPrevious should return false when ChoiceModel is MY_NULLPTR");
     }
 
-    // NULL ChoiceView
+    // MY_NULLPTR ChoiceView
     {
         // CompletionStyle takes ownership and deletes these in its destructor
         MockEditView* editView = new MockEditView();
         MockChoiceModel* choiceModel = new MockChoiceModel();
         MockPatternSelector* patternSelector = new MockPatternSelector();
-        BDefaultCompletionStyle style(editView, choiceModel, NULL, patternSelector);
+        BDefaultCompletionStyle style(editView, choiceModel, 0, patternSelector);
         choiceModel->AddChoice("choice1");
-        assert_bool(false, style.SelectNext(), "SelectNext should return false when ChoiceView is NULL");
-        assert_bool(false, style.SelectPrevious(), "SelectPrevious should return false when ChoiceView is NULL");
+        assert_bool(false, style.SelectNext(), "SelectNext should return false when ChoiceView is MY_NULLPTR");
+        assert_bool(false, style.SelectPrevious(), "SelectPrevious should return false when ChoiceView is MY_NULLPTR");
     }
 
     // Model changes (CountChoices changes)
@@ -465,18 +466,18 @@ void testApplyChoiceEdgeCases() {
         assert_int32(0, editView->fSetEditViewStateCalled, "ApplyChoice should do nothing if no choice is selected");
     }
 
-    // Case 2: NULL EditView
+    // Case 2: MY_NULLPTR EditView
     {
         MockChoiceModel* choiceModel = new MockChoiceModel();
         MockChoiceView* choiceView = new MockChoiceView();
         MockPatternSelector* patternSelector = new MockPatternSelector();
-        BDefaultCompletionStyle style(NULL, choiceModel, choiceView, patternSelector);
+        BDefaultCompletionStyle style(MY_NULLPTR, choiceModel, choiceView, patternSelector);
 
         choiceModel->AddChoice("choice");
         style.Select(0);
         style.ApplyChoice();
         // Should not crash
-        assert_int32(0, choiceView->fHideChoicesCalled, "HideChoices should not be called if EditView is NULL");
+        assert_int32(0, choiceView->fHideChoicesCalled, "HideChoices should not be called if EditView is MY_NULLPTR");
     }
 }
 
@@ -533,20 +534,20 @@ void testSelect() {
     // Out of bounds: too large
     assert_bool(false, style.Select(2), "Select(2) should return false (count is 2)");
 
-    // NULL ChoiceModel
+    // MY_NULLPTR ChoiceModel
     {
         // CompletionStyle takes ownership and deletes these
-        BDefaultCompletionStyle styleNullModel(new MockEditView(), NULL, new MockChoiceView(), new MockPatternSelector());
-        assert_bool(false, styleNullModel.Select(0), "Select(0) should return false if ChoiceModel is NULL");
+        BDefaultCompletionStyle styleNullModel(new MockEditView(), 0, new MockChoiceView(), new MockPatternSelector());
+        assert_bool(false, styleNullModel.Select(0), "Select(0) should return false if ChoiceModel is MY_NULLPTR");
     }
 
-    // NULL ChoiceView
+    // MY_NULLPTR ChoiceView
     {
         MockChoiceModel* model = new MockChoiceModel();
         model->AddChoice("c1");
         // CompletionStyle takes ownership and deletes these
-        BDefaultCompletionStyle styleNullView(new MockEditView(), model, NULL, new MockPatternSelector());
-        assert_bool(false, styleNullView.Select(0), "Select(0) should return false if ChoiceView is NULL");
+        BDefaultCompletionStyle styleNullView(new MockEditView(), model, 0, new MockPatternSelector());
+        assert_bool(false, styleNullView.Select(0), "Select(0) should return false if ChoiceView is MY_NULLPTR");
     }
 }
 

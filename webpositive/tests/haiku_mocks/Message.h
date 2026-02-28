@@ -39,13 +39,13 @@ public:
     }
     status_t FindString(const char* name, const char** s) const { return FindString(name, 0, s); }
     status_t FindString(const char* name, BString* s) const {
-        const char* str = nullptr;
+        const char* str = MY_NULLPTR;
         status_t st = FindString(name, &str);
         if(st == B_OK && s) *s = str;
         return st;
     }
     BString FindString(const char* name, int32 index = 0) const {
-        const char* str = nullptr;
+        const char* str = MY_NULLPTR;
         FindString(name, index, &str);
         return BString(str);
     }

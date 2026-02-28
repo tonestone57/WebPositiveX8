@@ -5,6 +5,7 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
+#include "BeOSCompatibility.h"
 #include "TabManager.h"
 
 #include <stdio.h>
@@ -69,8 +70,7 @@ public:
 		uint32 flags = be_control_look->Flags(this);
 		uint32 borders = BControlLook::B_TOP_BORDER
 			| BControlLook::B_BOTTOM_BORDER;
-		be_control_look->DrawTabFrame(this, bounds, updateRect, base,
-			0, borders, B_NO_BORDER);
+		be_control_look->DrawTabFrame(this, bounds, updateRect, base, 0, borders, B_NO_BORDER);
 		if (IsEnabled()) {
 			rgb_color button = tint_color(base, 1.07);
 			be_control_look->DrawButtonBackground(this, bounds, updateRect,
@@ -222,25 +222,25 @@ public:
 		:
 		BGroupView(B_HORIZONTAL, 0.0),
 		fTabContainerView(tabContainerView),
-		fScrollLeftTabButton(NULL),
-		fScrollRightTabButton(NULL),
-		fTabMenuButton(NULL)
+		fScrollLeftTabButton(0),
+		fScrollRightTabButton(0),
+		fTabMenuButton(0)
 	{
 	}
 
 	virtual void AttachedToWindow()
 	{
-		if (fScrollLeftTabButton != NULL)
+		if (fScrollLeftTabButton != MY_NULLPTR)
 			fScrollLeftTabButton->SetTarget(this);
-		if (fScrollRightTabButton != NULL)
+		if (fScrollRightTabButton != MY_NULLPTR)
 			fScrollRightTabButton->SetTarget(this);
-		if (fTabMenuButton != NULL)
+		if (fTabMenuButton != MY_NULLPTR)
 			fTabMenuButton->SetTarget(this);
 	}
 
 	virtual void MessageReceived(BMessage* message)
 	{
-		if (fTabContainerView == NULL)
+		if (fTabContainerView == MY_NULLPTR)
 			return BGroupView::MessageReceived(message);
 
 		switch (message->what) {
@@ -260,10 +260,10 @@ public:
 				int tabCount = fTabContainerView->GetLayout()->CountItems();
 				for (int i = 0; i < tabCount; i++) {
 					TabView* tab = fTabContainerView->TabAt(i);
-					if (tab != NULL) {
+					if (tab != MY_NULLPTR) {
 						BMenuItem* item = new(std::nothrow)
-							BMenuItem(tab->Label(), NULL);
-						if (item != NULL) {
+							BMenuItem(tab->Label(), 0);
+						if (item != MY_NULLPTR) {
 							tabMenu->AddItem(item);
 							if (i == fTabContainerView->SelectedTabIndex())
 								item->SetMarked(true);
@@ -392,7 +392,7 @@ public:
 		fCurrentToolTip = text;
 		fManager->GetTabContainerView()->HideToolTip();
 		fManager->GetTabContainerView()->SetToolTip(
-			reinterpret_cast<BToolTip*>(NULL));
+			static_cast<BToolTip*>(MY_NULLPTR));
 		fManager->GetTabContainerView()->SetToolTip(fCurrentToolTip.String());
 	}
 
@@ -461,7 +461,7 @@ private:
 WebTabView::WebTabView(TabManagerController* controller)
 	:
 	TabView(),
-	fIcon(NULL),
+	fIcon(0),
 	fController(controller),
 	fOverCloseRect(false),
 	fClicked(false)
@@ -499,7 +499,7 @@ WebTabView::DrawContents(BView* owner, BRect frame, const BRect& updateRect)
 	if (fController->CloseButtonsAvailable())
 		_DrawCloseButton(owner, frame, updateRect);
 
-	if (fIcon != NULL) {
+	if (fIcon != MY_NULLPTR) {
 		BRect iconBounds(0, 0, kIconSize - 1, kIconSize - 1);
 		// clip to icon bounds, if they are smaller
 		if (iconBounds.Contains(fIcon->Bounds()))
@@ -597,7 +597,7 @@ WebTabView::SetIcon(const BBitmap* icon)
 	if (icon)
 		fIcon = new BBitmap(icon);
 	else
-		fIcon = NULL;
+		fIcon = 0;
 	LayoutItem()->InvalidateLayout();
 }
 
@@ -682,9 +682,9 @@ WebTabView::_DrawCloseButton(BView* owner, BRect& frame,
 TabManagerController::TabManagerController(TabManager* manager)
 	:
 	fManager(manager),
-	fTabContainerGroup(NULL),
+	fTabContainerGroup(0),
 	fCloseButtonsAvailable(false),
-	fDoubleClickOutsideTabsMessage(NULL)
+	fDoubleClickOutsideTabsMessage(0)
 {
 }
 
@@ -819,9 +819,9 @@ BView*
 TabManager::ViewForTab(int32 tabIndex) const
 {
 	BLayoutItem* item = fCardLayout->ItemAt(tabIndex);
-	if (item != NULL)
+	if (item != MY_NULLPTR)
 		return item->View();
-	return NULL;
+	return MY_NULLPTR;
 }
 
 
@@ -901,8 +901,8 @@ TabManager::RemoveTab(int32 index)
 	// and then item count of card layout and tab container will not
 	// match yet.
 	BLayoutItem* item = fCardLayout->RemoveItem(index);
-	if (item == NULL)
-		return NULL;
+	if (item == MY_NULLPTR)
+		return MY_NULLPTR;
 
 	TabView* tab = fTabContainerView->RemoveTab(index);
 	delete tab;

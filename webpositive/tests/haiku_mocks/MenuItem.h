@@ -8,8 +8,8 @@ class BMenu;
 
 class BMenuItem {
 public:
-    BMenuItem(const char* label, BMessage* message, char shortcut = 0, uint32 modifiers = 0) : fLabel(label ? label : ""), fMessage(message), fSubmenu(nullptr) {}
-    BMenuItem(BMenu* submenu, BMessage* message = nullptr) : fMessage(message), fSubmenu(submenu) {}
+    BMenuItem(const char* label, BMessage* message, char shortcut = 0, uint32 modifiers = 0) : fLabel(label ? label : ""), fMessage(message), fSubmenu(MY_NULLPTR) {}
+    BMenuItem(BMenu* submenu, BMessage* message = MY_NULLPTR) : fMessage(message), fSubmenu(submenu) {}
     virtual ~BMenuItem() { delete fMessage; }
     void SetEnabled(bool enabled) {}
     BRect Frame() const { return BRect(0, 0, 10, 10); }
@@ -28,6 +28,6 @@ private:
 
 class BSeparatorItem : public BMenuItem {
 public:
-    BSeparatorItem() : BMenuItem((const char*)nullptr, nullptr) {}
+    BSeparatorItem() : BMenuItem((const char*)MY_NULLPTR, MY_NULLPTR) {}
 };
 #endif

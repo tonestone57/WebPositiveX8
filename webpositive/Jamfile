@@ -27,6 +27,7 @@ local sources =
 	TabManager.cpp
 	TabView.cpp
 
+	BeOSCompatibility.h
 	AuthenticationPanel.cpp
 	BrowserApp.cpp
 	BrowserWindow.cpp

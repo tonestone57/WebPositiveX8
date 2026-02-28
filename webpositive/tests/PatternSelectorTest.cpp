@@ -1,3 +1,4 @@
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include "AutoCompleterDefaultImpl.h"
 
@@ -39,12 +40,12 @@ int main() {
     assert_int32(0, start, "Start should be 0 regardless of caret position");
     assert_int32(text3.Length(), length, "Length should be full text length regardless of caret position");
 
-    // Test case 4: NULL pointers (should not crash)
-    printf("Testing NULL pointers (should not crash)...\n");
-    selector.SelectPatternBounds(text1, 0, NULL, &length);
-    selector.SelectPatternBounds(text1, 0, &start, NULL);
-    selector.SelectPatternBounds(text1, 0, NULL, NULL);
-    printf("PASS: NULL pointers handled without crash\n");
+    // Test case 4: MY_NULLPTR pointers (should not crash)
+    printf("Testing MY_NULLPTR pointers (should not crash)...\n");
+    selector.SelectPatternBounds(text1, 0, 0, &length);
+    selector.SelectPatternBounds(text1, 0, &start, 0);
+    selector.SelectPatternBounds(text1, 0, 0, 0);
+    printf("PASS: MY_NULLPTR pointers handled without crash\n");
 
     if (gTestFailures > 0) {
         printf("\nFinished running tests: %d failures\n", gTestFailures);
