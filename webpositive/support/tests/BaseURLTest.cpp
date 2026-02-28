@@ -1,8 +1,9 @@
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "BaseURL.h"
 
-int gTestFailures = 0;
+int gTestFailures =  0;
 
 void assert_string(const char* expected, BString actual, const char* message) {
     if (actual == expected) {

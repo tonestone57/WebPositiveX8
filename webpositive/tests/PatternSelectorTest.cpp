@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "AutoCompleterDefaultImpl.h"
 
-int gTestFailures = 0;
+int gTestFailures =  0;
 
 void assert_int32(int32 expected, int32 actual, const char* message) {
     if (actual == expected) {
@@ -42,9 +42,9 @@ int main() {
 
     // Test case 4: MY_NULLPTR pointers (should not crash)
     printf("Testing MY_NULLPTR pointers (should not crash)...\n");
-    selector.SelectPatternBounds(text1, 0, MY_NULLPTR, &length);
-    selector.SelectPatternBounds(text1, 0, &start, MY_NULLPTR);
-    selector.SelectPatternBounds(text1, 0, MY_NULLPTR, MY_NULLPTR);
+    selector.SelectPatternBounds(text1, 0, 0, &length);
+    selector.SelectPatternBounds(text1, 0, &start, 0);
+    selector.SelectPatternBounds(text1, 0, 0, 0);
     printf("PASS: MY_NULLPTR pointers handled without crash\n");
 
     if (gTestFailures > 0) {

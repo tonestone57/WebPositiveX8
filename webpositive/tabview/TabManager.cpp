@@ -70,8 +70,7 @@ public:
 		uint32 flags = be_control_look->Flags(this);
 		uint32 borders = BControlLook::B_TOP_BORDER
 			| BControlLook::B_BOTTOM_BORDER;
-		be_control_look->DrawTabFrame(this, bounds, updateRect, base,
-			0, borders, B_NO_BORDER);
+		be_control_look->DrawTabFrame(this, bounds, updateRect, base, 0, borders, B_NO_BORDER);
 		if (IsEnabled()) {
 			rgb_color button = tint_color(base, 1.07);
 			be_control_look->DrawButtonBackground(this, bounds, updateRect,
@@ -223,9 +222,9 @@ public:
 		:
 		BGroupView(B_HORIZONTAL, 0.0),
 		fTabContainerView(tabContainerView),
-		fScrollLeftTabButton(MY_NULLPTR),
-		fScrollRightTabButton(MY_NULLPTR),
-		fTabMenuButton(MY_NULLPTR)
+		fScrollLeftTabButton(0),
+		fScrollRightTabButton(0),
+		fTabMenuButton(0)
 	{
 	}
 
@@ -259,11 +258,11 @@ public:
 			{
 				BPopUpMenu* tabMenu = new BPopUpMenu("tab menu", true, false);
 				int tabCount = fTabContainerView->GetLayout()->CountItems();
-				for (int i = 0; i < tabCount; i++) {
+				for (int i =  0; i < tabCount; i++) {
 					TabView* tab = fTabContainerView->TabAt(i);
 					if (tab != MY_NULLPTR) {
 						BMenuItem* item = new(std::nothrow)
-							BMenuItem(tab->Label(), MY_NULLPTR);
+							BMenuItem(tab->Label(), 0);
 						if (item != MY_NULLPTR) {
 							tabMenu->AddItem(item);
 							if (i == fTabContainerView->SelectedTabIndex())
@@ -462,7 +461,7 @@ private:
 WebTabView::WebTabView(TabManagerController* controller)
 	:
 	TabView(),
-	fIcon(MY_NULLPTR),
+	fIcon(0),
 	fController(controller),
 	fOverCloseRect(false),
 	fClicked(false)
@@ -598,7 +597,7 @@ WebTabView::SetIcon(const BBitmap* icon)
 	if (icon)
 		fIcon = new BBitmap(icon);
 	else
-		fIcon = MY_NULLPTR;
+		fIcon = 0;
 	LayoutItem()->InvalidateLayout();
 }
 
@@ -683,9 +682,9 @@ WebTabView::_DrawCloseButton(BView* owner, BRect& frame,
 TabManagerController::TabManagerController(TabManager* manager)
 	:
 	fManager(manager),
-	fTabContainerGroup(MY_NULLPTR),
+	fTabContainerGroup(0),
 	fCloseButtonsAvailable(false),
-	fDoubleClickOutsideTabsMessage(MY_NULLPTR)
+	fDoubleClickOutsideTabsMessage(0)
 {
 }
 
@@ -830,7 +829,7 @@ int32
 TabManager::TabForView(const BView* containedView) const
 {
 	int32 count = fCardLayout->CountItems();
-	for (int32 i = 0; i < count; i++) {
+	for (int32 i =  0; i < count; i++) {
 		BLayoutItem* item = fCardLayout->ItemAt(i);
 		if (item->View() == containedView)
 			return i;

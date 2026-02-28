@@ -80,12 +80,12 @@ BookmarkBar::MouseDown(BPoint where)
 	fSelectedItemIndex = -1;
 	BMessage* message = Window()->CurrentMessage();
 	if (message != MY_NULLPTR) {
-		int32 buttons = 0;
+		int32 buttons =  0;
 		if (message->FindInt32("buttons", &buttons) == B_OK) {
 			if (buttons & B_SECONDARY_MOUSE_BUTTON) {
 
 				bool foundItem = false;
-				for (int32 i = 0; i < CountItems(); i++) {
+				for (int32 i =  0; i < CountItems(); i++) {
 					BRect itemBounds = ItemAt(i)->Frame();
 					if (itemBounds.Contains(where)) {
 						foundItem = true;
@@ -144,7 +144,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case kAddBookmarkMsg:
 		{
-			BBitmap* icon = MY_NULLPTR;
+			BBitmap* icon = 0;
 			message->FindPointer("icon", (void**)&icon);
 
 			ino_t inode;
@@ -368,7 +368,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 		{
 			// User clicked OK, get the new name
 			BString newName = message->FindString("text");
-			BMenuItem* selectedItem = MY_NULLPTR;
+			BMenuItem* selectedItem = 0;
 			message->FindPointer("item", (void**)&selectedItem);
 
 			if (selectedItem == MY_NULLPTR)
@@ -406,7 +406,7 @@ BookmarkBar::FrameResized(float width, float height)
 	int32 count = CountItems();
 
 	// Account for the "more" menu, in terms of item count and space occupied
-	int32 overflowMenuWidth = 0;
+	int32 overflowMenuWidth =  0;
 	if (IndexOf(fOverflowMenu) != B_ERROR) {
 		count--;
 		// Ignore the width of the "more" menu if it would disappear after
@@ -415,7 +415,7 @@ BookmarkBar::FrameResized(float width, float height)
 			overflowMenuWidth = 32;
 	}
 
-	int32 i = 0;
+	int32 i =  0;
 	float rightmost = 0.f;
 	while (i < count) {
 		BMenuItem* item = ItemAt(i);
@@ -500,7 +500,7 @@ BookmarkBar::_AddItem(ino_t inode, BEntry* entry)
 	BEntry followedLink(&ref, true);
 	bool isDirectory = followedLink.IsDirectory();
 
-	_AddItem(inode, &ref, name, isDirectory, MY_NULLPTR);
+	_AddItem(inode, &ref, name, isDirectory, 0);
 }
 
 
@@ -514,7 +514,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 		return;
 	}
 
-	IconMenuItem* item = MY_NULLPTR;
+	IconMenuItem* item = 0;
 
 	if (isDirectory) {
 		delete icon;
@@ -585,17 +585,17 @@ BookmarkBar::_LoaderThread(void* data)
 						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK) {
 							if (message.AddPointer("icon", icon) != B_OK) {
 								delete icon;
-								icon = MY_NULLPTR;
+								icon = 0;
 							}
 						} else {
 							delete icon;
-							icon = MY_NULLPTR;
+							icon = 0;
 						}
 					}
 				}
 
 				if (args->messenger.SendMessage(&message) != B_OK) {
-					BBitmap* icon = MY_NULLPTR;
+					BBitmap* icon = 0;
 					if (message.FindPointer("icon", (void**)&icon) == B_OK)
 						delete icon;
 				}

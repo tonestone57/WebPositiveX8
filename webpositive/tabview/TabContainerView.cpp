@@ -35,10 +35,10 @@ static const float kRightTabInset = 10;
 TabContainerView::TabContainerView(Controller* controller)
 	:
 	BGroupView(B_HORIZONTAL, 0.0),
-	fLastMouseEventTab(MY_NULLPTR),
+	fLastMouseEventTab(0),
 	fMouseDown(false),
 	fClickCount(0),
-	fSelectedTab(MY_NULLPTR),
+	fSelectedTab(0),
 	fController(controller),
 	fFirstVisibleTabIndex(0)
 {
@@ -88,9 +88,9 @@ TabContainerView::Draw(BRect updateRect)
 	// draw tabs on top of frame
 	BGroupLayout* layout = GroupLayout();
 	int32 count = layout->CountItems() - 1;
-	for (int32 i = 0; i < count; i++) {
+	for (int32 i =  0; i < count; i++) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(layout->ItemAt(i));
-		if (item == MY_NULLPTR || !item->IsVisible())
+		if (item == 0 || !item->IsVisible())
 			continue;
 		item->Parent()->Draw(item->Frame());
 	}
@@ -224,10 +224,10 @@ TabContainerView::RemoveTab(int32 index)
 	BRect dirty(Bounds());
 	dirty.left = item->Frame().left;
 	TabView* removedTab = item->Parent();
-	removedTab->SetContainerView(MY_NULLPTR);
+	removedTab->SetContainerView(0);
 
 	if (removedTab == fLastMouseEventTab)
-		fLastMouseEventTab = MY_NULLPTR;
+		fLastMouseEventTab = 0;
 
 	// Update tabs after or before the removed tab.
 	item = dynamic_cast<TabLayoutItem*>(GroupLayout()->ItemAt(index));
@@ -236,9 +236,9 @@ TabContainerView::RemoveTab(int32 index)
 		TabView* tab = item->Parent();
 		tab->Update();
 		if (removedTab == fSelectedTab) {
-			fSelectedTab = MY_NULLPTR;
+			fSelectedTab = 0;
 			SelectTab(tab);
-		} else if (fController != MY_NULLPTR && tab == fSelectedTab)
+		} else if (fController != 0 && tab == fSelectedTab)
 			fController->UpdateSelection(index);
 	} else {
 		// The removed tab was the last tab.
@@ -247,7 +247,7 @@ TabContainerView::RemoveTab(int32 index)
 			TabView* tab = item->Parent();
 			tab->Update();
 			if (removedTab == fSelectedTab) {
-				fSelectedTab = MY_NULLPTR;
+				fSelectedTab = 0;
 				SelectTab(tab);
 			}
 		}
@@ -275,7 +275,7 @@ TabContainerView::TabAt(int32 index) const
 int32
 TabContainerView::IndexOf(TabView* tab) const
 {
-	if (tab == MY_NULLPTR || GroupLayout() == MY_NULLPTR)
+	if (tab == 0 || GroupLayout() == MY_NULLPTR)
 		return -1;
 
 	return GroupLayout()->IndexOfItem(tab->LayoutItem());
@@ -285,7 +285,7 @@ TabContainerView::IndexOf(TabView* tab) const
 void
 TabContainerView::SelectTab(int32 index)
 {
-	TabView* tab = MY_NULLPTR;
+	TabView* tab = 0;
 	TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(
 		GroupLayout()->ItemAt(index));
 	if (item != MY_NULLPTR)
@@ -417,9 +417,9 @@ TabContainerView::_TabAt(const BPoint& where) const
 {
 	BGroupLayout* layout = GroupLayout();
 	int32 count = layout->CountItems() - 1;
-	for (int32 i = 0; i < count; i++) {
+	for (int32 i =  0; i < count; i++) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(layout->ItemAt(i));
-		if (item == MY_NULLPTR || !item->IsVisible())
+		if (item == 0 || !item->IsVisible())
 			continue;
 		// Account for the fact that the tab frame does not contain the
 		// visible bottom border.
@@ -445,7 +445,7 @@ TabContainerView::_MouseMoved(BPoint where, uint32 _transit,
 		return;
 	}
 
-	if (fLastMouseEventTab != MY_NULLPTR && fLastMouseEventTab == tab)
+	if (fLastMouseEventTab != 0 && fLastMouseEventTab == tab)
 		fLastMouseEventTab->MouseMoved(where, B_INSIDE_VIEW, dragMessage);
 	else {
 		if (fLastMouseEventTab)
@@ -484,7 +484,7 @@ TabContainerView::_UpdateTabVisibility()
 
 	BGroupLayout* layout = GroupLayout();
 	int32 count = layout->CountItems() - 1;
-	for (int32 i = 0; i < count; i++) {
+	for (int32 i =  0; i < count; i++) {
 		TabLayoutItem* item = dynamic_cast<TabLayoutItem*>(
 			layout->ItemAt(i));
 		if (i < fFirstVisibleTabIndex)
@@ -507,7 +507,7 @@ TabContainerView::_AvailableWidthForTabs() const
 {
 	float left;
 	float right;
-	GroupLayout()->GetInsets(&left, MY_NULLPTR, &right, MY_NULLPTR);
+	GroupLayout()->GetInsets(&left, 0, &right, 0);
 	float width = Bounds().Width() - left - right;
 
 	return width;
@@ -521,5 +521,5 @@ TabContainerView::_SendFakeMouseMoved()
 	uint32 buttons;
 	GetMouse(&where, &buttons, false);
 	if (Bounds().Contains(where))
-		_MouseMoved(where, B_INSIDE_VIEW, MY_NULLPTR);
+		_MouseMoved(where, B_INSIDE_VIEW, 0);
 }

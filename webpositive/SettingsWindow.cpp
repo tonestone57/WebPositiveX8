@@ -98,7 +98,7 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 	fRevertButton = new BButton(B_TRANSLATE("Revert"),
 		new BMessage(MSG_REVERT));
 
-	fOpenFilePanel = MY_NULLPTR;
+	fOpenFilePanel = 0;
 
 	float spacing = be_control_look->DefaultItemSpacing();
 
@@ -348,7 +348,7 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	BPopUpMenu* searchPageMenu = new BPopUpMenu("Search page:");
 	searchPageMenu->SetRadioMode(true);
 
-	for (int i = 0; kSearchEngines[i].url != MY_NULLPTR; i++) {
+	for (int i =  0; kSearchEngines[i].url != 0; i++) {
 		BMessage* message = new BMessage(MSG_SEARCH_PAGE_CHANGED_MENU);
 		message->AddString("searchstring", kSearchEngines[i].url);
 		searchPageMenu->AddItem(new BMenuItem(kSearchEngines[i].name, message));
@@ -955,7 +955,7 @@ SettingsWindow::_RevertSettings()
 	BMenu* searchMenu = fSearchPageMenu->Menu();
 	int32 itemCount = searchMenu->CountItems() - 2;
 		// Ignore the two last items: separator and "custom"
-	for (int i = 0; i < itemCount; i++) {
+	for (int i =  0; i < itemCount; i++) {
 		BMenuItem* item = searchMenu->ItemAt(i);
 		BMessage* message = item->Message();
 		if (message->FindString("searchstring") == searchPage) {
@@ -1075,7 +1075,7 @@ SettingsWindow::_ChooseDownloadFolder(const BMessage* message)
 	if (fOpenFilePanel == MY_NULLPTR) {
 		BMessenger target(this);
 		fOpenFilePanel = new (std::nothrow) BFilePanel(B_OPEN_PANEL,
-			&target, MY_NULLPTR, B_DIRECTORY_NODE);
+			&target, 0, B_DIRECTORY_NODE);
 	}
 	BMessage panelMessage(MSG_HANDLE_DOWNLOAD_FOLDER);
 	fOpenFilePanel->SetMessage(&panelMessage);
@@ -1166,7 +1166,7 @@ SettingsWindow::_FindDefaultSerifFont() const
 	BFont serifFont(*be_plain_font);
 	font_family family;
 	int32 familyCount = count_font_families();
-	for (int32 i = 0; i < familyCount; i++) {
+	for (int32 i =  0; i < familyCount; i++) {
 		if (get_font_family(i, &family) == B_OK) {
 			BString familyString(family);
 			if (familyString.IFindFirst("sans") >= 0)

@@ -81,7 +81,7 @@ public:
 					BEntry entry(path.String());
 					bool exists = entry.Exists();
 					node_ref nref;
-					BBitmap* icon = MY_NULLPTR;
+					BBitmap* icon = 0;
 
 					if (exists) {
 						if (entry.GetNodeRef(&nref) != B_OK)
@@ -92,7 +92,7 @@ public:
 							BNodeInfo info(&node);
 							if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
 								delete icon;
-								icon = MY_NULLPTR;
+								icon = 0;
 							}
 						}
 					}
@@ -120,7 +120,7 @@ public:
 	}
 };
 
-static AsyncWorker* sAsyncWorker = MY_NULLPTR;
+static AsyncWorker* sAsyncWorker = 0;
 static BLocker sAsyncWorkerLock("AsyncWorker lock");
 
 class AsyncWorkerCleanup {
@@ -130,7 +130,7 @@ public:
 		BAutolock _(sAsyncWorkerLock);
 		if (sAsyncWorker != MY_NULLPTR) {
 			sAsyncWorker->PostMessage(B_QUIT_REQUESTED);
-			sAsyncWorker = MY_NULLPTR;
+			sAsyncWorker = 0;
 		}
 	}
 };
@@ -186,7 +186,7 @@ public:
 
 	void SetIconBits(const void* bits, ssize_t size)
 	{
-		if (bits != MY_NULLPTR && size == fIconBitmap.BitsLength()) {
+		if (bits != 0 && size == fIconBitmap.BitsLength()) {
 			memcpy(fIconBitmap.Bits(), bits, size);
 			Invalidate();
 		}
@@ -275,7 +275,7 @@ DownloadProgressView::DownloadProgressView(BWebDownload* download)
 DownloadProgressView::DownloadProgressView(const BMessage* archive)
 	:
 	BGroupView(B_HORIZONTAL, 8),
-	fDownload(MY_NULLPTR),
+	fDownload(0),
 	fURL(),
 	fPath()
 {
@@ -498,7 +498,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 						"Are you sure you want to run it?"));
 					text.ReplaceFirst("%name%", fPath.Leaf());
 					BAlert* alert = new BAlert(B_TRANSLATE("Open executable"), text,
-						B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), MY_NULLPTR,
+						B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), 0,
 						B_WIDTH_AS_USUAL, B_WARNING_ALERT);
 					alert->SetShortcut(0, B_ESCAPE);
 					if (alert->Go() != 1)
@@ -512,7 +512,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 					B_TRANSLATE("The download could not be opened."),
 					B_TRANSLATE("OK"));
 				alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-				alert->Go(MY_NULLPTR);
+				alert->Go(0);
 			}
 			break;
 		}
@@ -746,7 +746,7 @@ DownloadProgressView::IsFinished() const
 void
 DownloadProgressView::DownloadFinished()
 {
-	fDownload = MY_NULLPTR;
+	fDownload = 0;
 	if (fExpectedSize == -1) {
 		fStatusBar->SetTo(100.0);
 		fExpectedSize = fCurrentSize;
@@ -793,7 +793,7 @@ DownloadProgressView::CancelDownload()
 		fStatusBar->SetBarColor(ui_color(B_FAILURE_COLOR));
 	}
 
-	fDownload = MY_NULLPTR;
+	fDownload = 0;
 	fTopButton->SetLabel(B_TRANSLATE("Restart"));
 	fTopButton->SetMessage(new BMessage(RESTART_DOWNLOAD));
 	fTopButton->SetEnabled(true);

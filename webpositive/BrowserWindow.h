@@ -128,7 +128,7 @@ public:
 
 			bool				IsBlankTab() const;
 			void				CreateNewTab(const BString& url, bool select,
-									BWebView* webView = 0);
+									BWebView* webView = MY_NULLPTR);
 
 			BRect				WindowFrame() const;
 

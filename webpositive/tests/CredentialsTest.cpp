@@ -15,7 +15,7 @@
 
 const char* kApplicationName = "WebPositive";
 
-int gTestFailures = 0;
+int gTestFailures =  0;
 
 
 static void
@@ -85,7 +85,7 @@ main()
 
 	// BMessage constructor with MY_NULLPTR
 	{
-		Credentials c(MY_NULLPTR);
+		Credentials c(0);
 		assert_true(c.Username() == "", "Username from MY_NULLPTR archive is empty");
 		assert_true(c.Password() == "", "Password from MY_NULLPTR archive is empty");
 	}
@@ -125,7 +125,7 @@ main()
 	// Archive with MY_NULLPTR
 	{
 		Credentials c("user", "pass");
-		assert_status(B_BAD_VALUE, c.Archive(MY_NULLPTR),
+		assert_status(B_BAD_VALUE, c.Archive(0),
 			"Archive with MY_NULLPTR returns B_BAD_VALUE");
 	}
 

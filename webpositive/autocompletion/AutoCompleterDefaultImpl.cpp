@@ -328,8 +328,8 @@ BDefaultChoiceView::ListItem::DrawItem(BView* owner, BRect frame,
 
 BDefaultChoiceView::BDefaultChoiceView()
 	:
-	fWindow(MY_NULLPTR),
-	fListView(MY_NULLPTR),
+	fWindow(0),
+	fListView(0),
 	fMaxVisibleChoices(8)
 {
 	
@@ -373,13 +373,13 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 
 	fListView = new ListView(completer);
 	int32 count = choiceModel->CountChoices();
-	for(int32 i = 0; i<count; ++i) {
+	for(int32 i =  0; i<count; ++i) {
 		fListView->AddItem(
 			new ListItem(choiceModel->ChoiceAt(i))
 		);
 	}
 
-	BScrollView *scrollView = MY_NULLPTR;
+	BScrollView *scrollView = 0;
 	if (count > fMaxVisibleChoices) {
 		scrollView = new BScrollView("", fListView, B_FOLLOW_NONE, 0, false, true, B_NO_BORDER);
 	}
@@ -427,8 +427,8 @@ BDefaultChoiceView::HideChoices()
 {
 	if (fWindow && fWindow->Lock()) {
 		fWindow->Quit();
-		fWindow = MY_NULLPTR;
-		fListView = MY_NULLPTR;
+		fWindow = 0;
+		fListView = 0;
 	}
 }
 

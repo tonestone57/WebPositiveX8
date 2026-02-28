@@ -45,9 +45,9 @@ public:
 	public:
 		virtual					~EditView()	{}
 
-		virtual	BRect			GetAdjustmentFrame() = 0;
+		virtual	BRect			GetAdjustmentFrame() =  0;
 		virtual	void			GetEditViewState(BString& text,
-									int32* caretPos) = 0;
+									int32* caretPos) =  0;
 		virtual	void			SetEditViewState(const BString& text,
 									int32 caretPos,
 									int32 selectionLength = 0) = 0;
@@ -59,7 +59,7 @@ public:
 		
 		virtual	void			SelectPatternBounds(const BString& text,
 									int32 caretPos, int32* start,
-									int32* length) = 0;
+									int32* length) =  0;
 	};
 
 	class ChoiceModel {
@@ -67,10 +67,10 @@ public:
 	
 		virtual					~ChoiceModel() {}
 		
-		virtual	void			FetchChoicesFor(const BString& pattern) = 0;
+		virtual	void			FetchChoicesFor(const BString& pattern) =  0;
 
-		virtual	int32			CountChoices() const = 0;
-		virtual	const Choice*	ChoiceAt(int32 index) const = 0;
+		virtual	int32			CountChoices() const =  0;
+		virtual	const Choice*	ChoiceAt(int32 index) const =  0;
 	};
 	
 	class CompletionStyle;
@@ -78,13 +78,13 @@ public:
 	public:
 		virtual					~ChoiceView() {}
 
-		virtual	void			SelectChoiceAt(int32 index) = 0;
+		virtual	void			SelectChoiceAt(int32 index) =  0;
 		virtual	void			ShowChoices(
 									BAutoCompleter::CompletionStyle* completer)
-									= 0;
-		virtual	void			HideChoices() = 0;
-		virtual	bool			ChoicesAreShown() = 0;
-		virtual int32			CountVisibleChoices() const = 0;
+									=  0;
+		virtual	void			HideChoices() =  0;
+		virtual	bool			ChoicesAreShown() =  0;
+		virtual int32			CountVisibleChoices() const =  0;
 	};
 
 	class CompletionStyle {
@@ -95,16 +95,16 @@ public:
 									PatternSelector* patternSelector);
 		virtual					~CompletionStyle();
 
-		virtual	bool			Select(int32 index) = 0;
+		virtual	bool			Select(int32 index) =  0;
 		virtual	bool			SelectNext(bool wrap = false) = 0;
 		virtual	bool			SelectPrevious(bool wrap = false) = 0;
-		virtual	bool			IsChoiceSelected() const = 0;
-		virtual	int32			SelectedChoiceIndex() const = 0;
+		virtual	bool			IsChoiceSelected() const =  0;
+		virtual	int32			SelectedChoiceIndex() const =  0;
 
 		virtual	void			ApplyChoice(bool hideChoices = true) = 0;
-		virtual	void			CancelChoice() = 0;
+		virtual	void			CancelChoice() =  0;
 
-		virtual	void			EditViewStateChanged(bool updateChoices) = 0;
+		virtual	void			EditViewStateChanged(bool updateChoices) =  0;
 
 				void			SetEditView(EditView* view);
 				void			SetPatternSelector(PatternSelector* selector);

@@ -33,7 +33,7 @@ my_find_directory(directory_which which, BPath* path, bool create_it = false,
 // Define kApplicationName for the test as it is typically defined in BrowserApp.cpp
 const char* kApplicationName = "WebPositive";
 
-int gTestFailures = 0;
+int gTestFailures =  0;
 
 
 static void
@@ -52,8 +52,8 @@ assert_status(status_t expected, status_t actual, const char* message)
 static void
 assert_string(const char* expected, const char* actual, const char* message)
 {
-	if ((expected == MY_NULLPTR && actual == MY_NULLPTR) ||
-		(expected != MY_NULLPTR && actual != MY_NULLPTR && strcmp(expected, actual) == 0)) {
+	if ((expected == 0 && actual == MY_NULLPTR) ||
+		(expected != 0 && actual != 0 && strcmp(expected, actual) == 0)) {
 		printf("PASS: %s\n", message);
 	} else {
 		printf("FAIL: %s (expected %s, got %s)\n", message,
@@ -85,8 +85,8 @@ test_get_settings_path_null_filename()
 	printf("Testing GetSettingsPath with MY_NULLPTR filename...\n");
 	BPath path;
 	sFindDirectoryResult = B_OK;
-	assert_status(B_OK, GetSettingsPath(path, MY_NULLPTR),
-		"GetSettingsPath(MY_NULLPTR) returns B_OK");
+	assert_status(B_OK, GetSettingsPath(path, 0),
+		"GetSettingsPath(0) returns B_OK");
 
 	BString expectedPath(sMockSettingsPath);
 	expectedPath << "/" << kApplicationName;

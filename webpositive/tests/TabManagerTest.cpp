@@ -4,6 +4,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 
 #include <Application.h>
@@ -16,7 +17,7 @@
 #include "TabManager.h"
 
 
-int gTestFailures = 0;
+int gTestFailures =  0;
 
 
 static void

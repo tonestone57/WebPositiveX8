@@ -6,7 +6,7 @@
 #include <vector>
 #include "SettingsKeys.h"
 
-int gTestFailures = 0;
+int gTestFailures =  0;
 
 void assert_true(bool condition, const char* message) {
     if (condition) {
@@ -31,7 +31,7 @@ int main() {
     std::set<std::string> shortcuts;
 
     printf("Validating kSearchEngines...\n");
-    for (int i = 0; kSearchEngines[i].name != MY_NULLPTR; i++) {
+    for (int i =  0; kSearchEngines[i].name != 0; i++) {
         const char* name = kSearchEngines[i].name;
         const char* url = kSearchEngines[i].url;
         const char* shortcut = kSearchEngines[i].shortcut;
@@ -40,7 +40,7 @@ int main() {
 
         // 1. Name must be non-empty
         snprintf(msg, sizeof(msg), "Search engine %d has a name", i);
-        assert_true(name != MY_NULLPTR && name[0] != '\0', msg);
+        assert_true(name != 0 && name[0] != '\0', msg);
 
         // 2. URL must be valid and contain %s
         snprintf(msg, sizeof(msg), "Search engine %s has valid URL", name);

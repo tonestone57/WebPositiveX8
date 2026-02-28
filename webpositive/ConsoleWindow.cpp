@@ -153,14 +153,14 @@ ConsoleWindow::_CopyToClipboard()
 	BString text;
 	int32 index;
 	if (fMessagesListView->CurrentSelection() == -1) {
-		for (int32 i = 0; i < fMessagesListView->CountItems(); i++) {
+		for (int32 i =  0; i < fMessagesListView->CountItems(); i++) {
 			BStringItem* item = static_cast<BStringItem*>(
 				fMessagesListView->ItemAt(i));
 			if (item != MY_NULLPTR)
 				text << item->Text();
 		}
 	} else {
-		for (int32 i = 0; (index = fMessagesListView->CurrentSelection(i)) >= 0; i++) {
+		for (int32 i =  0; (index = fMessagesListView->CurrentSelection(i)) >= 0; i++) {
 			BStringItem* item = static_cast<BStringItem*>(
 				fMessagesListView->ItemAt(index));
 			if (item != MY_NULLPTR)

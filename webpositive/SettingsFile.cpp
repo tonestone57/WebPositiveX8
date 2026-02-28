@@ -26,7 +26,7 @@ GetSettingsPath(BPath& path, const char* fileName)
 	if (status != B_OK)
 		return status;
 
-	if (fileName != MY_NULLPTR && fileName[0] != '\0')
+	if (fileName != 0 && fileName[0] != '\0')
 		status = path.Append(fileName);
 
 	return status;

@@ -3,6 +3,7 @@
  * Distributed under the terms of the MIT License.
  */
 
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -29,7 +30,7 @@ public:
 // We include the cpp to access private members and methods for testing.
 #include "ConsoleWindow.cpp"
 
-int gTestFailures = 0;
+int gTestFailures =  0;
 
 static void
 assert_true(bool condition, const char* message)

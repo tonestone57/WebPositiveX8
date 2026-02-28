@@ -38,20 +38,20 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 			| B_NOT_ZOOMABLE | B_CLOSE_ON_ESCAPE | B_AUTO_UPDATE_SIZE_LIMITS),
 	m_parentWindowFrame(parentFrame),
 	m_usernameTextControl(new BTextControl("user", B_TRANSLATE("Username:"),
-		"", MY_NULLPTR)),
+		"", 0)),
 	m_passwordTextControl(new BTextControl("pass", B_TRANSLATE("Password:"),
-		"", MY_NULLPTR)),
+		"", 0)),
 	m_hidePasswordCheckBox(new BCheckBox("hide", B_TRANSLATE("Hide password "
 		"text"), new BMessage(kHidePassword))),
 	m_rememberCredentialsCheckBox(new BCheckBox("remember",
-		B_TRANSLATE("Remember username and password for this site"), MY_NULLPTR)),
+		B_TRANSLATE("Remember username and password for this site"), 0)),
 	m_okButton(new BButton("ok", B_TRANSLATE("OK"),
 		new BMessage(kMsgPanelOK))),
 	m_cancelButton(new BButton("cancel", B_TRANSLATE("Cancel"),
 		new BMessage(B_QUIT_REQUESTED))),
 	m_cancelled(false),
 	m_exitSemaphore(create_sem(0, "Authentication Panel")),
-	m_jitterRunner(MY_NULLPTR),
+	m_jitterRunner(0),
 	m_jitterCount(0)
 {
 }
@@ -103,7 +103,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		} else {
 			MoveTo(m_originalPos);
 			delete m_jitterRunner;
-			m_jitterRunner = MY_NULLPTR;
+			m_jitterRunner = 0;
 			m_jitterCount = 0;
 		}
 		break;
@@ -129,8 +129,8 @@ AuthenticationPanel::_UpdatePasswordVisibility()
 	// current text and selection range, then restore them after toggling
 	// the hiding mode.
 	BString text = m_passwordTextControl->Text();
-	int32 selectionStart = 0;
-	int32 selectionEnd = 0;
+	int32 selectionStart =  0;
+	int32 selectionEnd =  0;
 	textView->GetSelection(&selectionStart, &selectionEnd);
 
 	textView->HideTyping(hide);
@@ -147,7 +147,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 {
 	// Configure panel and layout controls.
 	rgb_color infoColor = ui_color(B_PANEL_TEXT_COLOR);
-	BRect textBounds(0, 0, 250, 200);
+	BRect textBounds(MY_NULLPTR, 0, 250, 200);
 	BTextView* textView = new BTextView(textBounds, "text", textBounds,
 		be_plain_font, &infoColor, B_FOLLOW_NONE, B_WILL_DRAW
 			| B_SUPPORTS_LAYOUT);
@@ -171,7 +171,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	SetLayout(new BGroupLayout(B_VERTICAL, 0.0));
 	float spacing = be_control_look->DefaultItemSpacing();
 	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
-		.Add(BGridLayoutBuilder(0, spacing)
+		.Add(BGridLayoutBuilder(MY_NULLPTR, spacing)
 			.Add(textView, 0, 0, 2)
 			.Add(m_usernameTextControl->CreateLabelLayoutItem(), 0, 1)
 			.Add(m_usernameTextControl->CreateTextViewLayoutItem(), 1, 1)
@@ -215,7 +215,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	// Block calling thread
 	// Get the originating window, if it exists, to let it redraw itself.
 	BWindow* window = dynamic_cast<BWindow*>
-		(BLooper::LooperForThread(find_thread(MY_NULLPTR)));
+		(BLooper::LooperForThread(find_thread(0)));
 	if (window) {
 		status_t err;
 		for (;;) {

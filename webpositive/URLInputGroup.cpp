@@ -287,7 +287,7 @@ URLInputGroup::URLTextView::InsertText(const char* inText, int32 inLength,
 	const rgb_color urlColor = tint_color(hostColor,
 		(hostColor.IsDark() ? B_LIGHTEN_1_TINT : B_DARKEN_1_TINT));
 	if (baseUrlStart > 0)
-		SetFontAndColor(0, baseUrlStart, &font, B_FONT_ALL, &urlColor);
+		SetFontAndColor(MY_NULLPTR, baseUrlStart, &font, B_FONT_ALL, &urlColor);
 	if (baseUrlEnd > baseUrlStart) {
 		font.SetFace(B_BOLD_FACE);
 		SetFontAndColor(baseUrlStart, baseUrlEnd, &font, B_FONT_ALL,
@@ -411,8 +411,8 @@ public:
 	PageIconView()
 		:
 		BView("page icon view", B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE),
-		fIcon(MY_NULLPTR),
-		fLargeIcon(MY_NULLPTR),
+		fIcon(0),
+		fLargeIcon(0),
 		fClickPoint(-1, 0),
 		fPageIconSet(false)
 	{
@@ -433,7 +433,7 @@ public:
 			return;
 
 		BRect bounds(Bounds());
-		BRect iconBounds(0, 0, 15, 15);
+		BRect iconBounds(MY_NULLPTR, 0, 15, 15);
 		iconBounds.OffsetTo(
 			floorf((bounds.left + bounds.right
 				- (iconBounds.left + iconBounds.right)) / 2 + 0.5f),
@@ -540,7 +540,7 @@ public:
 	{
 		delete fIcon;
 		delete fLargeIcon;
-		fLargeIcon = MY_NULLPTR;
+		fLargeIcon = 0;
 
 		if (icon) {
 			fIcon = new BBitmap(icon);
@@ -585,7 +585,7 @@ URLInputGroup::URLInputGroup(BMessage* goMessage)
 
 // TODO: Fix in Haiku, no in-built support for archived BBitmaps from
 // resources?
-//	fGoButton = new BitmapButton("kActionGo", MY_NULLPTR);
+//	fGoButton = new BitmapButton("kActionGo", 0);
 	fGoButton = new BBitmapButton(kGoBitmapBits, kGoBitmapWidth,
 		kGoBitmapHeight, kGoBitmapFormat, goMessage);
 	GroupLayout()->AddView(fGoButton, 0.0f);
@@ -629,7 +629,7 @@ URLInputGroup::Draw(BRect updateRect)
 {
 	BRect bounds(Bounds());
 	rgb_color base(LowColor());
-	uint32 flags = 0;
+	uint32 flags =  0;
 	if (fWindowActive && fTextView->IsFocus())
 		flags |= BControlLook::B_FOCUSED;
 	be_control_look->DrawTextControlBorder(this, bounds, updateRect, base,

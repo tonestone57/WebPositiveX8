@@ -111,7 +111,7 @@ protected:
 		scrollBar->ResizeBy(2, 0);
 		scrollBar = ScrollBar(B_VERTICAL);
 		scrollBar->MoveBy(1, -1);
-		scrollBar->ResizeBy(0, 2);
+		scrollBar->ResizeBy(MY_NULLPTR, 2);
 		Target()->ResizeBy(1, 1);
 		// Set the scroll steps
 		if (BView* item = Target()->ChildAt(0)) {
@@ -262,7 +262,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 			_LoadSettings();
 			// Small trick to get the correct enabled status of the Remove
 			// finished button
-			_DownloadFinished(MY_NULLPTR);
+			_DownloadFinished(0);
 			break;
 		}
 		case B_DOWNLOAD_ADDED:
@@ -312,7 +312,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 				BAlert* alert = new BAlert(B_TRANSLATE("Error opening downloads "
 					"folder"), errorString.String(), B_TRANSLATE("OK"));
 				alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-				alert->Go(MY_NULLPTR);
+				alert->Go(0);
 			}
 			break;
 		}
@@ -470,8 +470,8 @@ DownloadWindow::_RemoveDownloads(bool finished, bool missing)
 void
 DownloadWindow::_ValidateButtonStatus()
 {
-	int32 finishedCount = 0;
-	int32 missingCount = 0;
+	int32 finishedCount =  0;
+	int32 missingCount =  0;
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
 		if (view == MY_NULLPTR)
@@ -556,7 +556,7 @@ DownloadWindow::_LoadSettings()
 	if (message.Unflatten(&file) != B_OK)
 		return;
 	BMessage downloadArchive;
-	for (int32 i = 0;
+	for (int32 i =  0;
 			message.FindMessage("download", i, &downloadArchive) == B_OK;
 			i++) {
 		DownloadProgressView* view = new DownloadProgressView(
@@ -573,10 +573,10 @@ DownloadWindow::_LoadSettings()
 int32
 DownloadWindow::_RemoveExistingDownload(const BString& url)
 {
-	int32 index = 0;
+	int32 index =  0;
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
-		if (view == MY_NULLPTR || view->URL() != url)
+		if (view == 0 || view->URL() != url)
 			continue;
 
 		index = i;
@@ -633,7 +633,7 @@ DownloadWindow::_FindView(BWebDownload* download)
 	if (download == MY_NULLPTR)
 		return MY_NULLPTR;
 
-	for (int32 i = 0; DownloadProgressView* view = _ViewAt(i); i++) {
+	for (int32 i =  0; DownloadProgressView* view = _ViewAt(i); i++) {
 		if (view->Download() == download)
 			return view;
 	}
