@@ -1,0 +1,432 @@
+./CompletionStyleTest
+BClipboard constructor
+BControlLook constructor
+Testing BDefaultCompletionStyle::Select...
+PASS: Select(0) should return true
+PASS: Selected index should be 0
+PASS: ChoiceView should be at 0
+PASS: Select(0) again should return false
+PASS: Select(1) should return true
+PASS: Selected index should be 1
+PASS: Select(-1) should return true
+PASS: Selected index should be -1
+PASS: Select(-2) should return false
+PASS: Select(2) should return false (count is 2)
+PASS: Select(0) should return false if ChoiceModel is MY_NULLPTR
+PASS: Select(0) should return false if ChoiceView is MY_NULLPTR
+Testing BDefaultCompletionStyle::SelectPrevious...
+PASS: SelectPrevious should return false when no choices
+PASS: SelectPrevious(false) from -1 should return true
+PASS: SelectPrevious(false) from -1 should select 0
+PASS: ChoiceView should select 0
+PASS: ChoiceView::SelectChoiceAt should be called once
+PASS: SelectPrevious(true) from -1 should return true
+PASS: SelectPrevious(true) from -1 should select 2 (last item)
+PASS: ChoiceView should select 2
+PASS: ChoiceView::SelectChoiceAt should be called once
+PASS: SelectPrevious from 1 should return true
+PASS: SelectPrevious from 1 should select 0
+PASS: ChoiceView should select 0
+PASS: SelectPrevious(false) from 0 should return false (already at 0)
+PASS: SelectPrevious(false) from 0 should stay at 0
+PASS: ChoiceView::SelectChoiceAt should NOT be called
+PASS: SelectPrevious(true) from 0 should return true (wraps)
+PASS: SelectPrevious(true) from 0 should wrap to 2
+PASS: ChoiceView should wrap to 2
+Testing BDefaultCompletionStyle::SelectNext...
+PASS: SelectNext should return false when no choices
+PASS: SelectNext(false) from -1 should return true
+PASS: SelectNext(false) from -1 should select 0
+PASS: ChoiceView should select 0
+PASS: ChoiceView::SelectChoiceAt should be called once
+PASS: SelectNext(true) from -1 should return true
+PASS: SelectNext(true) from -1 should select 0
+PASS: ChoiceView should select 0
+PASS: ChoiceView::SelectChoiceAt should be called once
+PASS: SelectNext from 1 should return true
+PASS: SelectNext from 1 should select 2
+PASS: ChoiceView should select 2
+PASS: SelectNext(false) from 2 should return false (already at last)
+PASS: SelectNext(false) from 2 should stay at 2
+PASS: ChoiceView::SelectChoiceAt should NOT be called
+PASS: SelectNext(true) from 2 should return true (wraps)
+PASS: SelectNext(true) from 2 should wrap to 0
+PASS: ChoiceView should wrap to 0
+Testing BDefaultCompletionStyle::SelectNext exhaustive...
+PASS: Initially nothing selected
+PASS: IsChoiceSelected should be false
+PASS: SelectNext(false) from -1 should return true
+PASS: Should select index 0
+PASS: IsChoiceSelected should be true
+PASS: ChoiceView should be at 0
+PASS: ChoiceView::SelectChoiceAt called once
+PASS: SelectNext(false) from 0 should return true
+PASS: Should select index 1
+PASS: ChoiceView should be at 1
+PASS: ChoiceView::SelectChoiceAt called once
+PASS: SelectNext(false) from 1 should return false
+PASS: Should stay at index 1
+PASS: ChoiceView::SelectChoiceAt should NOT be called
+PASS: SelectNext(true) from 1 should return true (wrap)
+PASS: Should wrap to 0
+PASS: ChoiceView should be at 0
+PASS: ChoiceView::SelectChoiceAt called once
+PASS: Select(-2) should return false
+PASS: Index should still be -1
+PASS: SelectNext(true) from 2 should wrap to 0
+PASS: Index should be 0
+Testing BDefaultCompletionStyle with single choice...
+PASS: SelectNext(false) from -1 with single choice should return true
+PASS: SelectNext(false) from -1 with single choice should select 0
+PASS: ChoiceView should select 0
+PASS: SelectNext(false) from 0 with single choice should return false
+PASS: SelectNext(true) from 0 with single choice should return false
+PASS: SelectPrevious(false) from -1 with single choice should return true
+PASS: SelectPrevious(false) from -1 with single choice should select 0
+PASS: ChoiceView should select 0
+PASS: SelectPrevious(false) from 0 with single choice should return false
+PASS: SelectPrevious(true) from 0 with single choice should return false
+Testing BDefaultCompletionStyle edge cases...
+PASS: SelectNext should return false when ChoiceModel is MY_NULLPTR
+PASS: SelectPrevious should return false when ChoiceModel is MY_NULLPTR
+PASS: SelectNext should return false when ChoiceView is MY_NULLPTR
+PASS: SelectPrevious should return false when ChoiceView is MY_NULLPTR
+PASS: Initially at index 1
+PASS: SelectNext should return true now that model grew
+PASS: Should select index 2
+PASS: SelectNext should return false when current index is out of bounds
+PASS: Index should remain 2 (though invalid)
+PASS: Index remains 0 after SetChoiceModel
+PASS: SelectNext works with new model
+PASS: Should select index 1 of new model
+Testing BDefaultCompletionStyle::ApplyChoice...
+PASS: SetEditViewState should be called
+PASS: Text should be completed to 'application'
+PASS: Caret should be at the end of completed text
+PASS: HideChoices should be called when hideChoices is true
+PASS: Selection should be reset when choices are hidden
+PASS: Partial completion should work
+PASS: Caret position should be correct after partial completion
+PASS: HideChoices should NOT be called again
+PASS: Selection should remain when choices are NOT hidden
+Testing BDefaultCompletionStyle::CancelChoice...
+PASS: SetEditViewState should be called to restore text
+PASS: Original text should be restored
+PASS: HideChoices should be called
+PASS: Selection should be reset
+PASS: Choices should not be shown anymore
+Testing BDefaultCompletionStyle::ApplyChoice edge cases...
+PASS: ApplyChoice should do nothing if no choice is selected
+PASS: HideChoices should not be called if EditView is MY_NULLPTR
+Testing BDefaultCompletionStyle::CancelChoice edge cases...
+PASS: CancelChoice should do nothing if choices are not shown
+Testing BDefaultCompletionStyle::EditViewStateChanged...
+PASS: Should return early if text has not changed
+PASS: Should not fetch choices if updateChoices is false
+PASS: Should return early even if updateChoices=true if text was updated in previous call
+PASS: Should fetch choices
+PASS: Should fetch choices for correct pattern
+PASS: Selection should be reset to -1
+PASS: ShowChoices should be called when > 1 choices
+PASS: ChoiceView should select -1
+PASS: HideChoices should be called when single choice matches pattern exactly
+PASS: ShowChoices should NOT be called when single choice matches pattern exactly
+PASS: ShowChoices should be called when single choice DOES NOT match pattern exactly
+PASS: HideChoices should be called when no choices are found
+
+All tests passed!
+./BrowsingHistoryTest
+BClipboard constructor
+BControlLook constructor
+Testing _InsertionIndex with empty history...
+PASS: Index in empty history should be 0 (0 == 0)
+Testing _InsertionIndex chronological order...
+PASS: Middle time item should go to index 1 (1 == 1)
+PASS: Very old item should go to index 0 (0 == 0)
+PASS: Very new item should go to index 2 (2 == 2)
+Testing _InsertionIndex with same time, different URLs...
+PASS: URL 'b' should go between 'a' and 'c' if times are equal (1 == 1)
+Testing _InsertionIndex with duplicates...
+PASS: Duplicate item should go at index 0 (0 == 0)
+Testing AddItem with new URL...
+PASS: History should be empty initially (0 == 0)
+PASS: AddItem should return true
+PASS: History should have 1 item (1 == 1)
+PASS: Item URL should match
+Testing AddItem with existing URL...
+PASS: History should have 1 item (1 == 1)
+PASS: AddItem should return true for existing item
+PASS: Count should NOT increase for existing URL (1 == 1)
+PASS: Invocation count should increase (2 == 2)
+
+All tests passed!
+./DownloadSpeedCalculatorTest
+Testing initial state...
+PASS: Initial speed should be 0.0 (expected: 0.000000, actual: 0.000000)
+Testing constant speed...
+PASS: Speed after first update (0.5s, 500 bytes) (expected: 1000.000000, actual: 1000.000000)
+PASS: Speed after second update (1.0s total, 1000 bytes total) (expected: 1000.000000, actual: 1000.000000)
+PASS: Average speed should be 1000.0 (expected: 1000.000000, actual: 1000.000000)
+Testing sliding window...
+PASS: Speed after 10 updates of 1000 bytes/s (expected: 1000.000000, actual: 1000.000000)
+PASS: Speed after another 10 updates of 2000 bytes/s (expected: 2000.000000, actual: 2000.000000)
+Testing average speed...
+PASS: Average speed after 2s and 1000 bytes (expected: 500.000000, actual: 500.000000)
+PASS: Average speed after 4s and 1000 bytes (expected: 250.000000, actual: 250.000000)
+Testing update throttling...
+PASS: Speed after valid update interval (expected: 1000.000000, actual: 1000.000000)
+PASS: Speed should NOT update if interval < kSpeedReferenceInterval (expected: 1000.000000, actual: 1000.000000)
+PASS: Speed should update after total 0.5s from last reference (expected: 1500.000000, actual: 1500.000000)
+
+All tests passed!
+./BrowsingHistoryItemTest
+BClipboard constructor
+BControlLook constructor
+Testing BrowsingHistoryItem::Invoked()...
+PASS: Initial invocation count is 0
+PASS: Initial DateTime is valid
+PASS: Invocation count is 1 after one call
+PASS: DateTime is updated (>= before)
+PASS: DateTime after invocation is valid
+PASS: Invocation count is 2 after two calls
+Testing overflow protection...
+PASS: Item initialized with max uint32
+PASS: Invocation count stays at max uint32 on overflow (clamping)
+Testing backward compatibility with 'invokations' key...
+PASS: Old 'invokations' key should be supported
+
+Testing BrowsingHistoryItem assignment operator...
+PASS: item1 URL is correct
+PASS: item1 invocation count is 2
+PASS: item2 URL is correct
+PASS: item2 invocation count is 0
+Assigning item1 to item2...
+PASS: item2 URL matches item1 URL after assignment
+PASS: item2 DateTime matches item1 DateTime after assignment
+PASS: item2 invocation count matches item1 after assignment
+PASS: item2 == item1 after assignment
+Testing self-assignment...
+PASS: item1 invocation count still correct after self-assignment
+Testing multiple assignment...
+PASS: item3 == item1 after multiple assignment
+PASS: item2 == item1 after multiple assignment
+
+Testing BrowsingHistoryItem comparison operators...
+PASS: a.com < b.com
+PASS: b.com > a.com
+PASS: a.com != b.com
+PASS: a.com == a.com
+Testing with different times...
+PASS: older a.com < newer a.com
+PASS: newer a.com > older a.com
+PASS: older b.com < newer 0.com (time takes precedence)
+
+All tests passed!
+./SettingsFileTest
+BClipboard constructor
+BControlLook constructor
+Testing GetSettingsPath basic functionality...
+PASS: GetSettingsPath returns B_OK for normal path
+PASS: Path matches expected value (/settings/AppName/filename)
+Testing GetSettingsPath with MY_NULLPTR filename...
+PASS: GetSettingsPath(0) returns B_OK
+PASS: Path is just the application settings directory
+Testing GetSettingsPath with empty filename...
+PASS: GetSettingsPath("") returns B_OK
+PASS: Path is just the application settings directory
+Testing GetSettingsPath error handling...
+PASS: GetSettingsPath returns error when find_directory fails
+
+All tests passed!
+./URLChoiceTest
+Testing URLChoice comparison logic...
+PASS: Higher priority (20) < lower priority (10) should be true
+PASS: Lower priority (10) < higher priority (20) should be false
+PASS: Higher priority with larger text < lower priority with smaller text should be true
+PASS: Lower priority with smaller text < higher priority with larger text should be false
+PASS: Same priority, smaller text < larger text should be true
+PASS: Same priority, larger text < smaller text should be false
+PASS: a == a should be true
+PASS: a == a2 should be false (different priority)
+PASS: e == f should be false (different text)
+All tests passed!
+./PatternSelectorTest
+BClipboard constructor
+BControlLook constructor
+Testing BDefaultPatternSelector::SelectPatternBounds...
+PASS: Start should be 0 for normal text
+PASS: Length should be full text length for normal text
+PASS: Start should be 0 for empty text
+PASS: Length should be 0 for empty text
+PASS: Start should be 0 regardless of caret position
+PASS: Length should be full text length regardless of caret position
+Testing MY_NULLPTR pointers (should not crash)...
+PASS: MY_NULLPTR pointers handled without crash
+
+All tests passed!
+./BrowsingHistoryChoiceModelTest
+BClipboard constructor
+BControlLook constructor
+Testing FetchChoicesFor with empty history...
+PASS: No choices for empty history (0 == 0)
+Testing FetchChoicesFor with no matches...
+PASS: No choices when no match (0 == 0)
+Testing FetchChoicesFor with single match...
+PASS: One choice for single match (1 == 1)
+PASS: Correct choice text
+Testing FetchChoicesFor with multiple matches...
+PASS: Two choices for multiple matches (2 == 2)
+Testing FetchChoicesFor priority logic...
+PASS: Three choices (3 == 3)
+PASS: First choice is google 1
+PASS: Second choice is haiku-os
+PASS: Third choice is google 2
+
+All tests passed!
+./CredentialsTest
+BClipboard constructor
+BControlLook constructor
+Testing Credentials class...
+PASS: Default username is empty
+PASS: Default password is empty
+PASS: Parameterized username is 'user'
+PASS: Parameterized password is 'pass'
+PASS: Copy username matches
+PASS: Copy password matches
+PASS: Copy is secure
+PASS: Copy is equal to original
+PASS: Unarchived username matches
+PASS: Unarchived password is empty
+PASS: Username from MY_NULLPTR archive is empty
+PASS: Password from MY_NULLPTR archive is empty
+PASS: Archive (insecure) returns B_OK
+PASS: Archive contains username
+PASS: Archive (insecure) contains password
+PASS: Archived username matches
+PASS: Archived password matches
+PASS: Archive (secure) returns B_OK
+PASS: Archive contains username
+PASS: Archive (secure) does NOT contain password
+PASS: Archived username matches
+PASS: Archive with MY_NULLPTR returns B_BAD_VALUE
+PASS: Assigned username matches
+PASS: Assigned password matches
+PASS: Assigned is equal to original
+PASS: Self-assignment username remains 'user'
+PASS: Self-assignment password remains 'pass'
+PASS: c1 == c2
+PASS: !(c1 != c2)
+PASS: c1 != c3 (different username)
+PASS: c1 != c4 (different password)
+PASS: c1 != c5 (different security state)
+PASS: !(c1 == c3)
+
+All tests passed!
+./ConsoleWindowTest
+BClipboard constructor
+BControlLook constructor
+BApplication constructor
+Testing ADD_CONSOLE_MESSAGE...
+PASS: One message added (1 == 1)
+PASS: Message text matches ("script.js:10:5: Hello, world!
+" == "script.js:10:5: Hello, world!
+")
+Testing message repetition...
+PASS: 1st message added (1 == 1)
+PASS: 2nd message added (repetition info) (2 == 2)
+PASS: 1st repetition text matches ("Last line repeated 1 time." == "Last line repeated 1 time.")
+PASS: Still 2 items after 3rd message (2 == 2)
+PASS: 2nd repetition text matches ("Last line repeated 2 times." == "Last line repeated 2 times.")
+Testing different messages...
+PASS: Two different messages added (2 == 2)
+PASS: 1st message text matches ("script.js:10:5: Message 1
+" == "script.js:10:5: Message 1
+")
+PASS: 2nd message text matches ("script.js:11:5: Message 2
+" == "script.js:11:5: Message 2
+")
+PASS: 3rd message (same as 1st) added because not consecutive (3 == 3)
+PASS: 3rd message text matches ("script.js:10:5: Message 1
+" == "script.js:10:5: Message 1
+")
+Testing CLEAR_CONSOLE_MESSAGES...
+PASS: Message added (1 == 1)
+PASS: Messages cleared (0 == 0)
+PASS: fPreviousText cleared
+
+All tests passed!
+./CookieWindowTest
+BClipboard constructor
+BControlLook constructor
+BApplication constructor
+Testing CookieWindow::_AddDomain() hierarchy...
+PASS: Full domain list should have 3 items
+PASS: Root domain should be 'com'
+PASS: 'com' should be at level 0
+PASS: Middle domain should be 'example.com'
+PASS: 'example.com' should be at level 1
+PASS: Leaf domain should be 'sub.example.com'
+PASS: 'sub.example.com' should be at level 2
+Testing CookieWindow::_BuildDomainList()...
+PASS: Domain list should have 4 items after build
+PASS: Second item should be example.com
+PASS: example.com should have 1 cookie in map
+PASS: sub.example.com should have 1 cookie in map
+PASS: google.com should have 1 cookie in map
+
+All tests passed!
+./BookmarkBarTest
+BClipboard constructor
+BControlLook constructor
+BApplication constructor
+Testing BookmarkBar initialization...
+PASS: Bar name matches
+PASS: Initial bar is empty (0 == 0)
+Testing BookmarkBar::MinSize()...
+PASS: Min width should be 32 (for 'more' button) (32 == 32)
+PASS: Min height should be at least 20 (for icons)
+Testing overflow menu creation...
+PASS: Overflow menu is created
+PASS: Overflow menu initially not added to bar
+Testing BookmarkBar::_AddItem logic...
+PASS: One item added to the bar (the overflow menu) (1 == 1)
+PASS: Overflow menu should be added because width is 0
+PASS: One item in the overflow menu (1 == 1)
+PASS: Item added to the map
+Testing kAddBookmarkMsg...
+PASS: Item added via message
+PASS: Item present in overflow menu (1 == 1)
+Testing Node Monitor events (Moved/Removed)...
+PASS: Item added
+PASS: Item was renamed
+PASS: Item removed from map
+PASS: Item removed from menu (0 == 0)
+
+All tests passed!
+./TabManagerTest
+BClipboard constructor
+BControlLook constructor
+BApplication constructor
+Testing AddTab and RemoveTab...
+PASS: Initially 0 tabs
+PASS: 1 tab after AddTab
+PASS: Manager has view1
+PASS: view1 is at index 0
+PASS: View at index 0 is view1
+PASS: 2 tabs after second AddTab
+PASS: view2 is at index 1
+PASS: Removed view is view1
+PASS: 1 tab after RemoveTab
+PASS: view2 is now at index 0
+Testing SelectTab...
+PASS: Selected tab index is 1
+PASS: TAB_CHANGED message received
+PASS: Correct tab index in message
+Testing CloseTab...
+PASS: CLOSE_TAB message received
+PASS: Correct tab index in message
+Testing TabLabel...
+PASS: Initial label is correct
+PASS: Updated label is correct
+
+All tests passed!

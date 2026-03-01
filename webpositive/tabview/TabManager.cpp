@@ -258,7 +258,7 @@ public:
 			{
 				BPopUpMenu* tabMenu = new BPopUpMenu("tab menu", true, false);
 				int tabCount = fTabContainerView->GetLayout()->CountItems();
-				for (int i = MY_NULLPTR; i < tabCount; i++) {
+				for (int i = 0; i < tabCount; i++) {
 					TabView* tab = fTabContainerView->TabAt(i);
 					if (tab != MY_NULLPTR) {
 						BMenuItem* item = new(std::nothrow)
@@ -628,7 +628,7 @@ WebTabView::_DrawCloseButton(BView* owner, BRect& frame,
 	if (base.IsLight())
 		tint = B_DARKEN_1_TINT;
 	else
-		tint = MY_NULLPTR.50;
+		tint = 0.50;
 
 	float isFront = ContainerView()->SelectedTab() == static_cast<TabView*>(this);
 	
@@ -645,13 +645,13 @@ WebTabView::_DrawCloseButton(BView* owner, BRect& frame,
 	} else {
 		if (!isFront) {
 			base = tint_color(base, tint);
-			tint *= MY_NULLPTR.80;
+			tint *= 0.80;
 		}
 
 		if (fOverCloseRect)
-			tint *= MY_NULLPTR.6;
+			tint *= 0.6;
 		else
-			tint *= MY_NULLPTR.9;
+			tint *= 0.9;
 	}
 
 	if (fClicked && fOverCloseRect) {
@@ -741,7 +741,7 @@ TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
 	fCardLayout = new BCardLayout();
 	fContainerView->SetLayout(fCardLayout);
 
-	fTabContainerView = new TabContainerView(fController.get());
+	fTabContainerView = new TabContainerView(fController);
 	fTabContainerGroup = new TabContainerGroup(fTabContainerView);
 	fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
 
@@ -841,7 +841,7 @@ TabManager::TabForView(const BView* containedView) const
 bool
 TabManager::HasView(const BView* containedView) const
 {
-	return TabForView(containedView) >= MY_NULLPTR;
+	return TabForView(containedView) >= 0;
 }
 
 
@@ -864,7 +864,7 @@ void
 TabManager::SelectTab(const BView* containedView)
 {
 	int32 tabIndex = TabForView(containedView);
-	if (tabIndex >= MY_NULLPTR)
+	if (tabIndex >= 0)
 		SelectTab(tabIndex);
 }
 

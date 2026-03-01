@@ -109,7 +109,7 @@ BrowserApp::BrowserApp()
 
 	fCookieLoaderThread = spawn_thread(_CookieLoaderThread, "cookie loader",
 		B_LOW_PRIORITY, this);
-	if (fCookieLoaderThread >= MY_NULLPTR)
+	if (fCookieLoaderThread >= 0)
 		resume_thread(fCookieLoaderThread);
 
 	BPath curlCookies;
@@ -125,7 +125,7 @@ BrowserApp::BrowserApp()
 
 BrowserApp::~BrowserApp()
 {
-	if (fCookieLoaderThread >= MY_NULLPTR) {
+	if (fCookieLoaderThread >= 0) {
 		status_t exitValue;
 		wait_for_thread(fCookieLoaderThread, &exitValue);
 	}
@@ -174,8 +174,8 @@ BrowserApp::ArgvReceived(int32 argc, char** argv)
 {
 	BMessage message(B_REFS_RECEIVED);
 	for (int i = 1; i < argc; i++) {
-		if (strcmp("-f", argv[i]) == MY_NULLPTR
-			|| strcmp("--fullscreen", argv[i]) == MY_NULLPTR) {
+		if (strcmp("-f", argv[i]) == 0
+			|| strcmp("--fullscreen", argv[i]) == 0) {
 			message.AddBool("fullscreen", true);
 			continue;
 		}
@@ -232,7 +232,7 @@ BrowserApp::ReadyToRun()
 		BRect screenFrame = BScreen().Frame();
 		BMessage decoratorSettings;
 		fDownloadWindow->GetDecoratorSettings(&decoratorSettings);
-		float borderWidth = MY_NULLPTR;
+		float borderWidth = 0;
 		if (decoratorSettings.FindFloat("border width", &borderWidth) != B_OK)
 			borderWidth = 5;
 		fDownloadWindow->MoveTo(screenFrame.Width()
@@ -249,7 +249,7 @@ BrowserApp::ReadyToRun()
 
 	fInitialized = true;
 
-	int32 pagesCreated = MY_NULLPTR;
+	int32 pagesCreated = 0;
 	bool fullscreen = false;
 
 	// Handle startup session / page
@@ -267,7 +267,7 @@ BrowserApp::ReadyToRun()
 		} else {
 			// otherwise, restore previous session
 			BMessage archivedWindow;
-			for (int i = MY_NULLPTR; fSession->FindMessage("window", i, &archivedWindow)
+			for (int i = 0; fSession->FindMessage("window", i, &archivedWindow)
 				== B_OK; i++) {
 				BRect frame = archivedWindow.FindRect("window frame");
 				uint32 workspaces = B_CURRENT_WORKSPACE;
@@ -365,7 +365,7 @@ BrowserApp::MessageReceived(BMessage* message)
 	case WINDOW_CLOSED:
 		fWindowCount--;
 		message->FindRect("window frame", &fLastWindowFrame);
-		if (fWindowCount <= MY_NULLPTR) {
+		if (fWindowCount <= 0) {
 			BMessage* message = new BMessage(B_QUIT_REQUESTED);
 			message->AddMessage("window", DetachCurrentMessage());
 			PostMessage(message);
@@ -390,7 +390,7 @@ BrowserApp::MessageReceived(BMessage* message)
 
 	case B_DOWNLOAD_ADDED:
 	{
-		for (int i = MY_NULLPTR; BWindow* window = WindowAt(i); i++) {
+		for (int i = 0; BWindow* window = WindowAt(i); i++) {
 			if (dynamic_cast<BrowserWindow*>(window)) {
 				BMessage* copy = new(std::nothrow) BMessage(*message);
 				if (copy != MY_NULLPTR)
@@ -430,7 +430,7 @@ BrowserApp::QuitRequested()
 			B_TRANSLATE("Quit"), B_TRANSLATE("Continue downloads"));
 		int32 choice = alert->Go();
 		if (choice == 1) {
-			if (fWindowCount == MY_NULLPTR) {
+			if (fWindowCount == 0) {
 				if (fDownloadWindow->Lock()) {
 					fDownloadWindow->SetWorkspaces(1 << current_workspace());
 					if (fDownloadWindow->IsHidden())
@@ -457,7 +457,7 @@ BrowserApp::QuitRequested()
 	if (ret == B_OK) {
 		fSession->AddMessage("window", &windowMessage);
 	} else {
-		for (int i = MY_NULLPTR; BWindow* window = WindowAt(i); i++) {
+		for (int i = 0; BWindow* window = WindowAt(i); i++) {
 			BrowserWindow* webWindow = dynamic_cast<BrowserWindow*>(window);
 			if (!webWindow)
 				continue;
@@ -500,7 +500,7 @@ BrowserApp::QuitRequested()
 		fCookieWindow->Unlock();
 	}
 
-	if (fCookieLoaderThread >= MY_NULLPTR) {
+	if (fCookieLoaderThread >= 0) {
 		status_t exitValue;
 		wait_for_thread(fCookieLoaderThread, &exitValue);
 		fCookieLoaderThread = -1;
@@ -522,7 +522,7 @@ void
 BrowserApp::_RefsReceived(BMessage* message, int32* _pagesCreated,
 	bool* _fullscreen)
 {
-	int32 pagesCreated = MY_NULLPTR;
+	int32 pagesCreated = 0;
 	if (_pagesCreated != MY_NULLPTR)
 		pagesCreated = *_pagesCreated;
 
@@ -567,7 +567,7 @@ BrowserApp::_FindWindowOnCurrentWorkspace()
 	BrowserWindow* windowOnCurrentWorkspace = MY_NULLPTR;
 	uint32 workspace = 1 << current_workspace();
 
-	for (int i = MY_NULLPTR; BWindow* window = WindowAt(i); i++) {
+	for (int i = 0; BWindow* window = WindowAt(i); i++) {
 		BrowserWindow* webWindow = dynamic_cast<BrowserWindow*>(window);
 		if (webWindow == MY_NULLPTR)
 			continue;
@@ -591,7 +591,7 @@ BrowserApp::_CreateNewPage(const BString& url, BrowserWindow* webWindow,
 	// Let's first see if we must target a specific window...
 	if (webWindow && webWindow->Lock()) {
 		if (useBlankTab && webWindow->IsBlankTab()) {
-			if (url.Length() != MY_NULLPTR)
+			if (url.Length() != 0)
 				webWindow->CurrentWebView()->LoadURL(url);
 		} else
 			webWindow->CreateNewTab(url, true);
@@ -611,7 +611,7 @@ BrowserApp::_CreateNewPage(const BString& url, BrowserWindow* webWindow,
 
 	if (window->Lock()) {
 		if (useBlankTab && window->IsBlankTab()) {
-			if (url.Length() != MY_NULLPTR)
+			if (url.Length() != 0)
 				window->CurrentWebView()->LoadURL(url);
 		} else {
 			window->CreateNewTab(url, true);

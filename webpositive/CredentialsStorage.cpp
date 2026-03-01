@@ -405,10 +405,10 @@ CredentialsStorage::_SaveSettings()
 	BMessage credentialsArchive;
 	CredentialMap::Iterator iterator = fCredentialMap.GetIterator();
 	while (iterator.HasNext()) {
-		const CredentialMap::Entry& entry = iterator.Next();
-		if (entry.value.Archive(&credentialsArchive) != B_OK
+		const CredentialMap::Entry entry = iterator.Next();
+		if (entry.second.Archive(&credentialsArchive) != B_OK
 			|| credentialsArchive.AddString("key",
-				entry.key.String()) != B_OK) {
+				entry.first.String()) != B_OK) {
 			credentialsArchive.MakeEmpty();
 			continue;
 		}
@@ -449,7 +449,7 @@ CredentialsStorage::_SaveThread(void* data)
 			BFile settingsFile;
 			if (OpenSettingsFile(settingsFile, kSettingsFileNameCredentialsStorage,
 					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
-				messageToSave->Flatten(&settingsFile); delete messageToSave; delete messageToSave;
+				messageToSave->Flatten(&settingsFile); delete messageToSave;
 			}
 		}
 

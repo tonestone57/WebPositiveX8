@@ -214,7 +214,7 @@ CookieWindow::~CookieWindow()
 {
 	CookieMap::Iterator iterator = fCookieMap.GetIterator();
 	while (iterator.HasNext()) {
-		delete iterator.Next().value;
+		delete iterator.Next().second;
 	}
 }
 
@@ -235,7 +235,7 @@ void
 CookieWindow::_BuildDomainList()
 {
 	// Empty the domain list (TODO should we do this when hiding instead?)
-	for (int i = fDomains->FullListCountItems() - 1; i >= MY_NULLPTR; i--) {
+	for (int i = fDomains->FullListCountItems() - 1; i >= 0; i--) {
 		delete fDomains->FullListItemAt(i);
 	}
 	fDomains->MakeEmpty();
@@ -246,7 +246,7 @@ CookieWindow::_BuildDomainList()
 	// Empty the cookie cache
 	CookieMap::Iterator iterator = fCookieMap.GetIterator();
 	while (iterator.HasNext()) {
-		delete iterator.Next().value;
+		delete iterator.Next().second;
 	}
 	fCookieMap.RemoveAll();
 
@@ -273,7 +273,7 @@ CookieWindow::_BuildDomainList()
 			list->AddItem(new(std::nothrow) BPrivate::Network::BNetworkCookie(*cookie));
 	}
 
-	int i = MY_NULLPTR;
+	int i = 0;
 	int firstNotEmpty = i;
 	// Collapse empty items to keep the list short
 	while (i < fDomains->FullListCountItems())
@@ -287,7 +287,7 @@ CookieWindow::_BuildDomainList()
 
 				int count = fDomains->CountItemsUnder(item, false);
 				int index = fDomains->FullListIndexOf(item) + 1;
-				for (int j = MY_NULLPTR; j < count; j++) {
+				for (int j = 0; j < count; j++) {
 					BListItem* child = fDomains->FullListItemAt(index + j);
 					child->SetOutlineLevel(child->OutlineLevel() - 1);
 				}
@@ -319,14 +319,14 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 {
 	BStringItem* parent = MY_NULLPTR;
 	int firstDot = domain.FindFirst('.');
-	if (firstDot >= MY_NULLPTR) {
+	if (firstDot >= 0) {
 		BString parentDomain(domain);
 		parentDomain.Remove(0, firstDot + 1);
 		parent = _AddDomain(parentDomain, true);
 	}
 
 	int siblingCount = fDomains->CountItemsUnder(parent, true);
-	int low = MY_NULLPTR;
+	int low = 0;
 	int high = siblingCount - 1;
 	int insertIndex = siblingCount;
 
@@ -338,7 +338,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		if (midItem == MY_NULLPTR)
 			break;
 		int cmp = strcmp(midItem->Text(), domain.String());
-		if (cmp == MY_NULLPTR) {
+		if (cmp == 0) {
 			DomainItem* stringItem = static_cast<DomainItem*>(midItem);
 			if (fake == false)
 				stringItem->fEmpty = false;
@@ -353,7 +353,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 
 	// Insert the new item, keeping the list alphabetically sorted
 	BStringItem* domainItem = new DomainItem(domain, fake);
-	domainItem->SetOutlineLevel(parent != MY_NULLPTR ? parent->OutlineLevel() + 1 : MY_NULLPTR);
+	domainItem->SetOutlineLevel(parent != MY_NULLPTR ? parent->OutlineLevel() + 1 : 0);
 
 	if (insertIndex < siblingCount) {
 		BListItem* nextSibling = fDomains->ItemUnderAt(parent, true,
@@ -428,7 +428,7 @@ CookieWindow::_DeleteCookies()
 	CookieRow* row;
 	CookieRow* prevRow;
 
-	for (prevRow = MY_NULLPTR; ; prevRow = row) {
+	for (prevRow  = 0; ; prevRow = row) {
 		row = static_cast<CookieRow*>(fCookies->CurrentSelection(prevRow));
 
 		if (prevRow != MY_NULLPTR) {

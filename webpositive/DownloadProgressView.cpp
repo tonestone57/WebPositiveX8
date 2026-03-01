@@ -477,10 +477,10 @@ DownloadProgressView::MessageReceived(BMessage* message)
 				char mimeType[B_MIME_TYPE_LENGTH];
 				bool isExecutable = false;
 				if (info.GetType(mimeType) == B_OK) {
-					if (strcmp(mimeType, "application/x-vnd.be-executable") == MY_NULLPTR
-						|| strcmp(mimeType, "application/x-executable") == MY_NULLPTR
-						|| strcmp(mimeType, "text/x-shellscript") == MY_NULLPTR
-						|| strcmp(mimeType, "application/x-vnd.be-shellscript") == MY_NULLPTR) {
+					if (strcmp(mimeType, "application/x-vnd.be-executable") == 0
+						|| strcmp(mimeType, "application/x-executable") == 0
+						|| strcmp(mimeType, "text/x-shellscript") == 0
+						|| strcmp(mimeType, "application/x-vnd.be-shellscript") == 0) {
 						isExecutable = true;
 					}
 				}
@@ -876,7 +876,7 @@ DownloadProgressView::_UpdateStatusText()
 			sizeof(sizeBuffer));
 		int currentSizeUnitPos = currentSize.FindLast(' ');
 		int expectedSizeUnitPos = expectedSize.FindLast(' ');
-		if (currentSizeUnitPos >= MY_NULLPTR && expectedSizeUnitPos >= MY_NULLPTR
+		if (currentSizeUnitPos >= 0 && expectedSizeUnitPos >= 0
 			&& strcmp(currentSize.String() + currentSizeUnitPos,
 				expectedSize.String() + expectedSizeUnitPos) == MY_NULLPTR) {
 			currentSize.Truncate(currentSizeUnitPos);

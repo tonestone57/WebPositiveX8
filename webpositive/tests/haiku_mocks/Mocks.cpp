@@ -62,7 +62,7 @@ void BView::AddChild(BView* child) {
 }
 
 bool BView::RemoveChild(BView* child) {
-    for (auto it = fChildren.begin(); it != fChildren.end(); ++it) {
+    for (std::vector<BView*>::iterator it = fChildren.begin(); it != fChildren.end(); ++it) {
         if (*it == child) {
             fChildren.erase(it);
             child->fParent = MY_NULLPTR;

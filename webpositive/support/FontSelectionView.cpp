@@ -95,7 +95,7 @@ FontSelectionView::FontSelectionView(const char* name, const char* label,
 	fPreviewTextView->SetWordWrap(true);
 	fPreviewTextView->MakeEditable(false);
 	fPreviewTextView->MakeSelectable(false);
-	fPreviewTextView->SetInsets(0, 0, MY_NULLPTR, 0);
+	fPreviewTextView->SetInsets(0, 0, 0, 0);
 	fPreviewTextView->SetViewUIColor(B_PANEL_BACKGROUND_COLOR);
 	fPreviewTextView->SetHighUIColor(B_PANEL_TEXT_COLOR);
 
@@ -178,7 +178,7 @@ FontSelectionView::MessageReceived(BMessage* message)
 				break;
 
 			font_style style;
-			fCurrentFont.GetFamilyAndStyle(MY_NULLPTR, &style);
+			fCurrentFont.GetFamilyAndStyle(NULL, &style);
 
 			BMenuItem* familyItem = fFontsMenu->FindItem(family);
 			if (familyItem != MY_NULLPTR) {
@@ -357,8 +357,8 @@ FontSelectionView::UpdateFontsMenu()
 
 		// if we're setting the fixed font, we only want to show fixed and
 		// full-and-half-fixed fonts
-		if (strcmp(Name(), "fixed") == MY_NULLPTR
-			&& (flags & (B_IS_FIXED | B_PRIVATE_FONT_IS_FULL_AND_HALF_FIXED)) == MY_NULLPTR) {
+		if (strcmp(Name(), "fixed") == 0
+			&& (flags & (B_IS_FIXED | B_PRIVATE_FONT_IS_FULL_AND_HALF_FIXED)) == 0) {
 			continue;
 		}
 
@@ -378,7 +378,7 @@ FontSelectionView::UpdateFontsMenu()
 			familyItem = new BMenuItem(stylesMenu, message);
 		}
 
-		familyItem->SetMarked(strcmp(family, currentFamily) == MY_NULLPTR);
+		familyItem->SetMarked(strcmp(family, currentFamily) == 0);
 		fFontsMenu->AddItem(familyItem);
 		familyItem->SetTarget(this);
 	}
@@ -461,9 +461,9 @@ FontSelectionView::_Invoke()
 BFont
 FontSelectionView::_DefaultFont() const
 {
-	if (strcmp(Name(), "bold") == MY_NULLPTR)
+	if (strcmp(Name(), "bold") == 0)
 		return *be_bold_font;
-	if (strcmp(Name(), "fixed") == MY_NULLPTR)
+	if (strcmp(Name(), "fixed") == 0)
 		return *be_fixed_font;
 	else
 		return *be_plain_font;
@@ -514,7 +514,7 @@ FontSelectionView::_UpdateFontPreview()
 void
 FontSelectionView::_BuildSizesMenu()
 {
-	const int32 sizes[] = {7, 8, 9, 10, 11, 12, 13, 14, 18, 21, 24, MY_NULLPTR};
+	const int32 sizes[] = {7, 8, 9, 10, 11, 12, 13, 14, 18, 21, 24, 0};
 
 	// build size menu
 	for (int32 i = 0; sizes[i]; i++) {
@@ -552,7 +552,7 @@ FontSelectionView::_AddStylesToMenu(const BFont& font, BMenu* stylesMenu) const
 
 	int32 numStyles = count_font_styles(family);
 
-	for (int32 j = MY_NULLPTR; j < numStyles; j++) {
+	for (int32 j = 0; j < numStyles; j++) {
 		if (get_font_style(family, j, &style) != B_OK)
 			continue;
 

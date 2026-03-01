@@ -18,8 +18,8 @@ const char* kSettingsKeyDownloadPath = "download path";
 const char* kSettingsKeyShowTabsIfSinglePageOpen
 	= "show tabs if single page open";
 const char* kSettingsKeyAutoHideInterfaceInFullscreenMode
-	= "auto hide interface in full screen mode";
-const char* kSettingsKeyAutoHidePointer = "auto hide pointer";
+	= "int hide interface in full screen mode";
+const char* kSettingsKeyAutoHidePointer = "int hide pointer";
 const char* kSettingsKeyShowHomeButton = "show home button";
 
 const char* kSettingsKeyNewWindowPolicy = "new window policy";
@@ -61,5 +61,5 @@ const struct SearchEngine kSearchEngines[] = {
 	{ "Wikipedia",  "https://en.wikipedia.org/w/index.php?search=%s", "w " },
 	{ "Yandex",     "https://yandex.com/search/?text=%s",             "y " },
 	{ "Yahoo",      "https://search.yahoo.com/search?p=%s",           "z " },
-	{ MY_NULLPTR, 0, MY_NULLPTR }
+	{ NULL, 0, NULL }
 };

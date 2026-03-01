@@ -85,7 +85,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		_UpdatePasswordVisibility();
 		break;
 	case kMsgJitter: {
-		if (m_jitterCount == MY_NULLPTR) {
+		if (m_jitterCount == 0) {
 			UpdateIfNeeded();
 			m_originalPos = Frame().LeftTop();
 			BMessage message(kMsgJitter);
@@ -93,7 +93,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 				15000, 20);
 		}
 
-		const float jitterOffsets[] = { -10, 0, 10, MY_NULLPTR };
+		const float jitterOffsets[] = { -10, 0, 10, 0 };
 		const int32 jitterOffsetCount = sizeof(jitterOffsets) / sizeof(float);
 
 		if (m_jitterCount < 20) {
@@ -104,7 +104,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 			MoveTo(m_originalPos);
 			delete m_jitterRunner;
 			m_jitterRunner = MY_NULLPTR;
-			m_jitterCount = MY_NULLPTR;
+			m_jitterCount = 0;
 		}
 		break;
 	}
@@ -129,8 +129,8 @@ AuthenticationPanel::_UpdatePasswordVisibility()
 	// current text and selection range, then restore them after toggling
 	// the hiding mode.
 	BString text = m_passwordTextControl->Text();
-	int32 selectionStart = MY_NULLPTR;
-	int32 selectionEnd = MY_NULLPTR;
+	int32 selectionStart = 0;
+	int32 selectionEnd = 0;
 	textView->GetSelection(&selectionStart, &selectionEnd);
 
 	textView->HideTyping(hide);

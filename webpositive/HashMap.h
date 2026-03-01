@@ -8,8 +8,8 @@ template<typename Key, typename Value>
 class HashMap {
 public:
     struct Entry {
-        Key key;
-        Value value;
+        Key first;
+        Value second;
     };
 
     typedef typename std::map<Key, Value>::iterator MapIterator;
@@ -27,17 +27,21 @@ public:
         MapIterator operator->() const { return fIt; }
 
         bool HasNext() const { return fIt != fEnd; }
-        const Entry& Next() {
-            fCurrentEntry.key = fIt->first;
-            fCurrentEntry.value = fIt->second;
+
+        Entry Next() {
+            Entry entry;
+            entry.first = fIt->first;
+            entry.second = fIt->second;
             ++fIt;
-            return fCurrentEntry;
+            return entry;
         }
+
+        Key key() const { return fIt->first; }
+        Value& value() const { return fIt->second; }
 
     private:
         MapIterator fIt;
         MapIterator fEnd;
-        Entry fCurrentEntry;
     };
 
     bool ContainsKey(const Key& key) const {

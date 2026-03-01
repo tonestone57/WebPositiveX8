@@ -3,9 +3,9 @@
 
 #ifndef MY_NULLPTR
 #if defined(__cplusplus) && __cplusplus >= 201103L
-#define MY_NULLPTR MY_NULLPTR
+#define MY_NULLPTR nullptr
 #else
-#define MY_NULLPTR MY_NULLPTR
+#define MY_NULLPTR NULL
 #endif
 #endif
 

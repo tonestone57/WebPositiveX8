@@ -80,7 +80,7 @@ BookmarkBar::MouseDown(BPoint where)
 	fSelectedItemIndex = -1;
 	BMessage* message = Window()->CurrentMessage();
 	if (message != MY_NULLPTR) {
-		int32 buttons = MY_NULLPTR;
+		int32 buttons = 0;
 		if (message->FindInt32("buttons", &buttons) == B_OK) {
 			if (buttons & B_SECONDARY_MOUSE_BUTTON) {
 
@@ -240,7 +240,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 					IconMenuItem* item = it->second;
 					RemoveItem(item);
 					fOverflowMenu->RemoveItem(item);
-					fItemsMap.erase(it);
+					fItemsMap.Remove(inode);
 					delete item;
 
 					// Reevaluate whether the "more" menu is still needed
@@ -254,7 +254,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 
 		case kOpenNewTabMsg:
 		{
-			if (fSelectedItemIndex >= MY_NULLPTR && fSelectedItemIndex < CountItems()) {
+			if (fSelectedItemIndex >= 0 && fSelectedItemIndex < CountItems()) {
 				// Get the bookmark refs
 				entry_ref ref;
 				BMenuItem* selectedItem = ItemAt(fSelectedItemIndex);
@@ -276,7 +276,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 		}
 		case kDeleteMsg:
 		{
-			if (fSelectedItemIndex >= MY_NULLPTR && fSelectedItemIndex < CountItems()) {
+			if (fSelectedItemIndex >= 0 && fSelectedItemIndex < CountItems()) {
 				BMenuItem* selectedItem = ItemAt(fSelectedItemIndex);
 				// Get the bookmark refs
 				entry_ref ref;
@@ -313,7 +313,7 @@ BookmarkBar::MessageReceived(BMessage* message)
 		case kShowInTrackerMsg:
 		{
 			entry_ref ref;
-			if (fSelectedItemIndex >= MY_NULLPTR && fSelectedItemIndex < CountItems()) {
+			if (fSelectedItemIndex >= 0 && fSelectedItemIndex < CountItems()) {
 				BMenuItem* selectedItem = ItemAt(fSelectedItemIndex);
 				// Get the bookmark refs
 				if (selectedItem->Message()->FindRef("refs", &ref) != B_OK)
@@ -406,7 +406,7 @@ BookmarkBar::FrameResized(float width, float height)
 	int32 count = CountItems();
 
 	// Account for the "more" menu, in terms of item count and space occupied
-	int32 overflowMenuWidth = MY_NULLPTR;
+	int32 overflowMenuWidth = 0;
 	if (IndexOf(fOverflowMenu) != B_ERROR) {
 		count--;
 		// Ignore the width of the "more" menu if it would disappear after
@@ -415,8 +415,8 @@ BookmarkBar::FrameResized(float width, float height)
 			overflowMenuWidth = 32;
 	}
 
-	int32 i = MY_NULLPTR;
-	float rightmost = MY_NULLPTR.f;
+	int32 i = 0;
+	float rightmost = 0.f;
 	while (i < count) {
 		BMenuItem* item = ItemAt(i);
 		BRect frame = item->Frame();
@@ -439,10 +439,10 @@ BookmarkBar::FrameResized(float width, float height)
 
 			rightmost = ItemAt(i)->Frame().right;
 			if (fOverflowMenu->CountItems() <= 1)
-				overflowMenuWidth = MY_NULLPTR;
+				overflowMenuWidth = 0;
 			extraItem = fOverflowMenu->ItemAt(0);
 		}
-		if (fOverflowMenu->CountItems() == MY_NULLPTR) {
+		if (fOverflowMenu->CountItems() == 0) {
 			RemoveItem(fOverflowMenu);
 			fOverflowMenuAdded = false;
 		}
@@ -510,14 +510,12 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 {
 	// make sure the item doesn't already exist
 	if (fItemsMap.find(inode) != fItemsMap.end()) {
-		delete icon;
 		return;
 	}
 
 	IconMenuItem* item = MY_NULLPTR;
 
 	if (isDirectory) {
-		delete icon;
 		BNavMenu* menu = new BNavMenu(name, B_REFS_RECEIVED, Window());
 		menu->SetNavDir(ref);
 		BMessage* message = new BMessage(kFolderMsg);
