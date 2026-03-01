@@ -275,7 +275,7 @@ TabContainerView::TabAt(int32 index) const
 int32
 TabContainerView::IndexOf(TabView* tab) const
 {
-	if (tab == 0 || GroupLayout() == MY_NULLPTR)
+	if (tab == MY_NULLPTR || GroupLayout() == MY_NULLPTR)
 		return -1;
 
 	return GroupLayout()->IndexOfItem(tab->LayoutItem());

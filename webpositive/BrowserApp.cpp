@@ -94,7 +94,7 @@ BrowserApp::BrowserApp()
 	cpuid_info info;
 	get_cpuid(&info, 1, 0);
 
-	if ((info.eax_1.features & (1 << 26)) == MY_NULLPTR) {
+	if ((info.eax_1.features & (1 << 26)) == 0) {
 		BString text(B_TRANSLATE("Your CPU is "
 			"too old and does not support the SSE2 extensions, without which "
 			"%appname% cannot run. We recommend installing NetSurf instead."));
@@ -300,7 +300,7 @@ BrowserApp::ReadyToRun()
 
 	// If previous session did not contain any window on this workspace, create a new empty one.
 	BrowserWindow* window = _FindWindowOnCurrentWorkspace();
-	if (pagesCreated == MY_NULLPTR || window == MY_NULLPTR)
+	if (pagesCreated == 0 || window == MY_NULLPTR)
 		_CreateNewWindow("", fullscreen);
 
 	PostMessage(PRELOAD_BROWSING_HISTORY);
@@ -411,6 +411,7 @@ void
 BrowserApp::RefsReceived(BMessage* message)
 {
 	if (!fInitialized) {
+		delete fLaunchRefsMessage;
 		fLaunchRefsMessage = new BMessage(*message);
 		return;
 	}
@@ -544,13 +545,13 @@ BrowserApp::_RefsReceived(BMessage* message, int32* _pagesCreated,
 			continue;
 		BUrl url(path);
 		window = _CreateNewPage(url.UrlString(), window, fullscreen,
-			pagesCreated == MY_NULLPTR);
+			pagesCreated == 0);
 		pagesCreated++;
 	}
 
 	BString url;
 	for (int32 i = 0; message->FindString("url", i, &url) == B_OK; i++) {
-		window = _CreateNewPage(url, window, fullscreen, pagesCreated == MY_NULLPTR);
+		window = _CreateNewPage(url, window, fullscreen, pagesCreated == 0);
 		pagesCreated++;
 	}
 
@@ -589,7 +590,7 @@ BrowserApp::_CreateNewPage(const BString& url, BrowserWindow* webWindow,
 	bool fullscreen, bool useBlankTab)
 {
 	// Let's first see if we must target a specific window...
-	if (webWindow && webWindow->Lock()) {
+	if (webWindow != MY_NULLPTR && webWindow->Lock()) {
 		if (useBlankTab && webWindow->IsBlankTab()) {
 			if (url.Length() != 0)
 				webWindow->CurrentWebView()->LoadURL(url);

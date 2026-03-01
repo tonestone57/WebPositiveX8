@@ -8,8 +8,9 @@ template<typename Key, typename Value>
 class HashMap {
 public:
     struct Entry {
-        Key first;
-        Value second;
+        const Key& first;
+        Value& second;
+        Entry(const Key& k, Value& v) : first(k), second(v) {}
     };
 
     typedef typename std::map<Key, Value>::iterator MapIterator;
@@ -28,15 +29,13 @@ public:
 
         bool HasNext() const { return fIt != fEnd; }
 
-        Entry Next() {
-            Entry entry;
-            entry.first = fIt->first;
-            entry.second = fIt->second;
+        const Entry Next() {
+            Entry entry(fIt->first, fIt->second);
             ++fIt;
             return entry;
         }
 
-        Key key() const { return fIt->first; }
+        const Key& key() const { return fIt->first; }
         Value& value() const { return fIt->second; }
 
     private:

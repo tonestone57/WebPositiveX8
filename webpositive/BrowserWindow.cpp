@@ -2344,8 +2344,6 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 
 		if (validData == true) {
 			_CreateBookmark(BPath(&ref), BString(fileName), BString(title), BString(url), miniIcon, largeIcon);
-delete miniIcon;
-delete largeIcon;
 		} else {
 			BString message(B_TRANSLATE("There was an error setting up "
 				"the bookmark."));
@@ -2356,6 +2354,8 @@ delete largeIcon;
 			alert->Go();
 		}
 
+		delete miniIcon;
+		delete largeIcon;
 		return;
 }
 
@@ -2386,8 +2386,6 @@ BrowserWindow::_CreateBookmark()
 
 	if (status == B_OK)
 		_CreateBookmark(path, fileName, title, url, miniIcon, largeIcon);
-delete miniIcon;
-delete largeIcon;
 	else {
 		BString message(B_TRANSLATE_COMMENT("There was an error retrieving "
 			"the bookmark folder.\n\nError: %error", "Don't translate the "
@@ -2400,6 +2398,8 @@ delete largeIcon;
 		alert->Go();
 	}
 
+	delete miniIcon;
+	delete largeIcon;
 	return;
 }
 
@@ -2563,7 +2563,7 @@ BrowserWindow::_UpdateHistoryMenu()
 		new BMessage(CLEAR_HISTORY));
 	clearHistoryItem->SetEnabled(count > 0);
 	fHistoryMenu->AddItem(clearHistoryItem);
-	if (count == MY_NULLPTR) {
+	if (count == 0) {
 		history->Unlock();
 		return;
 	}
@@ -3118,7 +3118,7 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 	}
 
 	delete message;
-return B_OK;
+	return B_OK;
 }
 
 

@@ -601,7 +601,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 						|| message->FindInt64("to directory",
 							reinterpret_cast<int64*>(&directory)) != B_OK
 						|| message->FindString("name", &name) != B_OK
-						|| strlen(name) == MY_NULLPTR) {
+						|| strlen(name) == 0) {
 						break;
 					}
 					// Construct the BEntry and update fPath
@@ -878,7 +878,7 @@ DownloadProgressView::_UpdateStatusText()
 		int expectedSizeUnitPos = expectedSize.FindLast(' ');
 		if (currentSizeUnitPos >= 0 && expectedSizeUnitPos >= 0
 			&& strcmp(currentSize.String() + currentSizeUnitPos,
-				expectedSize.String() + expectedSizeUnitPos) == MY_NULLPTR) {
+				expectedSize.String() + expectedSizeUnitPos) == 0) {
 			currentSize.Truncate(currentSizeUnitPos);
 		}
 

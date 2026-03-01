@@ -510,6 +510,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 {
 	// make sure the item doesn't already exist
 	if (fItemsMap.find(inode) != fItemsMap.end()) {
+		delete icon;
 		return;
 	}
 

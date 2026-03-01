@@ -18,8 +18,8 @@ const char* kSettingsKeyDownloadPath = "download path";
 const char* kSettingsKeyShowTabsIfSinglePageOpen
 	= "show tabs if single page open";
 const char* kSettingsKeyAutoHideInterfaceInFullscreenMode
-	= "int hide interface in full screen mode";
-const char* kSettingsKeyAutoHidePointer = "int hide pointer";
+	= "auto hide interface in full screen mode";
+const char* kSettingsKeyAutoHidePointer = "auto hide pointer";
 const char* kSettingsKeyShowHomeButton = "show home button";
 
 const char* kSettingsKeyNewWindowPolicy = "new window policy";
