@@ -30,8 +30,8 @@ public:
 	virtual						~DownloadWindow() override;
 
 	virtual	void				DispatchMessage(BMessage* message,
-									BHandler* target);
-	virtual void				FrameResized(float newWidth, float newHeight);
+									BHandler* target) override;
+	virtual void				FrameResized(float newWidth, float newHeight) override;
 	virtual	void				MessageReceived(BMessage* message) override;
 	virtual	bool				QuitRequested() override;
 
