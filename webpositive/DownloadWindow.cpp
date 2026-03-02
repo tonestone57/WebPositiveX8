@@ -229,7 +229,7 @@ DownloadWindow::DispatchMessage(BMessage* message, BHandler* target)
 	if (message->what == B_MOUSE_DOWN
 		&& message->FindPoint("screen_where", &where) == B_OK
 		&& message->FindInt32("buttons", &buttons) == B_OK
-		&& (buttons & B_SECONDARY_MOUSE_BUTTON) != MY_NULLPTR) {
+		&& (buttons & B_SECONDARY_MOUSE_BUTTON) != 0) {
 		for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 			DownloadProgressView* view = _ViewAt(i);
 			if (view == MY_NULLPTR)

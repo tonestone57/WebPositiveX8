@@ -433,7 +433,7 @@ public:
 			return;
 
 		BRect bounds(Bounds());
-		BRect iconBounds(MY_NULLPTR, 0, 15, 15);
+		BRect iconBounds(0, 0, 15, 15);
 		iconBounds.OffsetTo(
 			floorf((bounds.left + bounds.right
 				- (iconBounds.left + iconBounds.right)) / 2 + 0.5f),

@@ -178,7 +178,7 @@ FontSelectionView::MessageReceived(BMessage* message)
 				break;
 
 			font_style style;
-			fCurrentFont.GetFamilyAndStyle(NULL, &style);
+			fCurrentFont.GetFamilyAndStyle(MY_NULLPTR, &style);
 
 			BMenuItem* familyItem = fFontsMenu->FindItem(family);
 			if (familyItem != MY_NULLPTR) {
