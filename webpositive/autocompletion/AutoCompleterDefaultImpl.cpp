@@ -6,6 +6,7 @@
  *		Oliver Tappe <beam@hirschkaefer.de>
  */
 
+#include "BeOSCompatibility.h"
 #include "AutoCompleterDefaultImpl.h"
 
 #include <ListView.h>
@@ -327,8 +328,8 @@ BDefaultChoiceView::ListItem::DrawItem(BView* owner, BRect frame,
 
 BDefaultChoiceView::BDefaultChoiceView()
 	:
-	fWindow(NULL),
-	fListView(NULL),
+	fWindow(0),
+	fListView(0),
 	fMaxVisibleChoices(8)
 {
 	
@@ -378,7 +379,7 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 		);
 	}
 
-	BScrollView *scrollView = NULL;
+	BScrollView *scrollView = 0;
 	if (count > fMaxVisibleChoices) {
 		scrollView = new BScrollView("", fListView, B_FOLLOW_NONE, 0, false, true, B_NO_BORDER);
 	}
@@ -386,7 +387,7 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 	fWindow = new BWindow(BRect(0, 0, 100, 100), "", B_BORDERED_WINDOW_LOOK, 
 		B_NORMAL_WINDOW_FEEL, B_NOT_MOVABLE | B_WILL_ACCEPT_FIRST_CLICK 
 			| B_AVOID_FOCUS | B_ASYNCHRONOUS_CONTROLS);
-	if (scrollView != NULL)
+	if (scrollView != MY_NULLPTR)
 		fWindow->AddChild(scrollView);
 	else
 		fWindow->AddChild(fListView);
@@ -403,7 +404,7 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 	else
 		listRect.OffsetTo(pvRect.left, pvRect.top - listHeight);
 
-	if (scrollView != NULL) {
+	if (scrollView != MY_NULLPTR) {
 		// Moving here to cut off the scrollbar top
 		scrollView->MoveTo(0, -1);
 		// Adding the 1 and 2 to cut-off the scroll-bar top, right and bottom
@@ -426,8 +427,8 @@ BDefaultChoiceView::HideChoices()
 {
 	if (fWindow && fWindow->Lock()) {
 		fWindow->Quit();
-		fWindow = NULL;
-		fListView = NULL;
+		fWindow = 0;
+		fListView = 0;
 	}
 }
 
@@ -435,7 +436,7 @@ BDefaultChoiceView::HideChoices()
 bool
 BDefaultChoiceView::ChoicesAreShown()
 {
-	return (fWindow != NULL);
+	return (fWindow != MY_NULLPTR);
 }
 
 
@@ -459,9 +460,9 @@ BDefaultChoiceView::SetMaxVisibleChoices(int32 choices)
 
 	fMaxVisibleChoices = choices;
 
-	if (fListView != NULL) {
+	if (fListView != MY_NULLPTR) {
 		BAutoCompleter::CompletionStyle* completer = fListView->Completer();
-		if (completer != NULL) {
+		if (completer != MY_NULLPTR) {
 			int32 selectedIndex = completer->SelectedChoiceIndex();
 			ShowChoices(completer);
 			SelectChoiceAt(selectedIndex);

@@ -29,14 +29,12 @@
 #define BROWSER_APP_H
 
 
+#include "BeOSCompatibility.h"
 #include <Application.h>
 #include <Catalog.h>
 #include <NetworkCookieJar.h>
 #include <Rect.h>
 #include <UrlContext.h>
-
-#include <memory>
-
 
 class ConsoleWindow;
 class CookieWindow;
@@ -64,10 +62,10 @@ private:
 			 *                               the number of created pages.
 			*/
 			void				_RefsReceived(BMessage* message,
-									int32* pagesCreated = NULL,
-									bool* fullscreen = NULL);
+									int32* pagesCreated = MY_NULLPTR,
+									bool* fullscreen = MY_NULLPTR);
 			BrowserWindow*		_CreateNewPage(const BString& url,
-									BrowserWindow* window = NULL,
+									BrowserWindow* window = MY_NULLPTR,
 									bool fullscreen = false,
 									bool useBlankTab = true);
 			BrowserWindow*		_CreateNewWindow(const BString& url,
@@ -83,18 +81,14 @@ private:
 private:
 			int					fWindowCount;
 			BRect				fLastWindowFrame;
-			std::unique_ptr<BMessage>
-								fLaunchRefsMessage;
+			BMessage*			fLaunchRefsMessage;
 			bool				fInitialized;
 
-			std::unique_ptr<SettingsMessage>
-								fSettings;
-			std::unique_ptr<SettingsMessage>
-								fCookies;
+			SettingsMessage*	fSettings;
+			SettingsMessage*	fCookies;
 			bool				fCookiesLoaded;
 			thread_id			fCookieLoaderThread;
-			std::unique_ptr<SettingsMessage>
-								fSession;
+			SettingsMessage*	fSession;
 			BReference<BPrivate::Network::BUrlContext>	fContext;
 
 			DownloadWindow*		fDownloadWindow;

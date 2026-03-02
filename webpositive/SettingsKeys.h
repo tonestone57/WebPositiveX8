@@ -13,6 +13,7 @@
 
 
 #include <SupportDefs.h>
+#include "BeOSCompatibility.h"
 
 
 extern const char* kSettingsKeyDownloadPath;

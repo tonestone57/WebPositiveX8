@@ -7,7 +7,7 @@
 #define DOWNLOAD_WINDOW_H
 
 
-#include <memory>
+#include "BeOSCompatibility.h"
 
 #include <Locker.h>
 #include <OS.h>
@@ -73,8 +73,7 @@ private:
 			thread_id			fSaveThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			std::unique_ptr<BMessage>
-								fPendingSaveMessage;
+			BMessage* fPendingSaveMessage;
 			BLocker				fSaveLock;
 };
 

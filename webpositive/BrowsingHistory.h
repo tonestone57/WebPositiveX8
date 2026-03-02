@@ -6,26 +6,19 @@
 #ifndef BROWSING_HISTORY_H
 #define BROWSING_HISTORY_H
 
-#include <memory>
-#include <string_view>
-#include <unordered_map>
-#include <vector>
-
+#include "BeOSCompatibility.h"
 #include "DateTime.h"
 #include <Locker.h>
 #include <ObjectList.h>
 #include <OS.h>
-
+#include "HashMap.h"
+#include "HashString.h"
 #include <String.h>
 
 class BFile;
 
 
-class BrowsingHistoryItem;
-typedef std::shared_ptr<const BrowsingHistoryItem> BrowsingHistoryItemPtr;
-
-
-class BrowsingHistoryItem {
+class BrowsingHistoryItem : public BReferenceable {
 public:
 								BrowsingHistoryItem(const BString& url);
 								BrowsingHistoryItem(const BString& url,
@@ -65,14 +58,6 @@ private:
 };
 
 
-struct BStringHash {
-	size_t operator()(const BString& s) const
-	{
-		return std::hash<std::string_view>{}({s.String(), (size_t)s.Length()});
-	}
-};
-
-
 class BrowsingHistory : public BLocker {
 	friend class BrowsingHistoryTest;
 public:
@@ -101,7 +86,6 @@ protected:
 
 private:
 			void				_Clear();
-			void				_EnsureUniqueVector();
 			bool				_AddItem(const BrowsingHistoryItem& item,
 									bool invoke);
 			int32				_InsertionIndex(
@@ -114,12 +98,10 @@ private:
 	static	status_t			_LoadThread(void* data);
 
 private:
-			typedef std::vector<BrowsingHistoryItemPtr> HistoryVector;
-			typedef std::shared_ptr<HistoryVector> HistoryVectorPtr;
+			typedef BObjectList<BrowsingHistoryItem> HistoryList;
 
-			HistoryVectorPtr	fHistoryItems;
-			std::unordered_map<BString, BrowsingHistoryItemPtr, BStringHash>
-								fHistoryMap;
+			HistoryList			fHistoryItems;
+			HashMap<HashString, BrowsingHistoryItem*> fHistoryMap;
 			int32				fMaxHistoryItemAge;
 
 	static	BrowsingHistory		sDefaultInstance;
@@ -129,8 +111,7 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			std::unique_ptr<HistoryVector>
-								fPendingSaveItems;
+			HistoryList*		fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 
@@ -139,4 +120,3 @@ private:
 
 
 #endif // BROWSING_HISTORY_H
-

@@ -6,6 +6,7 @@
 #ifndef TAB_CONTAINER_VIEW_H
 #define TAB_CONTAINER_VIEW_H
 
+#include "BeOSCompatibility.h"
 #include <GroupView.h>
 
 
@@ -51,10 +52,10 @@ public:
 
 			int32				FirstTabIndex() { return 0; };
 			int32				LastTabIndex()
-									{ return GroupLayout() == NULL ? -1
+									{ return GroupLayout() == 0 ? -1
 										: GroupLayout()->CountItems() - 2; };
 			int32				SelectedTabIndex()
-									{ return fSelectedTab == NULL ? -1
+									{ return fSelectedTab == 0 ? -1
 										: IndexOf(fSelectedTab); };
 
 			TabView*			SelectedTab() { return fSelectedTab; };

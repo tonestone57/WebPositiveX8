@@ -5,6 +5,7 @@
 #ifndef BROWSING_HISTORY_CHOICE_MODEL_H
 #define BROWSING_HISTORY_CHOICE_MODEL_H
 
+#include "BeOSCompatibility.h"
 #include <ObjectList.h>
 #include "AutoCompleter.h"
 
@@ -13,7 +14,7 @@ class BrowsingHistory;
 class BrowsingHistoryChoiceModel : public BAutoCompleter::ChoiceModel {
 public:
 								BrowsingHistoryChoiceModel(
-									BrowsingHistory* history = NULL);
+									BrowsingHistory* history = MY_NULLPTR);
 	virtual						~BrowsingHistoryChoiceModel();
 
 	virtual void				FetchChoicesFor(const BString& pattern);

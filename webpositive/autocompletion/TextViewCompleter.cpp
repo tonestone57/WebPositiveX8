@@ -6,6 +6,7 @@
  *		Oliver Tappe <beam@hirschkaefer.de>
  */
 
+#include "BeOSCompatibility.h"
 #include "TextViewCompleter.h"
 
 #include <Looper.h>

@@ -11,7 +11,7 @@ public:
     BBitmap(const BBitmap* other) { if (other) fBounds = other->fBounds; }
     virtual ~BBitmap() {}
     BRect Bounds() const { return fBounds; }
-    void* Bits() const { return nullptr; }
+    void* Bits() const { return MY_NULLPTR; }
     int32 BitsLength() const { return 0; }
     status_t Archive(BMessage* archive, bool deep = true) const { return B_OK; }
 private:

@@ -42,7 +42,7 @@ public:
     bool IsHidden() const { return false; }
     void AddChild(BView* view);
     void CenterOnScreen() {}
-    BMessage* CurrentMessage() const { return nullptr; }
+    BMessage* CurrentMessage() const { return MY_NULLPTR; }
     BRect Frame() const { return fFrame; }
     void MoveTo(float x, float y) { fFrame.OffsetTo(x, y); }
     void ResizeTo(float w, float h) { fFrame.right = fFrame.left + w; fFrame.bottom = fFrame.top + h; }

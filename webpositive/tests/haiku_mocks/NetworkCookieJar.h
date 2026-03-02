@@ -82,7 +82,7 @@ public:
         Iterator(const std::vector<BNetworkCookie>& cookies) : fCookies(cookies), fIndex(0) {}
         const BNetworkCookie* Next() {
             if (fIndex < fCookies.size()) return &fCookies[fIndex++];
-            return nullptr;
+            return MY_NULLPTR;
         }
     private:
         const std::vector<BNetworkCookie>& fCookies;

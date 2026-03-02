@@ -7,6 +7,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <Application.h>
 #include <NetworkCookieJar.h>
@@ -47,12 +48,12 @@ assert_int32(int32 expected, int32 actual, const char* message)
 static void
 assert_string(const char* expected, const char* actual, const char* message)
 {
-	if ((expected == NULL && actual == NULL) ||
-		(expected != NULL && actual != NULL && strcmp(expected, actual) == 0)) {
+	if ((expected == 0 && actual == MY_NULLPTR) ||
+		(expected != 0 && actual != 0 && strcmp(expected, actual) == 0)) {
 		printf("PASS: %s\n", message);
 	} else {
 		printf("FAIL: %s (expected '%s', got '%s')\n", message,
-			expected ? expected : "NULL", actual ? actual : "NULL");
+			expected ? expected : "MY_NULLPTR", actual ? actual : "MY_NULLPTR");
 		gTestFailures++;
 	}
 }
@@ -152,9 +153,9 @@ CookieWindowTest::test_build_domain_list()
 	assert_string("example.com", item1->Text(), "Second item should be example.com");
 
 	// Check if cookie map is populated
-	assert_int32(1, (int32)window->fCookieMap["example.com"].size(), "example.com should have 1 cookie in map");
-	assert_int32(1, (int32)window->fCookieMap["sub.example.com"].size(), "sub.example.com should have 1 cookie in map");
-	assert_int32(1, (int32)window->fCookieMap["google.com"].size(), "google.com should have 1 cookie in map");
+	assert_int32(1, window->fCookieMap.Get("example.com")->CountItems(), "example.com should have 1 cookie in map");
+	assert_int32(1, window->fCookieMap.Get("sub.example.com")->CountItems(), "sub.example.com should have 1 cookie in map");
+	assert_int32(1, window->fCookieMap.Get("google.com")->CountItems(), "google.com should have 1 cookie in map");
 
 	window->Lock();
 	window->Quit();

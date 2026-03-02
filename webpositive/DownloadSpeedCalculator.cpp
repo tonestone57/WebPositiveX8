@@ -5,6 +5,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include "DownloadSpeedCalculator.h"
 
 

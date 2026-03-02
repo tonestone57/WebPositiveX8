@@ -6,7 +6,8 @@
 #define BOOKMARK_BAR_H
 
 
-#include <map>
+#include "HashMap.h"
+#include "HashString.h"
 
 #include <MenuBar.h>
 #include <Messenger.h>
@@ -53,7 +54,7 @@ private:
 
 private:
 	node_ref						fNodeRef;
-	std::map<ino_t, BPrivate::IconMenuItem*>	fItemsMap;
+	HashMap<ino_t, BPrivate::IconMenuItem*> fItemsMap;
 	BMenu*							fOverflowMenu;
 	// True if fOverflowMenu is currently added to BookmarkBar
 	bool							fOverflowMenuAdded;

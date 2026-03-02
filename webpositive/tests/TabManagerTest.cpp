@@ -4,6 +4,7 @@
  */
 
 
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 
 #include <Application.h>

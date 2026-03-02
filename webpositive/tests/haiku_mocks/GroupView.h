@@ -4,7 +4,7 @@
 #include "GroupLayout.h"
 class BGroupView : public BView {
 public:
-    BGroupView(orientation orientation, float spacing = 0.0) : BView(nullptr, 0) {
+    BGroupView(orientation orientation, float spacing = 0.0) : BView(MY_NULLPTR, 0) {
         BGroupLayout* layout = new BGroupLayout(orientation, spacing);
         SetLayout(layout);
     }

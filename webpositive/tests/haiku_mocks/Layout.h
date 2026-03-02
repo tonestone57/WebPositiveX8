@@ -6,7 +6,7 @@
 
 class BLayoutItem {
 public:
-    BLayoutItem() : fView(nullptr), fLayout(nullptr) {}
+    BLayoutItem() : fView(MY_NULLPTR), fLayout(MY_NULLPTR) {}
     virtual ~BLayoutItem() {}
     virtual BView* View() { return fView; }
     virtual void SetView(BView* view) { fView = view; }
@@ -28,14 +28,14 @@ private:
 
 class BLayout {
 public:
-    BLayout() : fView(nullptr) {}
+    BLayout() : fView(MY_NULLPTR) {}
     virtual ~BLayout() {}
     virtual BView* View() { return fView; }
     virtual void SetView(BView* view) { fView = view; }
     virtual int32 IndexOfView(BView* view) { return -1; }
-    virtual BLayoutItem* ItemAt(int32 index) const { return nullptr; }
+    virtual BLayoutItem* ItemAt(int32 index) const { return MY_NULLPTR; }
     virtual int32 CountItems() const { return 0; }
-    virtual BLayoutItem* RemoveItem(int32 index) { return nullptr; }
+    virtual BLayoutItem* RemoveItem(int32 index) { return MY_NULLPTR; }
     virtual void SetInsets(float left, float top, float right, float bottom) {}
     virtual void GetInsets(float* left, float* top, float* right, float* bottom) const { if(left)*left=0; if(top)*top=0; if(right)*right=0; if(bottom)*bottom=0; }
     virtual void InvalidateLayout(bool descendants = false) {}

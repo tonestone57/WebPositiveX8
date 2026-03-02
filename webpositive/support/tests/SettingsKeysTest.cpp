@@ -1,3 +1,4 @@
+#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <string.h>
 #include <set>
@@ -17,7 +18,7 @@ void assert_true(bool condition, const char* message) {
 }
 
 bool is_valid_url(const char* url) {
-    if (url == NULL) return false;
+    if (url == MY_NULLPTR) return false;
     if (strncmp(url, "http://", 7) == 0 && url[7] != '\0') return true;
     if (strncmp(url, "https://", 8) == 0 && url[8] != '\0') return true;
     if (strncmp(url, "file://", 7) == 0 && url[7] != '\0') return true;
@@ -30,7 +31,7 @@ int main() {
     std::set<std::string> shortcuts;
 
     printf("Validating kSearchEngines...\n");
-    for (int i = 0; kSearchEngines[i].name != NULL; i++) {
+    for (int i = 0; kSearchEngines[i].name != 0; i++) {
         const char* name = kSearchEngines[i].name;
         const char* url = kSearchEngines[i].url;
         const char* shortcut = kSearchEngines[i].shortcut;
@@ -39,20 +40,20 @@ int main() {
 
         // 1. Name must be non-empty
         snprintf(msg, sizeof(msg), "Search engine %d has a name", i);
-        assert_true(name != NULL && name[0] != '\0', msg);
+        assert_true(name != 0 && name[0] != '\0', msg);
 
         // 2. URL must be valid and contain %s
         snprintf(msg, sizeof(msg), "Search engine %s has valid URL", name);
         assert_true(is_valid_url(url), msg);
-        if (url != NULL) {
+        if (url != MY_NULLPTR) {
             snprintf(msg, sizeof(msg), "Search engine %s URL contains %%s", name);
-            assert_true(strstr(url, "%s") != NULL, msg);
+            assert_true(strstr(url, "%s") != MY_NULLPTR, msg);
         }
 
-        // 3. Shortcut must not be NULL and end with a space
+        // 3. Shortcut must not be MY_NULLPTR and end with a space
         snprintf(msg, sizeof(msg), "Search engine %s has valid shortcut", name);
-        assert_true(shortcut != NULL, msg);
-        if (shortcut != NULL) {
+        assert_true(shortcut != MY_NULLPTR, msg);
+        if (shortcut != MY_NULLPTR) {
             size_t len = strlen(shortcut);
             snprintf(msg, sizeof(msg), "Search engine %s shortcut ends with space", name);
             assert_true(len > 0 && shortcut[len - 1] == ' ', msg);
@@ -63,13 +64,13 @@ int main() {
         assert_true(names.find(name) == names.end(), msg);
         names.insert(name);
 
-        if (url != NULL) {
+        if (url != MY_NULLPTR) {
             snprintf(msg, sizeof(msg), "Search engine URL '%s' is unique", url);
             assert_true(urls.find(url) == urls.end(), msg);
             urls.insert(url);
         }
 
-        if (shortcut != NULL) {
+        if (shortcut != MY_NULLPTR) {
             snprintf(msg, sizeof(msg), "Search engine shortcut '%s' is unique", shortcut);
             assert_true(shortcuts.find(shortcut) == shortcuts.end(), msg);
             shortcuts.insert(shortcut);
@@ -79,22 +80,22 @@ int main() {
     printf("\nValidating default settings constants...\n");
 
     // Validate kDefaultDownloadPath
-    assert_true(kDefaultDownloadPath != NULL, "kDefaultDownloadPath is not NULL");
-    if (kDefaultDownloadPath != NULL) {
+    assert_true(kDefaultDownloadPath != MY_NULLPTR, "kDefaultDownloadPath is not MY_NULLPTR");
+    if (kDefaultDownloadPath != MY_NULLPTR) {
         size_t len = strlen(kDefaultDownloadPath);
         assert_true(len > 0 && kDefaultDownloadPath[len - 1] == '/',
             "kDefaultDownloadPath ends with a slash");
     }
 
     // Validate kDefaultStartPageURL
-    assert_true(kDefaultStartPageURL != NULL, "kDefaultStartPageURL is not NULL");
+    assert_true(kDefaultStartPageURL != MY_NULLPTR, "kDefaultStartPageURL is not MY_NULLPTR");
     assert_true(is_valid_url(kDefaultStartPageURL), "kDefaultStartPageURL is a valid URL");
 
     // Validate kDefaultSearchPageURL
-    assert_true(kDefaultSearchPageURL != NULL, "kDefaultSearchPageURL is not NULL");
+    assert_true(kDefaultSearchPageURL != MY_NULLPTR, "kDefaultSearchPageURL is not MY_NULLPTR");
     assert_true(is_valid_url(kDefaultSearchPageURL), "kDefaultSearchPageURL is a valid URL");
-    if (kDefaultSearchPageURL != NULL) {
-        assert_true(strstr(kDefaultSearchPageURL, "%s") != NULL,
+    if (kDefaultSearchPageURL != MY_NULLPTR) {
+        assert_true(strstr(kDefaultSearchPageURL, "%s") != MY_NULLPTR,
             "kDefaultSearchPageURL contains %%s");
     }
 
@@ -126,9 +127,9 @@ int main() {
     std::set<std::string> keyValues;
     for (const auto& key : keys) {
         char msg[512];
-        snprintf(msg, sizeof(msg), "%s is not NULL", key.name);
-        assert_true(key.value != NULL, msg);
-        if (key.value != NULL) {
+        snprintf(msg, sizeof(msg), "%s is not MY_NULLPTR", key.name);
+        assert_true(key.value != MY_NULLPTR, msg);
+        if (key.value != MY_NULLPTR) {
             snprintf(msg, sizeof(msg), "%s value '%s' is unique", key.name, key.value);
             assert_true(keyValues.find(key.value) == keyValues.end(), msg);
             keyValues.insert(key.value);

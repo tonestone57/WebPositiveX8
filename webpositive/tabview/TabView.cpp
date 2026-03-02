@@ -5,6 +5,7 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
+#include "BeOSCompatibility.h"
 #include "TabView.h"
 
 #include <stdio.h>
@@ -27,7 +28,7 @@
 
 TabView::TabView()
 	:
-	fContainerView(NULL),
+	fContainerView(0),
 	fLayoutItem(new TabLayoutItem(this)),
 	fLabel()
 {
@@ -37,7 +38,7 @@ TabView::TabView()
 TabView::~TabView()
 {
 	// The layout item is deleted for us by the layout which contains it.
-	if (fContainerView == NULL)
+	if (fContainerView == MY_NULLPTR)
 		delete fLayoutItem;
 }
 
@@ -260,7 +261,7 @@ TabLayoutItem::SetFrame(BRect frame)
 BView*
 TabLayoutItem::View()
 {
-	return NULL;
+	return MY_NULLPTR;
 }
 
 

@@ -33,14 +33,14 @@ public:
     }
     void SetField(BField* field, int32 logicalColumn) {
         if (logicalColumn >= (int32)fFields.size())
-            fFields.resize(logicalColumn + 1, nullptr);
+            fFields.resize(logicalColumn + 1, MY_NULLPTR);
         delete fFields[logicalColumn];
         fFields[logicalColumn] = field;
     }
     BField* GetField(int32 logicalColumn) {
         if (logicalColumn >= 0 && logicalColumn < (int32)fFields.size())
             return fFields[logicalColumn];
-        return nullptr;
+        return MY_NULLPTR;
     }
 private:
     std::vector<BField*> fFields;
@@ -73,8 +73,8 @@ public:
         for (auto row : fRows) delete row;
     }
     void AddColumn(BColumn* column, int32 logicalIndex) { fColumns.push_back(column); }
-    void AddRow(BRow* row, BRow* parent = nullptr) { fRows.push_back(row); }
-    void AddRow(BRow* row, int32 index, BRow* parent = nullptr) { fRows.insert(fRows.begin() + index, row); }
+    void AddRow(BRow* row, BRow* parent = MY_NULLPTR) { fRows.push_back(row); }
+    void AddRow(BRow* row, int32 index, BRow* parent = MY_NULLPTR) { fRows.insert(fRows.begin() + index, row); }
     void RemoveRow(BRow* row) {
         for (auto it = fRows.begin(); it != fRows.end(); ++it) {
             if (*it == row) { fRows.erase(it); break; }
@@ -86,15 +86,15 @@ public:
     }
     BRow* RowAt(int32 index) const {
         if (index >= 0 && index < (int32)fRows.size()) return fRows[index];
-        return nullptr;
+        return MY_NULLPTR;
     }
-    BRow* CurrentSelection(BRow* after = nullptr) const {
-        if (fRows.empty()) return nullptr;
-        if (after == nullptr) return fRows[0]; // Simple mock: always select first
+    BRow* CurrentSelection(BRow* after = MY_NULLPTR) const {
+        if (fRows.empty()) return MY_NULLPTR;
+        if (after == MY_NULLPTR) return fRows[0]; // Simple mock: always select first
         for (size_t i = 0; i < fRows.size() - 1; ++i) {
             if (fRows[i] == after) return fRows[i+1];
         }
-        return nullptr;
+        return MY_NULLPTR;
     }
     float StringWidth(const char* string) const { return 100.0f; }
 
