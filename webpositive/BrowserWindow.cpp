@@ -1910,7 +1910,7 @@ BrowserWindow::LoadFinished(const BString& url, BWebView* view)
 
 	int32 tabIndex = fTabManager->TabForView(view);
 	if (tabIndex > 0 && strcmp(B_TRANSLATE("New tab"),
-		fTabManager->TabLabel(tabIndex)) == nullptr)
+		fTabManager->TabLabel(tabIndex)) == 0)
 			fTabManager->SetTabLabel(tabIndex, url);
 }
 

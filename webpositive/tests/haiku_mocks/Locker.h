@@ -5,6 +5,7 @@
 class BLocker {
 public:
     BLocker(const char* name = nullptr) {}
+    virtual ~BLocker() {}
     bool Lock() { return true; }
     void Unlock() {}
 };
