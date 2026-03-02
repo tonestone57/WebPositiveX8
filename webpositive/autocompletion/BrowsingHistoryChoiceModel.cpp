@@ -3,7 +3,6 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include "BrowsingHistoryChoiceModel.h"
 
 #include <limits.h>
@@ -44,7 +43,7 @@ BrowsingHistoryChoiceModel::FetchChoicesFor(const BString& pattern)
 	int32 count = history->CountItems();
 	for (int32 i = 0; i < count; i++) {
 		const BrowsingHistoryItem* item = history->ItemAt(i);
-		if (item == MY_NULLPTR)
+		if (item == nullptr)
 			continue;
 		const BString& choiceText = item->URL();
 		int32 matchPos = choiceText.IFindFirst(pattern);

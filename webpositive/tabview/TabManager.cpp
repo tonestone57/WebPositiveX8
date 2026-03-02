@@ -5,7 +5,6 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include "TabManager.h"
 
 #include <stdio.h>
@@ -230,17 +229,17 @@ public:
 
 	virtual void AttachedToWindow()
 	{
-		if (fScrollLeftTabButton != MY_NULLPTR)
+		if (fScrollLeftTabButton != nullptr)
 			fScrollLeftTabButton->SetTarget(this);
-		if (fScrollRightTabButton != MY_NULLPTR)
+		if (fScrollRightTabButton != nullptr)
 			fScrollRightTabButton->SetTarget(this);
-		if (fTabMenuButton != MY_NULLPTR)
+		if (fTabMenuButton != nullptr)
 			fTabMenuButton->SetTarget(this);
 	}
 
 	virtual void MessageReceived(BMessage* message)
 	{
-		if (fTabContainerView == MY_NULLPTR)
+		if (fTabContainerView == nullptr)
 			return BGroupView::MessageReceived(message);
 
 		switch (message->what) {
@@ -260,10 +259,10 @@ public:
 				int tabCount = fTabContainerView->GetLayout()->CountItems();
 				for (int i = 0; i < tabCount; i++) {
 					TabView* tab = fTabContainerView->TabAt(i);
-					if (tab != MY_NULLPTR) {
+					if (tab != nullptr) {
 						BMenuItem* item = new(std::nothrow)
 							BMenuItem(tab->Label(), 0);
-						if (item != MY_NULLPTR) {
+						if (item != nullptr) {
 							tabMenu->AddItem(item);
 							if (i == fTabContainerView->SelectedTabIndex())
 								item->SetMarked(true);
@@ -392,7 +391,7 @@ public:
 		fCurrentToolTip = text;
 		fManager->GetTabContainerView()->HideToolTip();
 		fManager->GetTabContainerView()->SetToolTip(
-			static_cast<BToolTip*>(MY_NULLPTR));
+			static_cast<BToolTip*>(nullptr));
 		fManager->GetTabContainerView()->SetToolTip(fCurrentToolTip.String());
 	}
 
@@ -420,7 +419,7 @@ private:
 	TabManager*			fManager;
 	TabContainerGroup*	fTabContainerGroup;
 	bool				fCloseButtonsAvailable;
-	BMessage*			fDoubleClickOutsideTabsMessage;
+	std::unique_ptr<BMessage> fDoubleClickOutsideTabsMessage;
 	BMessenger			fTarget;
 	BString				fCurrentToolTip;
 };
@@ -499,7 +498,7 @@ WebTabView::DrawContents(BView* owner, BRect frame, const BRect& updateRect)
 	if (fController->CloseButtonsAvailable())
 		_DrawCloseButton(owner, frame, updateRect);
 
-	if (fIcon != MY_NULLPTR) {
+	if (fIcon != nullptr) {
 		BRect iconBounds(0, 0, kIconSize - 1, kIconSize - 1);
 		// clip to icon bounds, if they are smaller
 		if (iconBounds.Contains(fIcon->Bounds()))
@@ -597,7 +596,7 @@ WebTabView::SetIcon(const BBitmap* icon)
 	if (icon)
 		fIcon = new BBitmap(icon);
 	else
-		fIcon = MY_NULLPTR;
+		fIcon = nullptr;
 	LayoutItem()->InvalidateLayout();
 }
 
@@ -684,14 +683,13 @@ TabManagerController::TabManagerController(TabManager* manager)
 	fManager(manager),
 	fTabContainerGroup(0),
 	fCloseButtonsAvailable(false),
-	fDoubleClickOutsideTabsMessage(0)
+	fDoubleClickOutsideTabsMessage()
 {
 }
 
 
 TabManagerController::~TabManagerController()
 {
-	delete fDoubleClickOutsideTabsMessage;
 }
 
 
@@ -705,7 +703,7 @@ TabManagerController::CreateTabView()
 void
 TabManagerController::DoubleClickOutsideTabs()
 {
-	fTarget.SendMessage(fDoubleClickOutsideTabsMessage);
+	fTarget.SendMessage(fDoubleClickOutsideTabsMessage.get());
 }
 
 
@@ -720,8 +718,7 @@ void
 TabManagerController::SetDoubleClickOutsideTabsMessage(const BMessage& message,
 	const BMessenger& target)
 {
-	delete fDoubleClickOutsideTabsMessage;
-	fDoubleClickOutsideTabsMessage = new BMessage(message);
+	fDoubleClickOutsideTabsMessage.reset(new BMessage(message));
 	fTarget = target;
 }
 
@@ -741,7 +738,7 @@ TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
 	fCardLayout = new BCardLayout();
 	fContainerView->SetLayout(fCardLayout);
 
-	fTabContainerView = new TabContainerView(fController);
+	fTabContainerView = new TabContainerView(fController.get());
 	fTabContainerGroup = new TabContainerGroup(fTabContainerView);
 	fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
 
@@ -819,9 +816,9 @@ BView*
 TabManager::ViewForTab(int32 tabIndex) const
 {
 	BLayoutItem* item = fCardLayout->ItemAt(tabIndex);
-	if (item != MY_NULLPTR)
+	if (item != nullptr)
 		return item->View();
-	return MY_NULLPTR;
+	return nullptr;
 }
 
 
@@ -901,8 +898,8 @@ TabManager::RemoveTab(int32 index)
 	// and then item count of card layout and tab container will not
 	// match yet.
 	BLayoutItem* item = fCardLayout->RemoveItem(index);
-	if (item == MY_NULLPTR)
-		return MY_NULLPTR;
+	if (item == nullptr)
+		return nullptr;
 
 	TabView* tab = fTabContainerView->RemoveTab(index);
 	delete tab;

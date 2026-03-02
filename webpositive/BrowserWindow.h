@@ -29,7 +29,6 @@
 #define BROWSER_WINDOW_H
 
 
-#include "BeOSCompatibility.h"
 #include "WebWindow.h"
 
 #include <Messenger.h>
@@ -104,7 +103,7 @@ public:
 								BrowserWindow(BRect frame, SettingsMessage* appSettings,
 									const BString& url, BPrivate::Network::BUrlContext* context,
 									uint32 interfaceElements = INTERFACE_ELEMENT_ALL,
-									BWebView* webView = MY_NULLPTR,
+									BWebView* webView = nullptr,
 									uint32 workspaces = B_CURRENT_WORKSPACE,
 									bool forDownload = false);
 	virtual						~BrowserWindow();
@@ -128,7 +127,7 @@ public:
 
 			bool				IsBlankTab() const;
 			void				CreateNewTab(const BString& url, bool select,
-									BWebView* webView = MY_NULLPTR);
+									BWebView* webView = nullptr);
 
 			BRect				WindowFrame() const;
 

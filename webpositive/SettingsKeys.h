@@ -13,9 +13,6 @@
 
 
 #include <SupportDefs.h>
-#include "BeOSCompatibility.h"
-
-
 extern const char* kSettingsKeyDownloadPath;
 extern const char* kSettingsKeyShowTabsIfSinglePageOpen;
 extern const char* kSettingsKeyAutoHideInterfaceInFullscreenMode;

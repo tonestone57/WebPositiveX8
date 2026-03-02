@@ -4,7 +4,6 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include "BrowsingHistory.h"
 
 #include <new>
@@ -193,7 +192,7 @@ BrowsingHistory::BrowsingHistory(bool startThreads)
 	fMaxHistoryItemAge(7),
 	fSettingsLoaded(false),
 	fQuitting(false),
-	fPendingSaveItems(MY_NULLPTR),
+	fPendingSaveItems(nullptr),
 	fSaveLock("browsing history save lock"),
 	fFileLock("browsing history file lock"),
 	fLastSaveTime(0)
@@ -234,7 +233,7 @@ BrowsingHistory::~BrowsingHistory()
 	if (fSaveSem >= 0)
 		delete_sem(fSaveSem);
 	_Clear();
-	delete fPendingSaveItems;
+
 }
 
 
@@ -263,7 +262,7 @@ BrowsingHistory::RemoveItem(const BString& url)
 {
 	BAutolock _(this);
 	BrowsingHistoryItem* item = fHistoryMap.Get(url);
-	if (item == MY_NULLPTR)
+	if (item == nullptr)
 		return false;
 
 	fHistoryMap.Remove(url);
@@ -290,7 +289,7 @@ BrowsingHistory::HistoryItemAt(int32 index) const
 	BAutolock _(const_cast<BrowsingHistory*>(this));
 
 	BrowsingHistoryItem* item = fHistoryItems.ItemAt(index);
-	if (item == MY_NULLPTR)
+	if (item == nullptr)
 		return BrowsingHistoryItem(BString());
 
 	return *item;
@@ -346,7 +345,7 @@ bool
 BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 {
 	BrowsingHistoryItem* existingItem = fHistoryMap.Get(item.URL());
-	if (existingItem != MY_NULLPTR) {
+	if (existingItem != nullptr) {
 		if (!internal) {
 			BReference<BrowsingHistoryItem> itemRef(existingItem);
 			fHistoryItems.RemoveItem(fHistoryItems.IndexOf(existingItem), false);
@@ -362,7 +361,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 	}
 
 	BrowsingHistoryItem* newItem = new(std::nothrow) BrowsingHistoryItem(item);
-	if (newItem == MY_NULLPTR)
+	if (newItem == nullptr)
 		return false;
 
 	if (!internal)
@@ -430,19 +429,18 @@ BrowsingHistory::_SaveSettings(bool force)
 	fLastSaveTime = system_time();
 
 	// Take a copy of the current history list.
-	HistoryList* pendingItems = new(std::nothrow) HistoryList(64, true);
-	if (pendingItems == MY_NULLPTR)
+	std::unique_ptr<HistoryList> pendingItems(new(std::nothrow) HistoryList(64, true));
+	if (pendingItems == nullptr)
 		return;
 
 	for (int32 i = 0; i < fHistoryItems.CountItems(); i++) {
 		BrowsingHistoryItem* item = new(std::nothrow) BrowsingHistoryItem(*fHistoryItems.ItemAt(i));
-		if (item != MY_NULLPTR)
+		if (item != nullptr)
 			pendingItems->AddItem(item);
 	}
 
 	fSaveLock.Lock();
-	delete fPendingSaveItems;
-	fPendingSaveItems = pendingItems;
+	fPendingSaveItems = std::move(pendingItems);
 	fSaveLock.Unlock();
 
 	if (fSaveSem >= 0)
@@ -458,17 +456,16 @@ BrowsingHistory::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		HistoryList* itemsToSave = MY_NULLPTR;
+		std::unique_ptr<HistoryList> itemsToSave;
 
 		self->fSaveLock.Lock();
-		itemsToSave = self->fPendingSaveItems;
-		self->fPendingSaveItems = MY_NULLPTR;
+		itemsToSave = std::move(self->fPendingSaveItems);
 		self->fSaveLock.Unlock();
 
-		if (self->fQuitting && itemsToSave == MY_NULLPTR)
+		if (self->fQuitting && itemsToSave == nullptr)
 			break;
 
-		if (itemsToSave != MY_NULLPTR) {
+		if (itemsToSave != nullptr) {
 			self->fFileLock.Lock();
 			BFile settingsFile;
 			if (OpenSettingsFile(settingsFile, kSettingsFileNameBrowsingHistory,
@@ -485,7 +482,7 @@ BrowsingHistory::_SaveThread(void* data)
 				int32 count = itemsToSave->CountItems();
 				for (int32 i = 0; i < count; i++) {
 					BrowsingHistoryItem* item = itemsToSave->ItemAt(i);
-					if (item != MY_NULLPTR && item->Archive(&historyItemArchive) == B_OK) {
+					if (item != nullptr && item->Archive(&historyItemArchive) == B_OK) {
 						settingsArchive.AddMessage("history item", &historyItemArchive);
 					}
 					historyItemArchive.MakeEmpty();
@@ -493,7 +490,7 @@ BrowsingHistory::_SaveThread(void* data)
 				settingsArchive.Flatten(&settingsFile);
 			}
 			self->fFileLock.Unlock();
-			delete itemsToSave;
+
 		}
 
 		if (self->fQuitting)

@@ -3,7 +3,6 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include "URLInputGroup.h"
 
 #include <Bitmap.h>
@@ -429,7 +428,7 @@ public:
 
 	virtual void Draw(BRect updateRect)
 	{
-		if (fIcon == MY_NULLPTR)
+		if (fIcon == nullptr)
 			return;
 
 		BRect bounds(Bounds());
@@ -477,7 +476,7 @@ public:
 
 	virtual void MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 	{
-		if (dragMessage != MY_NULLPTR)
+		if (dragMessage != nullptr)
 			return;
 
 		if (fClickPoint.x >= 0
@@ -504,7 +503,7 @@ public:
 			miniIcon.ImportBits(fIcon);
 
 			BBitmap largeIcon(BRect(0, 0, 31, 31), B_CMAP8);
-			if (fLargeIcon != MY_NULLPTR)
+			if (fLargeIcon != nullptr)
 				largeIcon.ImportBits(fLargeIcon);
 			else
 				largeIcon.ImportBits(fIcon);
@@ -545,7 +544,7 @@ public:
 		if (icon) {
 			fIcon = new BBitmap(icon);
 			fPageIconSet = true;
-			if (largeIcon != MY_NULLPTR)
+			if (largeIcon != nullptr)
 				fLargeIcon = new BBitmap(largeIcon);
 		} else {
 			fIcon = new BBitmap(BRect(0, 0, 15, 15), B_RGB32);

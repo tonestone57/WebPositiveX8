@@ -20,14 +20,14 @@ public:
         return true;
     }
     T* RemoveItem(int32 index, bool owns = true) {
-        if (index < 0 || index >= (int32)fItems.size()) return MY_NULLPTR;
+        if (index < 0 || index >= (int32)fItems.size()) return nullptr;
         T* item = fItems[index];
         fItems.erase(fItems.begin() + index);
         if (fOwns && owns) delete item;
         return item;
     }
     T* ItemAt(int32 index) const {
-        if (index < 0 || index >= (int32)fItems.size()) return MY_NULLPTR;
+        if (index < 0 || index >= (int32)fItems.size()) return nullptr;
         return fItems[index];
     }
     int32 CountItems() const { return (int32)fItems.size(); }

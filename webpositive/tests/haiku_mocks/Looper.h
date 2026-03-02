@@ -8,7 +8,7 @@ class BMessage;
 
 class BLooper : public BHandler {
 public:
-    BLooper(const char* name = MY_NULLPTR) : BHandler(name) {
+    BLooper(const char* name = nullptr) : BHandler(name) {
         SetLooper(this);
     }
     virtual ~BLooper() {}
@@ -35,7 +35,7 @@ public:
     bool Lock() { return true; }
     void Unlock() {}
     void Quit() {}
-    static BLooper* LooperForThread(thread_id thread) { return MY_NULLPTR; }
+    static BLooper* LooperForThread(thread_id thread) { return nullptr; }
 
 private:
     std::vector<BHandler*> fHandlers;

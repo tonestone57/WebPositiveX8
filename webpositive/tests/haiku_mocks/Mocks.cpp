@@ -10,7 +10,7 @@
 #include "Layout.h"
 #include <cstdio>
 
-find_directory_func gMockFindDirectory = MY_NULLPTR;
+find_directory_func gMockFindDirectory = nullptr;
 
 BClipboard::BClipboard(const char* name, bool lookForExternalChanges) : fData(0) { printf("BClipboard constructor\n"); }
 BClipboard sClipboard("system");
@@ -24,7 +24,7 @@ BApplication::BApplication(const char* signature) : BLooper(signature) {
     printf("BApplication constructor\n");
     be_app = this;
 }
-BApplication* be_app = MY_NULLPTR;
+BApplication* be_app = nullptr;
 
 void BWindow::AddChild(BView* view) {}
 
@@ -45,11 +45,11 @@ status_t wait_for_thread(thread_id thread, status_t* exit_value) { if (exit_valu
 
 BView::~BView() {
     if (fParent) fParent->RemoveChild(this);
-    delete fLayout; fLayout = MY_NULLPTR;
+    delete fLayout; fLayout = nullptr;
     auto children = fChildren;
     fChildren.clear();
     for (auto child : children) {
-        child->fParent = MY_NULLPTR; // Prevent child from trying to remove itself from us while we iterate
+        child->fParent = nullptr; // Prevent child from trying to remove itself from us while we iterate
         delete child;
     }
 }
@@ -65,7 +65,7 @@ bool BView::RemoveChild(BView* child) {
     for (std::vector<BView*>::iterator it = fChildren.begin(); it != fChildren.end(); ++it) {
         if (*it == child) {
             fChildren.erase(it);
-            child->fParent = MY_NULLPTR;
+            child->fParent = nullptr;
             return true;
         }
     }

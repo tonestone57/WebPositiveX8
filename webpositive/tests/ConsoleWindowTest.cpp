@@ -3,7 +3,6 @@
  * Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <string.h>
 

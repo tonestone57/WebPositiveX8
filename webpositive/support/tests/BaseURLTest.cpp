@@ -1,4 +1,3 @@
-#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "BaseURL.h"

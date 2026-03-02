@@ -8,7 +8,6 @@
 #ifndef TEXT_CONTROL_COMPLETER_H
 #define TEXT_CONTROL_COMPLETER_H
 
-#include "BeOSCompatibility.h"
 #include <MessageFilter.h>
 
 #include "AutoCompleter.h"
@@ -19,8 +18,8 @@ class BTextView;
 class TextViewCompleter : protected BAutoCompleter, public BMessageFilter {
 public:
 								TextViewCompleter(BTextView* textView,
-									ChoiceModel* choiceModel = MY_NULLPTR,
-									PatternSelector* patternSelector = MY_NULLPTR);
+									ChoiceModel* choiceModel = nullptr,
+									PatternSelector* patternSelector = nullptr);
 	virtual						~TextViewCompleter();
 
 			void				SetModificationsReported(bool reported);

@@ -3,7 +3,6 @@
  *
  * All rights reserved. Distributed under the terms of the MIT License.
  */
-#include "BeOSCompatibility.h"
 #include "AuthenticationPanel.h"
 
 #include <Button.h>
@@ -51,7 +50,7 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 		new BMessage(B_QUIT_REQUESTED))),
 	m_cancelled(false),
 	m_exitSemaphore(create_sem(0, "Authentication Panel")),
-	m_jitterRunner(MY_NULLPTR),
+	m_jitterRunner(nullptr),
 	m_jitterCount(0)
 {
 }
@@ -103,7 +102,7 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 		} else {
 			MoveTo(m_originalPos);
 			delete m_jitterRunner;
-			m_jitterRunner = MY_NULLPTR;
+			m_jitterRunner = nullptr;
 			m_jitterCount = 0;
 		}
 		break;
@@ -172,7 +171,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	float spacing = be_control_look->DefaultItemSpacing();
 	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
 		.Add(BGridLayoutBuilder(0, spacing)
-			.Add(textView, 0, MY_NULLPTR, 2)
+			.Add(textView, 0, nullptr, 2)
 			.Add(m_usernameTextControl->CreateLabelLayoutItem(), 0, 1)
 			.Add(m_usernameTextControl->CreateTextViewLayoutItem(), 1, 1)
 			.Add(m_passwordTextControl->CreateLabelLayoutItem(), 0, 2)

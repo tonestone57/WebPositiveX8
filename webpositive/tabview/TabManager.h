@@ -6,10 +6,9 @@
 #ifndef TAB_MANAGER_H
 #define TAB_MANAGER_H
 
-#include "BeOSCompatibility.h"
-
 #include <Messenger.h>
 #include <TabView.h>
+#include <memory>
 
 enum {
 	TAB_CHANGED = 'tcha',
@@ -73,7 +72,7 @@ private:
 			TabContainerView*	fTabContainerView;
 			BView*				fContainerView;
 			BCardLayout*		fCardLayout;
-			TabManagerController* fController;
+			std::unique_ptr<TabManagerController> fController;
 
 			BMessenger			fTarget;
 };

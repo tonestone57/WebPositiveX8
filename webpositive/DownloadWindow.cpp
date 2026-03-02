@@ -4,7 +4,6 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include "DownloadWindow.h"
 
 #include <new>
@@ -132,7 +131,7 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 		B_AUTO_UPDATE_SIZE_LIMITS | B_ASYNCHRONOUS_CONTROLS | B_NOT_ZOOMABLE),
 	fMinimizeOnClose(false),
 	fQuitting(false),
-	fPendingSaveMessage(MY_NULLPTR),
+	fPendingSaveMessage(nullptr),
 	fSaveLock("download window save lock")
 {
 	fSaveSem = create_sem(0, "download window save sem");
@@ -232,7 +231,7 @@ DownloadWindow::DispatchMessage(BMessage* message, BHandler* target)
 		&& (buttons & B_SECONDARY_MOUSE_BUTTON) != 0) {
 		for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 			DownloadProgressView* view = _ViewAt(i);
-			if (view == MY_NULLPTR)
+			if (view == nullptr)
 				continue;
 			BPoint viewWhere(where);
 			view->ConvertFromScreen(&viewWhere);
@@ -272,7 +271,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 					&download)) == B_OK) {
 				_DownloadStarted(download);
 				BMessage* copy = new(std::nothrow) BMessage(*message);
-				if (copy != MY_NULLPTR)
+				if (copy != nullptr)
 					be_app->PostMessage(copy);
 			}
 			break;
@@ -284,7 +283,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 			if (message->FindPointer("download", reinterpret_cast<void**>(
 					&download)) == B_OK) {
 				DownloadProgressView* view = _FindView(download);
-				if (view != MY_NULLPTR)
+				if (view != nullptr)
 					view->PostMessage(message);
 			}
 			break;
@@ -367,9 +366,9 @@ DownloadWindow::DownloadsInProgress()
 
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
-		if (view == MY_NULLPTR)
+		if (view == nullptr)
 			continue;
-		if (view->Download() != MY_NULLPTR) {
+		if (view->Download() != nullptr) {
 			downloadsInProgress = true;
 			break;
 		}
@@ -423,15 +422,15 @@ DownloadWindow::_DownloadStarted(BWebDownload* download)
 void
 DownloadWindow::_DownloadFinished(BWebDownload* download)
 {
-	if (download != MY_NULLPTR) {
+	if (download != nullptr) {
 		DownloadProgressView* view = _FindView(download);
-		if (view != MY_NULLPTR)
+		if (view != nullptr)
 			view->DownloadFinished();
 	}
 
 	_ValidateButtonStatus();
 
-	if (download != MY_NULLPTR)
+	if (download != nullptr)
 		_SaveSettings();
 }
 
@@ -455,7 +454,7 @@ DownloadWindow::_RemoveDownloads(bool finished, bool missing)
 {
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
-		if (view == MY_NULLPTR)
+		if (view == nullptr)
 			continue;
 
 		if ((finished && view->IsFinished()) || (missing && view->IsMissing()))
@@ -474,7 +473,7 @@ DownloadWindow::_ValidateButtonStatus()
 	int32 missingCount = 0;
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
-		if (view == MY_NULLPTR)
+		if (view == nullptr)
 			continue;
 		if (view->IsFinished())
 			finishedCount++;
@@ -490,13 +489,13 @@ void
 DownloadWindow::_SaveSettings()
 {
 	BMessage* newMessage = new(std::nothrow) BMessage();
-	if (newMessage == MY_NULLPTR)
+	if (newMessage == nullptr)
 		return;
 
 	// Create snapshot of settings on window thread
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
-		if (view == MY_NULLPTR)
+		if (view == nullptr)
 			continue;
 
 		BMessage downloadArchive;
@@ -520,16 +519,16 @@ DownloadWindow::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		BMessage* messageToSave = MY_NULLPTR;
+		BMessage* messageToSave = nullptr;
 
 		self->fSaveLock.Lock();
-		messageToSave = self->fPendingSaveMessage; self->fPendingSaveMessage = MY_NULLPTR;
+		messageToSave = self->fPendingSaveMessage; self->fPendingSaveMessage = nullptr;
 		self->fSaveLock.Unlock();
 
 		if (self->fQuitting && !messageToSave)
 			break;
 
-		if (messageToSave != MY_NULLPTR) {
+		if (messageToSave != nullptr) {
 			BFile file;
 			if (OpenSettingsFile(file, kSettingsFileNameDownloads,
 					B_ERASE_FILE | B_CREATE_FILE | B_WRITE_ONLY) == B_OK) {
@@ -576,7 +575,7 @@ DownloadWindow::_RemoveExistingDownload(const BString& url)
 	int32 index = 0;
 	for (int32 i = fDownloadViewsLayout->CountItems() - 1; i >= 0; i--) {
 		DownloadProgressView* view = _ViewAt(i);
-		if (view == MY_NULLPTR || view->URL() != url)
+		if (view == nullptr || view->URL() != url)
 			continue;
 
 		index = i;
@@ -611,8 +610,8 @@ DownloadProgressView*
 DownloadWindow::_ViewAt(int32 index) const
 {
 	BLayoutItem* item = fDownloadViewsLayout->ItemAt(index);
-	if (item == MY_NULLPTR)
-		return MY_NULLPTR;
+	if (item == nullptr)
+		return nullptr;
 
 	return dynamic_cast<DownloadProgressView*>(item->View());
 }
@@ -630,15 +629,15 @@ DownloadWindow::_RemoveView(int32 index)
 DownloadProgressView*
 DownloadWindow::_FindView(BWebDownload* download)
 {
-	if (download == MY_NULLPTR)
-		return MY_NULLPTR;
+	if (download == nullptr)
+		return nullptr;
 
 	for (int32 i = 0; DownloadProgressView* view = _ViewAt(i); i++) {
 		if (view->Download() == download)
 			return view;
 	}
 
-	return MY_NULLPTR;
+	return nullptr;
 }
 
 

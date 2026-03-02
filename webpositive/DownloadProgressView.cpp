@@ -4,7 +4,6 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include "DownloadProgressView.h"
 
 #include <new>
@@ -81,7 +80,7 @@ public:
 					BEntry entry(path.String());
 					bool exists = entry.Exists();
 					node_ref nref;
-					BBitmap* icon = MY_NULLPTR;
+					BBitmap* icon = nullptr;
 
 					if (exists) {
 						if (entry.GetNodeRef(&nref) != B_OK)
@@ -92,7 +91,7 @@ public:
 							BNodeInfo info(&node);
 							if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
 								delete icon;
-								icon = MY_NULLPTR;
+								icon = nullptr;
 							}
 						}
 					}
@@ -120,7 +119,7 @@ public:
 	}
 };
 
-static AsyncWorker* sAsyncWorker = MY_NULLPTR;
+static AsyncWorker* sAsyncWorker = nullptr;
 static BLocker sAsyncWorkerLock("AsyncWorker lock");
 
 class AsyncWorkerCleanup {
@@ -128,9 +127,9 @@ public:
 	~AsyncWorkerCleanup()
 	{
 		BAutolock _(sAsyncWorkerLock);
-		if (sAsyncWorker != MY_NULLPTR) {
+		if (sAsyncWorker != nullptr) {
 			sAsyncWorker->PostMessage(B_QUIT_REQUESTED);
-			sAsyncWorker = MY_NULLPTR;
+			sAsyncWorker = nullptr;
 		}
 	}
 };
@@ -140,7 +139,7 @@ static AsyncWorker*
 GetAsyncWorker()
 {
 	BAutolock _(sAsyncWorkerLock);
-	if (sAsyncWorker == MY_NULLPTR)
+	if (sAsyncWorker == nullptr)
 		sAsyncWorker = new AsyncWorker();
 	return sAsyncWorker;
 }
@@ -186,7 +185,7 @@ public:
 
 	void SetIconBits(const void* bits, ssize_t size)
 	{
-		if (bits != MY_NULLPTR && size == fIconBitmap.BitsLength()) {
+		if (bits != nullptr && size == fIconBitmap.BitsLength()) {
 			memcpy(fIconBitmap.Bits(), bits, size);
 			Invalidate();
 		}
@@ -246,7 +245,7 @@ private:
 
 class SmallButton : public BButton {
 public:
-	SmallButton(const char* label, BMessage* message = MY_NULLPTR)
+	SmallButton(const char* label, BMessage* message = nullptr)
 		:
 		BButton(label, message)
 	{
@@ -290,9 +289,9 @@ DownloadProgressView::DownloadProgressView(const BMessage* archive)
 bool
 DownloadProgressView::Init(BMessage* archive)
 {
-	fCurrentSize = MY_NULLPTR;
-	fExpectedSize = MY_NULLPTR;
-	fLastUpdateTime = MY_NULLPTR;
+	fCurrentSize = 0;
+	fExpectedSize = 0;
+	fLastUpdateTime = 0;
 
 	fSpeedCalculator.Reset(0, system_time());
 
@@ -320,7 +319,7 @@ DownloadProgressView::Init(BMessage* archive)
 	} else {
 		fTopButton = new SmallButton(B_TRANSLATE("Open"),
 			new BMessage(OPEN_DOWNLOAD));
-		fTopButton->SetEnabled(fDownload == MY_NULLPTR);
+		fTopButton->SetEnabled(fDownload == nullptr);
 	}
 	if (fDownload) {
 		fBottomButton = new SmallButton(B_TRANSLATE("Cancel"),
@@ -328,7 +327,7 @@ DownloadProgressView::Init(BMessage* archive)
 	} else {
 		fBottomButton = new SmallButton(B_TRANSLATE("Remove"),
 			new BMessage(REMOVE_DOWNLOAD));
-		fBottomButton->SetEnabled(fDownload == MY_NULLPTR);
+		fBottomButton->SetEnabled(fDownload == nullptr);
 	}
 
 	fInfoView = new BStringView("info view", "");
@@ -524,7 +523,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 			// restarted). So we create a new window to restart the download
 			// in a fresh context.
 			BMessage* request = new(std::nothrow) BMessage(NEW_WINDOW);
-			if (request != MY_NULLPTR) {
+			if (request != nullptr) {
 				request->AddString("url", fURL);
 				request->AddBool("forDownload", true);
 				if (be_app->PostMessage(request) != B_OK)
@@ -655,7 +654,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 		case COPY_URL_TO_CLIPBOARD:
 			if (be_clipboard->Lock()) {
 				BMessage* data = be_clipboard->Data();
-				if (data != MY_NULLPTR) {
+				if (data != nullptr) {
 					be_clipboard->Clear();
 					data->AddData("text/plain", B_MIME_TYPE, fURL.String(),
 						fURL.Length());
@@ -746,7 +745,7 @@ DownloadProgressView::IsFinished() const
 void
 DownloadProgressView::DownloadFinished()
 {
-	fDownload = MY_NULLPTR;
+	fDownload = nullptr;
 	if (fExpectedSize == -1) {
 		fStatusBar->SetTo(100.0);
 		fExpectedSize = fCurrentSize;
@@ -793,7 +792,7 @@ DownloadProgressView::CancelDownload()
 		fStatusBar->SetBarColor(ui_color(B_FAILURE_COLOR));
 	}
 
-	fDownload = MY_NULLPTR;
+	fDownload = nullptr;
 	fTopButton->SetLabel(B_TRANSLATE("Restart"));
 	fTopButton->SetMessage(new BMessage(RESTART_DOWNLOAD));
 	fTopButton->SetEnabled(true);

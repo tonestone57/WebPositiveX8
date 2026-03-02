@@ -29,7 +29,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "BeOSCompatibility.h"
 #include "BrowserWindow.h"
 
 #include <Alert.h>
@@ -170,24 +169,24 @@ public:
 					|| message->FindString("url", &url) != B_OK)
 					break;
 
-				BBitmap* miniIcon = MY_NULLPTR;
-				BBitmap* largeIcon = MY_NULLPTR;
+				BBitmap* miniIcon = nullptr;
+				BBitmap* largeIcon = nullptr;
 
 				BMessage miniIconMsg;
 				if (message->FindMessage("miniIcon", &miniIconMsg) == B_OK) {
 					miniIcon = new(std::nothrow) BBitmap(&miniIconMsg);
-					if (miniIcon != MY_NULLPTR && miniIcon->InitCheck() != B_OK) {
+					if (miniIcon != nullptr && miniIcon->InitCheck() != B_OK) {
 						delete miniIcon;
-						miniIcon = MY_NULLPTR;
+						miniIcon = nullptr;
 					}
 				}
 
 				BMessage largeIconMsg;
 				if (message->FindMessage("largeIcon", &largeIconMsg) == B_OK) {
 					largeIcon = new(std::nothrow) BBitmap(&largeIconMsg);
-					if (largeIcon != MY_NULLPTR && largeIcon->InitCheck() != B_OK) {
+					if (largeIcon != nullptr && largeIcon->InitCheck() != B_OK) {
 						delete largeIcon;
-						largeIcon = MY_NULLPTR;
+						largeIcon = nullptr;
 					}
 				}
 
@@ -284,16 +283,16 @@ private:
 			// if any were provided.
 			if (status == B_OK) {
 				status_t ret = B_OK;
-				if (miniIcon != MY_NULLPTR) {
+				if (miniIcon != nullptr) {
 					ret = nodeInfo.SetIcon(miniIcon, B_MINI_ICON);
 					if (ret != B_OK) {
 						fprintf(stderr, "Failed to store mini icon for bookmark: "
 							"%s\n", strerror(ret));
 					}
 				}
-				if (largeIcon != MY_NULLPTR && ret == B_OK)
+				if (largeIcon != nullptr && ret == B_OK)
 					ret = nodeInfo.SetIcon(largeIcon, B_LARGE_ICON);
-				else if (largeIcon == MY_NULLPTR && miniIcon != MY_NULLPTR && ret == B_OK) {
+				else if (largeIcon == nullptr && miniIcon != nullptr && ret == B_OK) {
 					// If largeIcon is not available but miniIcon is, use a magnified miniIcon instead.
 					BBitmap substituteLargeIcon(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK,
 						B_CMAP8);
@@ -333,7 +332,7 @@ private:
 				"%error"));
 			message.ReplaceFirst("%error", strerror(status));
 			BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-				message.String(), B_TRANSLATE("OK"), 0, MY_NULLPTR,
+				message.String(), B_TRANSLATE("OK"), 0, nullptr,
 				B_WIDTH_AS_USUAL, B_STOP_ALERT);
 			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 			alert->Go();
@@ -343,7 +342,7 @@ private:
 };
 
 
-static BookmarkWorker* sBookmarkWorker = MY_NULLPTR;
+static BookmarkWorker* sBookmarkWorker = nullptr;
 static BLocker sBookmarkWorkerLock("BookmarkWorker lock");
 
 
@@ -352,9 +351,9 @@ public:
 	~BookmarkWorkerCleanup()
 	{
 		BAutolock _(sBookmarkWorkerLock);
-		if (sBookmarkWorker != MY_NULLPTR) {
+		if (sBookmarkWorker != nullptr) {
 			sBookmarkWorker->PostMessage(B_QUIT_REQUESTED);
-			sBookmarkWorker = MY_NULLPTR;
+			sBookmarkWorker = nullptr;
 		}
 	}
 };
@@ -365,7 +364,7 @@ static BookmarkWorker*
 GetBookmarkWorker()
 {
 	BAutolock _(sBookmarkWorkerLock);
-	if (sBookmarkWorker == MY_NULLPTR)
+	if (sBookmarkWorker == nullptr)
 		sBookmarkWorker = new BookmarkWorker();
 	return sBookmarkWorker;
 }
@@ -460,11 +459,11 @@ public:
 
 	void SetPageIcon(const BBitmap* icon)
 	{
-		if (icon == MY_NULLPTR) {
+		if (icon == nullptr) {
 			delete fPageIcon;
-			fPageIcon = MY_NULLPTR;
+			fPageIcon = nullptr;
 			delete fPageLargeIcon;
-			fPageLargeIcon = MY_NULLPTR;
+			fPageLargeIcon = nullptr;
 			return;
 		}
 
@@ -892,7 +891,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	else
 		_ShowBookmarkBar(false);
 
-	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), 0, MY_NULLPTR,
+	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), 0, nullptr,
 		false);
 
 	// Layout
@@ -903,7 +902,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 #endif
 	topView->AddChild(fTabManager->TabGroup());
 	topView->AddChild(navigationGroup);
-	if (fBookmarkBar != MY_NULLPTR)
+	if (fBookmarkBar != nullptr)
 		topView->AddChild(fBookmarkBar);
 	topView->AddChild(fTabManager->ContainerView());
 	topView->AddChild(findGroup);
@@ -1227,7 +1226,7 @@ BrowserWindow::MessageReceived(BMessage* message)
 		case B_SIMPLE_DATA:
 		{
 			const char* filetype = message->GetString("be:filetypes");
-			if (filetype != MY_NULLPTR
+			if (filetype != nullptr
 				&& strcmp(filetype, "application/x-vnd.Be-bookmark") == 0
 				&& LastMouseMovedView() == fBookmarkBar) {
 				// Something that can be made into a bookmark (e.g. the page icon)
@@ -1286,7 +1285,7 @@ BrowserWindow::MessageReceived(BMessage* message)
 			fZoomTextOnly = !fZoomTextOnly;
 			fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
 			fAppSettings->SetValue("zoom text only", fZoomTextOnly);
-			if (CurrentWebView() != MY_NULLPTR)
+			if (CurrentWebView() != nullptr)
 				CurrentWebView()->SetZoomTextOnly(fZoomTextOnly);
 			break;
 
@@ -1333,7 +1332,7 @@ BrowserWindow::MessageReceived(BMessage* message)
 		case EDIT_HIDE_FIND_GROUP:
 			if (fFindGroup->IsVisible()) {
 				fFindGroup->SetVisible(false);
-				if (CurrentWebView() != MY_NULLPTR)
+				if (CurrentWebView() != nullptr)
 					CurrentWebView()->MakeFocus(true);
 			}
 			break;
@@ -1343,9 +1342,9 @@ BrowserWindow::MessageReceived(BMessage* message)
 		case B_PASTE:
 		{
 			BTextView* textView = dynamic_cast<BTextView*>(CurrentFocus());
-			if (textView != MY_NULLPTR)
+			if (textView != nullptr)
 				textView->MessageReceived(message);
-			else if (CurrentWebView() != MY_NULLPTR)
+			else if (CurrentWebView() != nullptr)
 				CurrentWebView()->MessageReceived(message);
 			break;
 		}
@@ -1491,7 +1490,7 @@ BrowserWindow::MessageReceived(BMessage* message)
 		case B_COPY_TARGET:
 		{
 			const char* filetype = message->GetString("be:filetypes");
-			if (filetype != MY_NULLPTR && strcmp(filetype, "application/x-vnd.Be-bookmark") == 0) {
+			if (filetype != nullptr && strcmp(filetype, "application/x-vnd.Be-bookmark") == 0) {
 				// Tracker replied after the user dragged and dropped something
 				// that can be bookmarked (e.g. the page icon) to a Tracker window.
 				_CreateBookmark(message);
@@ -1518,7 +1517,7 @@ BrowserWindow::Archive(BMessage* archive, bool deep) const
 
 	for (int i = 0; i < fTabManager->CountTabs(); i++) {
 		BWebView* view = dynamic_cast<BWebView*>(fTabManager->ViewForTab(i));
-		if (view == MY_NULLPTR) {
+		if (view == nullptr) {
 			continue;
 		}
 
@@ -1604,13 +1603,13 @@ BrowserWindow::SetCurrentWebView(BWebView* webView)
 	if (webView == CurrentWebView())
 		return;
 
-	if (CurrentWebView() != MY_NULLPTR) {
+	if (CurrentWebView() != nullptr) {
 		// Remember the currently focused view before switching tabs,
 		// so that we can revert the focus when switching back to this tab
 		// later.
 		PageUserData* userData = static_cast<PageUserData*>(
 			CurrentWebView()->GetUserData());
-		if (userData == MY_NULLPTR) {
+		if (userData == nullptr) {
 			userData = new PageUserData(CurrentFocus());
 			CurrentWebView()->SetUserData(userData);
 		}
@@ -1625,7 +1624,7 @@ BrowserWindow::SetCurrentWebView(BWebView* webView)
 
 	BWebWindow::SetCurrentWebView(webView);
 
-	if (webView != MY_NULLPTR) {
+	if (webView != nullptr) {
 		webView->SetAutoHidePointer(fAutoHidePointer);
 
 		_UpdateTitle(webView->MainFrameTitle());
@@ -1633,11 +1632,11 @@ BrowserWindow::SetCurrentWebView(BWebView* webView)
 		// Restore the previous focus or focus the web view.
 		PageUserData* userData = static_cast<PageUserData*>(
 			webView->GetUserData());
-		BView* focusedView = MY_NULLPTR;
-		if (userData != MY_NULLPTR)
+		BView* focusedView = nullptr;
+		if (userData != nullptr)
 			focusedView = userData->FocusedView();
 
-		if (focusedView != MY_NULLPTR
+		if (focusedView != nullptr
 			&& viewIsChild(GetLayout()->View(), focusedView)) {
 			focusedView->MakeFocus(true);
 		} else
@@ -1647,7 +1646,7 @@ BrowserWindow::SetCurrentWebView(BWebView* webView)
 		fURLInputGroup->LockURLInput(false);
 			// Unlock it so the following code can update the URL
 
-		if (userData != MY_NULLPTR) {
+		if (userData != nullptr) {
 			fURLInputGroup->SetPageIcon(userData->PageIcon(),
 				userData->PageLargeIcon());
 			if (userData->URLInputContents().Length())
@@ -1678,7 +1677,7 @@ BrowserWindow::SetCurrentWebView(BWebView* webView)
 bool
 BrowserWindow::IsBlankTab() const
 {
-	if (CurrentWebView() == MY_NULLPTR)
+	if (CurrentWebView() == nullptr)
 		return false;
 	BString requestedURL = CurrentWebView()->MainFrameRequestedURL();
 	return requestedURL.Length() == 0
@@ -1690,9 +1689,9 @@ void
 BrowserWindow::CreateNewTab(const BString& _url, bool select,
 	BWebView* webView)
 {
-	bool applyNewPagePolicy = webView == MY_NULLPTR;
+	bool applyNewPagePolicy = webView == nullptr;
 	// Executed in app thread (new BWebPage needs to be created in app thread).
-	if (webView == MY_NULLPTR)
+	if (webView == nullptr)
 		webView = new BWebView("web view", fContext);
 
 	bool isNewWindow = fTabManager->CountTabs() == 0;
@@ -1816,7 +1815,7 @@ BrowserWindow::LoadNegotiating(const BString& url, BWebView* view)
 		// the correct URL when they switch back to that tab.
 		PageUserData* userData = static_cast<PageUserData*>(
 			view->GetUserData());
-		if (userData != MY_NULLPTR && userData->URLInputContents().Length() == 0) {
+		if (userData != nullptr && userData->URLInputContents().Length() == 0) {
 			userData->SetURLInputContents(url);
 		}
 	}
@@ -1911,7 +1910,7 @@ BrowserWindow::LoadFinished(const BString& url, BWebView* view)
 
 	int32 tabIndex = fTabManager->TabForView(view);
 	if (tabIndex > 0 && strcmp(B_TRANSLATE("New tab"),
-		fTabManager->TabLabel(tabIndex)) == MY_NULLPTR)
+		fTabManager->TabLabel(tabIndex)) == nullptr)
 			fTabManager->SetTabLabel(tabIndex, url);
 }
 
@@ -2143,7 +2142,7 @@ BrowserWindow::UpdateGlobalHistory(const BString& url)
 	BrowsingHistory::DefaultInstance()->AddItem(BrowsingHistoryItem(url));
 
 	BWebView* webView = CurrentWebView();
-	if (webView != MY_NULLPTR)
+	if (webView != nullptr)
 		fURLInputGroup->SetText(webView->MainFrameURL());
 }
 
@@ -2207,7 +2206,7 @@ BrowserWindow::_UpdateTitle(const BString& title)
 		windowTitle = title;
 	else {
 		BWebView* webView = CurrentWebView();
-		if (webView != MY_NULLPTR) {
+		if (webView != nullptr) {
 			BString url = webView->MainFrameURL();
 			int32 leafPos = url.FindLast('/');
 			url.Remove(0, leafPos + 1);
@@ -2249,7 +2248,7 @@ BrowserWindow::_ShutdownTab(int32 index)
 	BWebView* webView = dynamic_cast<BWebView*>(view);
 	if (webView == CurrentWebView())
 		SetCurrentWebView(0);
-	if (webView != MY_NULLPTR) {
+	if (webView != nullptr) {
 		webView->Shutdown();
 		delete webView->GetUserData();
 		delete webView;
@@ -2276,7 +2275,7 @@ BrowserWindow::_BookmarkPath(BPath& path) const
 }
 
 /*! If fileName is an empty BString, a valid file name will be derived from title.
-	miniIcon and largeIcon may be MY_NULLPTR.
+	miniIcon and largeIcon may be nullptr.
 */
 void
 BrowserWindow::_CreateBookmark(const BPath& path, BString fileName, const BString& title,
@@ -2287,12 +2286,12 @@ BrowserWindow::_CreateBookmark(const BPath& path, BString fileName, const BStrin
 	message->AddString("fileName", fileName);
 	message->AddString("title", title);
 	message->AddString("url", url);
-	if (miniIcon != MY_NULLPTR) {
+	if (miniIcon != nullptr) {
 		BMessage archive;
 		if (miniIcon->Archive(&archive) == B_OK)
 			message->AddMessage("miniIcon", &archive);
 	}
-	if (largeIcon != MY_NULLPTR) {
+	if (largeIcon != nullptr) {
 		BMessage archive;
 		if (largeIcon->Archive(&archive) == B_OK)
 			message->AddMessage("largeIcon", &archive);
@@ -2320,15 +2319,15 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 			// This string is only present if the message originated from Tracker (drag and drop).
 			fileName = "";
 		}
-		BBitmap* miniIcon = MY_NULLPTR;
-		BBitmap* largeIcon = MY_NULLPTR;
+		BBitmap* miniIcon = nullptr;
+		BBitmap* largeIcon = nullptr;
 
 		const void* bits;
 		ssize_t length;
 		if (originatorData.FindData("miniIcon", B_COLOR_8_BIT_TYPE, &bits,
 				&length) == B_OK) {
 			miniIcon = new(std::nothrow) BBitmap(BRect(0, 0, 15, 15), B_BITMAP_NO_SERVER_LINK, B_CMAP8);
-			if (miniIcon != MY_NULLPTR && miniIcon->InitCheck() == B_OK
+			if (miniIcon != nullptr && miniIcon->InitCheck() == B_OK
 				&& length == (ssize_t)miniIcon->BitsLength()) {
 				memcpy(miniIcon->Bits(), bits, length);
 			}
@@ -2336,7 +2335,7 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 		if (originatorData.FindData("largeIcon", B_COLOR_8_BIT_TYPE, &bits,
 				&length) == B_OK) {
 			largeIcon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK, B_CMAP8);
-			if (largeIcon != MY_NULLPTR && largeIcon->InitCheck() == B_OK
+			if (largeIcon != nullptr && largeIcon->InitCheck() == B_OK
 				&& length == (ssize_t)largeIcon->BitsLength()) {
 				memcpy(largeIcon->Bits(), bits, length);
 			}
@@ -2348,7 +2347,7 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 			BString message(B_TRANSLATE("There was an error setting up "
 				"the bookmark."));
 			BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-				message.String(), B_TRANSLATE("OK"), 0, MY_NULLPTR,
+				message.String(), B_TRANSLATE("OK"), 0, nullptr,
 				B_WIDTH_AS_USUAL, B_STOP_ALERT);
 			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 			alert->Go();
@@ -2370,15 +2369,15 @@ BrowserWindow::_CreateBookmark()
 	BPath path;
 	status_t status = _BookmarkPath(path);
 
-	BBitmap* miniIcon = MY_NULLPTR;
-	BBitmap* largeIcon = MY_NULLPTR;
+	BBitmap* miniIcon = nullptr;
+	BBitmap* largeIcon = nullptr;
 	PageUserData* userData = static_cast<PageUserData*>(CurrentWebView()->GetUserData());
-	if (userData != MY_NULLPTR) {
-		if (userData->PageIcon() != MY_NULLPTR) {
+	if (userData != nullptr) {
+		if (userData->PageIcon() != nullptr) {
 			miniIcon = new BBitmap(BRect(0, 0, 15, 15), B_CMAP8);
 			miniIcon->ImportBits(userData->PageIcon());
 		}
-		if (userData->PageLargeIcon() != MY_NULLPTR) {
+		if (userData->PageLargeIcon() != nullptr) {
 			largeIcon = new BBitmap(BRect(0, 0, 31, 31), B_CMAP8);
 			largeIcon->ImportBits(userData->PageLargeIcon());
 		}
@@ -2392,7 +2391,7 @@ BrowserWindow::_CreateBookmark()
 			"variable %error"));
 		message.ReplaceFirst("%error", strerror(status));
 		BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-			message.String(), B_TRANSLATE("OK"), 0, MY_NULLPTR,
+			message.String(), B_TRANSLATE("OK"), 0, nullptr,
 			B_WIDTH_AS_USUAL, B_STOP_ALERT);
 		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 		alert->Go();
@@ -2421,7 +2420,7 @@ BrowserWindow::_ShowBookmarks()
 			"Don't translate variable %error"));
 		message.ReplaceFirst("%error", strerror(status));
 		BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-			message.String(), B_TRANSLATE("OK"), 0, MY_NULLPTR,
+			message.String(), B_TRANSLATE("OK"), 0, nullptr,
 			B_WIDTH_AS_USUAL, B_STOP_ALERT);
 		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 		alert->Go();
@@ -2485,9 +2484,9 @@ void
 BrowserWindow::_SetPageIcon(BWebView* view, const BBitmap* icon)
 {
 	PageUserData* userData = static_cast<PageUserData*>(view->GetUserData());
-	if (userData == MY_NULLPTR) {
+	if (userData == nullptr) {
 		userData = new(std::nothrow) PageUserData(0);
-		if (userData == MY_NULLPTR)
+		if (userData == nullptr)
 			return;
 		view->SetUserData(userData);
 	}
@@ -2497,9 +2496,9 @@ BrowserWindow::_SetPageIcon(BWebView* view, const BBitmap* icon)
 
 	const BBitmap* miniIcon = userData->PageIcon();
 	const BBitmap* largeIcon = userData->PageLargeIcon();
-	if (miniIcon == MY_NULLPTR)
+	if (miniIcon == nullptr)
 		miniIcon = largeIcon;
-	if (largeIcon == MY_NULLPTR)
+	if (largeIcon == nullptr)
 		largeIcon = miniIcon;
 
 	fTabManager->SetTabIcon(view, miniIcon);
@@ -2601,7 +2600,7 @@ BrowserWindow::_UpdateHistoryMenu()
 
 	for (int32 i = 0; i < count; i++) {
 		const BrowsingHistoryItem* historyItem = history->ItemAt(i);
-		if (historyItem == MY_NULLPTR)
+		if (historyItem == nullptr)
 			continue;
 		BMessage* message = new BMessage(GOTO_URL);
 		message->AddString("url", historyItem->URL().String());
@@ -2641,7 +2640,7 @@ void
 BrowserWindow::_UpdateClipboardItems()
 {
 	BTextView* focusTextView = dynamic_cast<BTextView*>(CurrentFocus());
-	if (focusTextView != MY_NULLPTR) {
+	if (focusTextView != nullptr) {
 		int32 selectionStart;
 		int32 selectionEnd;
 		focusTextView->GetSelection(&selectionStart, &selectionEnd);
@@ -2650,14 +2649,14 @@ BrowserWindow::_UpdateClipboardItems()
 		// A BTextView has the focus.
 		if (be_clipboard->Lock()) {
 			BMessage* data = be_clipboard->Data();
-			if (data != MY_NULLPTR)
+			if (data != nullptr)
 				canPaste = data->HasData("text/plain", B_MIME_TYPE);
 			be_clipboard->Unlock();
 		}
 		fCutMenuItem->SetEnabled(hasSelection);
 		fCopyMenuItem->SetEnabled(hasSelection);
 		fPasteMenuItem->SetEnabled(canPaste);
-	} else if (CurrentWebView() != MY_NULLPTR) {
+	} else if (CurrentWebView() != nullptr) {
 		// Trigger update of the clipboard items, even if the
 		// BWebView doesn't have focus, we'll dispatch these message
 		// there anyway. This works so fast that the user can never see
@@ -2719,7 +2718,7 @@ BrowserWindow::_SetAutoHideInterfaceInFullscreen(bool doIt)
 		fPulseRunner = new BMessageRunner(BMessenger(this), &message, 300000);
 	} else {
 		delete fPulseRunner;
-		fPulseRunner = MY_NULLPTR;
+		fPulseRunner = nullptr;
 		_ShowInterface(true);
 	}
 }
@@ -2729,7 +2728,7 @@ void
 BrowserWindow::_CheckAutoHideInterface()
 {
 	if (!fIsFullscreen || !fAutoHideInterfaceInFullscreenMode
-		|| (CurrentWebView() != MY_NULLPTR && !CurrentWebView()->IsFocus())) {
+		|| (CurrentWebView() != nullptr && !CurrentWebView()->IsFocus())) {
 		return;
 	}
 
@@ -2781,7 +2780,7 @@ BrowserWindow::_ShowProgressBar(bool show)
 {
 	if (show) {
 		if (!fStatusGroup->IsVisible() && (fVisibleInterfaceElements
-			& INTERFACE_ELEMENT_STATUS) != MY_NULLPTR)
+			& INTERFACE_ELEMENT_STATUS) != nullptr)
 				fStatusGroup->SetVisible(true);
 		fLoadingProgressBar->Show();
 	} else {
@@ -2821,7 +2820,7 @@ BrowserWindow::_NewTabURL(bool isNewWindow) const
 			url.ReplaceAll("%s", "");
 			break;
 		case CloneCurrentPage:
-			if (CurrentWebView() != MY_NULLPTR)
+			if (CurrentWebView() != nullptr)
 				url = CurrentWebView()->MainFrameURL();
 			break;
 		case OpenBlankPage:
@@ -2876,7 +2875,7 @@ BrowserWindow::_VisitSearchEngine(const BString& search)
 	BString engine(fSearchPageURL);
 
 	// Check if the string starts with one of the search engine shortcuts
-	for (int i = 0; kSearchEngines[i].url != MY_NULLPTR; i++) {
+	for (int i = 0; kSearchEngines[i].url != nullptr; i++) {
 		if (kSearchEngines[i].shortcut == searchPrefix) {
 			engine = kSearchEngines[i].url;
 			searchQuery.Remove(0, 2);
@@ -2947,7 +2946,7 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 			temp = "application/x-vnd.Be.URL.";
 			temp += proto;
 
-			const char* argv[] = { url.String(), MY_NULLPTR };
+			const char* argv[] = { url.String(), nullptr };
 
 			if (be_roster->Launch(temp.String(), 1, argv) == B_OK)
 				return;
@@ -3005,7 +3004,7 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 status_t
 BrowserWindow::_HandlePageSourceThread(void* data)
 {
-	if (data == MY_NULLPTR)
+	if (data == nullptr)
 		return B_BAD_VALUE;
 	BMessage* message = static_cast<BMessage*>(data);
 
@@ -3057,7 +3056,7 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		if (ret == B_OK) {
 			BString pathString(pathToPageSource.Path());
 			char* path = strdup(pathString.String());
-			if (path == MY_NULLPTR) {
+			if (path == nullptr) {
 				ret = B_NO_MEMORY;
 			} else {
 				fd = mkstemps(path, extension.Length() + 1);
@@ -3125,11 +3124,11 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 void
 BrowserWindow::_HandlePageSourceResult(const BMessage* message)
 {
-	if (message == MY_NULLPTR)
+	if (message == nullptr)
 		return;
 
 	BMessage* messageCopy = new(std::nothrow) BMessage(*message);
-	if (messageCopy == MY_NULLPTR)
+	if (messageCopy == nullptr)
 		return;
 
 	thread_id thread = spawn_thread(_HandlePageSourceThread,
@@ -3145,7 +3144,7 @@ void
 BrowserWindow::_ShowBookmarkBar(bool show)
 {
 	// It is not allowed to show the bookmark bar when it is empty
-	if (show && (fBookmarkBar == MY_NULLPTR || fBookmarkBar->CountItems() <= 1))
+	if (show && (fBookmarkBar == nullptr || fBookmarkBar->CountItems() <= 1))
 	{
 		fBookmarkBarMenuItem->SetMarked(false);
 		return;
@@ -3153,7 +3152,7 @@ BrowserWindow::_ShowBookmarkBar(bool show)
 
 	fBookmarkBarMenuItem->SetMarked(show);
 
-	if (fBookmarkBar == MY_NULLPTR || fBookmarkBar->IsHidden() != show)
+	if (fBookmarkBar == nullptr || fBookmarkBar->IsHidden() != show)
 		return;
 
 	fAppSettings->SetValue(kSettingsShowBookmarkBar, show);
