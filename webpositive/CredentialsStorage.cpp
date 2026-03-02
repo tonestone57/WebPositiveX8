@@ -4,7 +4,6 @@
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include "CredentialsStorage.h"
 
 #include <new>
@@ -56,7 +55,7 @@ Credentials::Credentials(const BMessage* archive)
 	:
 	fIsSecure(false)
 {
-	if (archive == MY_NULLPTR)
+	if (archive == nullptr)
 		return;
 	archive->FindString("username", &fUsername);
 }
@@ -70,7 +69,7 @@ Credentials::~Credentials()
 status_t
 Credentials::Archive(BMessage* archive) const
 {
-	if (archive == MY_NULLPTR)
+	if (archive == nullptr)
 		return B_BAD_VALUE;
 	status_t status = archive->AddString("username", fUsername);
 	if (status == B_OK && !fIsSecure && fPassword.Length() > 0)
@@ -159,7 +158,7 @@ CredentialsStorage::CredentialsStorage(bool persistent)
 	fIsLoading(false),
 	fPersistent(persistent),
 	fQuitting(false),
-	fPendingSaveMessage(MY_NULLPTR),
+	fPendingSaveMessage(nullptr),
 	fSaveLock("credentials save lock")
 {
 	fSaveSem = create_sem(0, "credentials save sem");
@@ -398,8 +397,8 @@ CredentialsStorage::_SaveSettings()
 	if (!fPersistent)
 		return;
 
-	BMessage* newMessage = new(std::nothrow) BMessage();
-	if (newMessage == MY_NULLPTR)
+	std::unique_ptr<BMessage> newMessage(new(std::nothrow) BMessage());
+	if (newMessage == nullptr)
 		return;
 
 	BMessage credentialsArchive;
@@ -421,7 +420,7 @@ CredentialsStorage::_SaveSettings()
 	}
 
 	fSaveLock.Lock();
-	delete fPendingSaveMessage; fPendingSaveMessage = newMessage;
+	fPendingSaveMessage = std::move(newMessage);
 	fSaveLock.Unlock();
 
 	release_sem(fSaveSem);
@@ -436,20 +435,20 @@ CredentialsStorage::_SaveThread(void* data)
 	while (true) {
 		acquire_sem(self->fSaveSem);
 
-		BMessage* messageToSave = MY_NULLPTR;
+		std::unique_ptr<BMessage> messageToSave;
 
 		self->fSaveLock.Lock();
-		messageToSave = self->fPendingSaveMessage; self->fPendingSaveMessage = MY_NULLPTR;
+		messageToSave = std::move(self->fPendingSaveMessage);
 		self->fSaveLock.Unlock();
 
 		if (self->fQuitting && !messageToSave)
 			break;
 
-		if (messageToSave != MY_NULLPTR) {
+		if (messageToSave != nullptr) {
 			BFile settingsFile;
 			if (OpenSettingsFile(settingsFile, kSettingsFileNameCredentialsStorage,
 					B_CREATE_FILE | B_ERASE_FILE | B_WRITE_ONLY) == B_OK) {
-				messageToSave->Flatten(&settingsFile); delete messageToSave;
+				messageToSave->Flatten(&settingsFile);
 			}
 		}
 

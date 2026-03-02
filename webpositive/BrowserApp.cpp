@@ -26,7 +26,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "BeOSCompatibility.h"
 #include "BrowserApp.h"
 
 #include <new>
@@ -76,18 +75,18 @@ BrowserApp::BrowserApp()
 	BApplication(kApplicationSignature),
 	fWindowCount(0),
 	fLastWindowFrame(50, 50, 950, 750),
-	fLaunchRefsMessage(MY_NULLPTR),
+	fLaunchRefsMessage(nullptr),
 	fInitialized(false),
-	fSettings(MY_NULLPTR),
-	fCookies(MY_NULLPTR),
+	fSettings(nullptr),
+	fCookies(nullptr),
 	fCookiesLoaded(false),
 	fCookieLoaderThread(-1),
-	fSession(MY_NULLPTR),
-	fContext(MY_NULLPTR),
-	fDownloadWindow(MY_NULLPTR),
-	fSettingsWindow(MY_NULLPTR),
-	fConsoleWindow(MY_NULLPTR),
-	fCookieWindow(MY_NULLPTR)
+	fSession(nullptr),
+	fContext(nullptr),
+	fDownloadWindow(nullptr),
+	fSettingsWindow(nullptr),
+	fConsoleWindow(nullptr),
+	fCookieWindow(nullptr)
 {
 #ifdef __i386__
 	// First let's check SSE2 is available
@@ -154,7 +153,7 @@ BrowserApp::AboutRequested()
 		"Ryan Leavengood",
 		"Michael Lotz",
 		"Maxime Simon",
-		MY_NULLPTR
+		nullptr
 	};
 
 	BString aboutText("");
@@ -260,7 +259,7 @@ BrowserApp::ReadyToRun()
 		// If requested not to load previous session
 		if (fStartUpPolicy == StartNewSession) {
 			// Check if lauchrefs will open a page
-			if (fLaunchRefsMessage == MY_NULLPTR) {
+			if (fLaunchRefsMessage == nullptr) {
 				// else open new window
 				PostMessage(NEW_WINDOW);
 			}
@@ -278,7 +277,7 @@ BrowserApp::ReadyToRun()
 				fSettings, url, fContext, INTERFACE_ELEMENT_ALL, 0,
 					workspaces);
 
-				if (window != MY_NULLPTR) {
+				if (window != nullptr) {
 					window->Show();
 					pagesCreated++;
 
@@ -292,15 +291,15 @@ BrowserApp::ReadyToRun()
 		}
 	}
 	// If there is fLauchRefs message,
-	if (fLaunchRefsMessage != MY_NULLPTR) {
+	if (fLaunchRefsMessage != nullptr) {
 		_RefsReceived(fLaunchRefsMessage, &pagesCreated, &fullscreen);
 		delete fLaunchRefsMessage;
-		fLaunchRefsMessage = MY_NULLPTR;
+		fLaunchRefsMessage = nullptr;
 	}
 
 	// If previous session did not contain any window on this workspace, create a new empty one.
 	BrowserWindow* window = _FindWindowOnCurrentWorkspace();
-	if (pagesCreated == 0 || window == MY_NULLPTR)
+	if (pagesCreated == 0 || window == nullptr)
 		_CreateNewWindow("", fullscreen);
 
 	PostMessage(PRELOAD_BROWSING_HISTORY);
@@ -316,13 +315,13 @@ BrowserApp::MessageReceived(BMessage* message)
 		BrowsingHistory::DefaultInstance();
 		break;
 	case MSG_COOKIES_LOADED: {
-		if (fCookies != MY_NULLPTR) {
+		if (fCookies != nullptr) {
 			BMessage cookieArchive;
 			cookieArchive = fCookies->GetValue("cookies", cookieArchive);
 			fContext->SetCookieJar(
 				BPrivate::Network::BNetworkCookieJar(&cookieArchive));
 
-			if (fCookieWindow != MY_NULLPTR)
+			if (fCookieWindow != nullptr)
 				fCookieWindow->SetCookieJar(fContext->GetCookieJar());
 
 			fCookiesLoaded = true;
@@ -393,7 +392,7 @@ BrowserApp::MessageReceived(BMessage* message)
 		for (int i = 0; BWindow* window = WindowAt(i); i++) {
 			if (dynamic_cast<BrowserWindow*>(window)) {
 				BMessage* copy = new(std::nothrow) BMessage(*message);
-				if (copy != MY_NULLPTR)
+				if (copy != nullptr)
 					window->PostMessage(copy);
 			}
 		}
@@ -507,7 +506,7 @@ BrowserApp::QuitRequested()
 		fCookieLoaderThread = -1;
 	}
 
-	if (fCookies != MY_NULLPTR && fCookiesLoaded) {
+	if (fCookies != nullptr && fCookiesLoaded) {
 		BMessage cookieArchive;
 		BPrivate::Network::BNetworkCookieJar& cookieJar = fContext->GetCookieJar();
 		cookieJar.PurgeForExit();
@@ -524,12 +523,12 @@ BrowserApp::_RefsReceived(BMessage* message, int32* _pagesCreated,
 	bool* _fullscreen)
 {
 	int32 pagesCreated = 0;
-	if (_pagesCreated != MY_NULLPTR)
+	if (_pagesCreated != nullptr)
 		pagesCreated = *_pagesCreated;
 
-	BrowserWindow* window = MY_NULLPTR;
+	BrowserWindow* window = nullptr;
 	if (message->FindPointer("window", (void**)&window) != B_OK)
-		window = MY_NULLPTR;
+		window = nullptr;
 
 	bool fullscreen;
 	if (message->FindBool("fullscreen", &fullscreen) != B_OK)
@@ -555,9 +554,9 @@ BrowserApp::_RefsReceived(BMessage* message, int32* _pagesCreated,
 		pagesCreated++;
 	}
 
-	if (_pagesCreated != MY_NULLPTR)
+	if (_pagesCreated != nullptr)
 		*_pagesCreated = pagesCreated;
-	if (_fullscreen != MY_NULLPTR)
+	if (_fullscreen != nullptr)
 		*_fullscreen = fullscreen;
 }
 
@@ -565,12 +564,12 @@ BrowserApp::_RefsReceived(BMessage* message, int32* _pagesCreated,
 BrowserWindow*
 BrowserApp::_FindWindowOnCurrentWorkspace()
 {
-	BrowserWindow* windowOnCurrentWorkspace = MY_NULLPTR;
+	BrowserWindow* windowOnCurrentWorkspace = nullptr;
 	uint32 workspace = 1 << current_workspace();
 
 	for (int i = 0; BWindow* window = WindowAt(i); i++) {
 		BrowserWindow* webWindow = dynamic_cast<BrowserWindow*>(window);
-		if (webWindow == MY_NULLPTR)
+		if (webWindow == nullptr)
 			continue;
 
 		if (webWindow->Lock()) {
@@ -581,7 +580,7 @@ BrowserApp::_FindWindowOnCurrentWorkspace()
 				return windowOnCurrentWorkspace;
 		}
 	}
-	return MY_NULLPTR;
+	return nullptr;
 }
 
 
@@ -590,7 +589,7 @@ BrowserApp::_CreateNewPage(const BString& url, BrowserWindow* webWindow,
 	bool fullscreen, bool useBlankTab)
 {
 	// Let's first see if we must target a specific window...
-	if (webWindow != MY_NULLPTR && webWindow->Lock()) {
+	if (webWindow != nullptr && webWindow->Lock()) {
 		if (useBlankTab && webWindow->IsBlankTab()) {
 			if (url.Length() != 0)
 				webWindow->CurrentWebView()->LoadURL(url);
@@ -606,7 +605,7 @@ BrowserApp::_CreateNewPage(const BString& url, BrowserWindow* webWindow,
 	bool loadedInWindowOnCurrentWorkspace = false;
 	BrowserWindow* window = _FindWindowOnCurrentWorkspace();
 
-	if (window == MY_NULLPTR)
+	if (window == nullptr)
 		return _CreateNewWindow(url, fullscreen);
 
 
@@ -688,7 +687,7 @@ BrowserApp::_CookieLoaderThread(void* data)
 	SettingsMessage* cookies = new(std::nothrow) SettingsMessage(
 		B_USER_SETTINGS_DIRECTORY, cookieStoreSubPath.String());
 
-	if (cookies == MY_NULLPTR)
+	if (cookies == nullptr)
 		return B_NO_MEMORY;
 
 	if (cookies->InitCheck() != B_OK) {

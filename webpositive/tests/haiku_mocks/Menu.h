@@ -49,12 +49,12 @@ public:
             fItems.erase(fItems.begin() + index);
             return item;
         }
-        return MY_NULLPTR;
+        return nullptr;
     }
     int32 CountItems() const { return (int32)fItems.size(); }
     BMenuItem* ItemAt(int32 index) const {
         if (index >= 0 && index < (int32)fItems.size()) return fItems[index];
-        return MY_NULLPTR;
+        return nullptr;
     }
     int32 IndexOf(BMenuItem* item) const {
         for (size_t i = 0; i < fItems.size(); ++i) if (fItems[i] == item) return (int32)i;

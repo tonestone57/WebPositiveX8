@@ -1,4 +1,3 @@
-#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <DateTime.h>
 #include <Message.h>

@@ -6,7 +6,6 @@
 #ifndef TAB_CONTAINER_VIEW_H
 #define TAB_CONTAINER_VIEW_H
 
-#include "BeOSCompatibility.h"
 #include <GroupView.h>
 
 

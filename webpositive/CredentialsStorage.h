@@ -7,9 +7,8 @@
 #define CREDENTIAL_STORAGE_H
 
 
-#include "BeOSCompatibility.h"
-
 #include <Locker.h>
+#include <memory>
 #include <String.h>
 
 #include "HashMap.h"
@@ -84,7 +83,7 @@ private:
 			thread_id			fSaveThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			BMessage* fPendingSaveMessage;
+			std::unique_ptr<BMessage> fPendingSaveMessage;
 			BLocker				fSaveLock;
 };
 

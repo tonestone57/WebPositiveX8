@@ -6,7 +6,6 @@
  *		Oliver Tappe <beam@hirschkaefer.de>
  */
 
-#include "BeOSCompatibility.h"
 #include "AutoCompleterDefaultImpl.h"
 
 #include <ListView.h>
@@ -387,7 +386,7 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 	fWindow = new BWindow(BRect(0, 0, 100, 100), "", B_BORDERED_WINDOW_LOOK, 
 		B_NORMAL_WINDOW_FEEL, B_NOT_MOVABLE | B_WILL_ACCEPT_FIRST_CLICK 
 			| B_AVOID_FOCUS | B_ASYNCHRONOUS_CONTROLS);
-	if (scrollView != MY_NULLPTR)
+	if (scrollView != nullptr)
 		fWindow->AddChild(scrollView);
 	else
 		fWindow->AddChild(fListView);
@@ -404,7 +403,7 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 	else
 		listRect.OffsetTo(pvRect.left, pvRect.top - listHeight);
 
-	if (scrollView != MY_NULLPTR) {
+	if (scrollView != nullptr) {
 		// Moving here to cut off the scrollbar top
 		scrollView->MoveTo(0, -1);
 		// Adding the 1 and 2 to cut-off the scroll-bar top, right and bottom
@@ -436,7 +435,7 @@ BDefaultChoiceView::HideChoices()
 bool
 BDefaultChoiceView::ChoicesAreShown()
 {
-	return (fWindow != MY_NULLPTR);
+	return (fWindow != nullptr);
 }
 
 
@@ -460,9 +459,9 @@ BDefaultChoiceView::SetMaxVisibleChoices(int32 choices)
 
 	fMaxVisibleChoices = choices;
 
-	if (fListView != MY_NULLPTR) {
+	if (fListView != nullptr) {
 		BAutoCompleter::CompletionStyle* completer = fListView->Completer();
-		if (completer != MY_NULLPTR) {
+		if (completer != nullptr) {
 			int32 selectedIndex = completer->SelectedChoiceIndex();
 			ShowChoices(completer);
 			SelectChoiceAt(selectedIndex);

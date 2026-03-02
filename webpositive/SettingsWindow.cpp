@@ -3,7 +3,6 @@
  * Copyright 2019, Haiku, Inc.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
-#include "BeOSCompatibility.h"
 #include "SettingsWindow.h"
 
 #include <new>
@@ -1072,7 +1071,7 @@ SettingsWindow::_RevertSettings()
 void
 SettingsWindow::_ChooseDownloadFolder(const BMessage* message)
 {
-	if (fOpenFilePanel == MY_NULLPTR) {
+	if (fOpenFilePanel == nullptr) {
 		BMessenger target(this);
 		fOpenFilePanel = new (std::nothrow) BFilePanel(B_OPEN_PANEL,
 			&target, 0, B_DIRECTORY_NODE);

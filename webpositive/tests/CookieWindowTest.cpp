@@ -7,7 +7,6 @@
  */
 
 
-#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <Application.h>
 #include <NetworkCookieJar.h>
@@ -48,12 +47,12 @@ assert_int32(int32 expected, int32 actual, const char* message)
 static void
 assert_string(const char* expected, const char* actual, const char* message)
 {
-	if ((expected == 0 && actual == MY_NULLPTR) ||
+	if ((expected == 0 && actual == nullptr) ||
 		(expected != 0 && actual != 0 && strcmp(expected, actual) == 0)) {
 		printf("PASS: %s\n", message);
 	} else {
 		printf("FAIL: %s (expected '%s', got '%s')\n", message,
-			expected ? expected : "MY_NULLPTR", actual ? actual : "MY_NULLPTR");
+			expected ? expected : "nullptr", actual ? actual : "nullptr");
 		gTestFailures++;
 	}
 }

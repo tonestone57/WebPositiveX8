@@ -6,9 +6,9 @@
 #ifndef BROWSING_HISTORY_H
 #define BROWSING_HISTORY_H
 
-#include "BeOSCompatibility.h"
 #include "DateTime.h"
 #include <Locker.h>
+#include <memory>
 #include <ObjectList.h>
 #include <OS.h>
 #include "HashMap.h"
@@ -111,7 +111,7 @@ private:
 			thread_id			fLoadThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			HistoryList*		fPendingSaveItems;
+			std::unique_ptr<HistoryList> fPendingSaveItems;
 			BLocker				fSaveLock;
 			BLocker				fFileLock;
 

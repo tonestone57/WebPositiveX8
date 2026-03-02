@@ -3,7 +3,6 @@
  * Distributed under the terms of the MIT License.
  */
 
-#include "BeOSCompatibility.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -99,7 +98,7 @@ BookmarkBarTest::test_overflow_menu_created()
 	BookmarkBar* bar = new BookmarkBar("Bookmarks", 0, &ref);
 
 	// fOverflowMenu is private, but we included BookmarkBar.cpp
-	assert_true(bar->fOverflowMenu != MY_NULLPTR, "Overflow menu is created");
+	assert_true(bar->fOverflowMenu != nullptr, "Overflow menu is created");
 	assert_true(!bar->fOverflowMenuAdded, "Overflow menu initially not added to bar");
 
 	delete bar;

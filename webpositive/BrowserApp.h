@@ -29,7 +29,6 @@
 #define BROWSER_APP_H
 
 
-#include "BeOSCompatibility.h"
 #include <Application.h>
 #include <Catalog.h>
 #include <NetworkCookieJar.h>
@@ -62,10 +61,10 @@ private:
 			 *                               the number of created pages.
 			*/
 			void				_RefsReceived(BMessage* message,
-									int32* pagesCreated = MY_NULLPTR,
-									bool* fullscreen = MY_NULLPTR);
+									int32* pagesCreated = nullptr,
+									bool* fullscreen = nullptr);
 			BrowserWindow*		_CreateNewPage(const BString& url,
-									BrowserWindow* window = MY_NULLPTR,
+									BrowserWindow* window = nullptr,
 									bool fullscreen = false,
 									bool useBlankTab = true);
 			BrowserWindow*		_CreateNewWindow(const BString& url,

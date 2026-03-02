@@ -7,8 +7,6 @@
 #define DOWNLOAD_WINDOW_H
 
 
-#include "BeOSCompatibility.h"
-
 #include <Locker.h>
 #include <OS.h>
 #include <String.h>

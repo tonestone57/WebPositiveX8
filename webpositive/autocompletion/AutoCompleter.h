@@ -8,7 +8,6 @@
 #ifndef _AUTO_COMPLETER_H
 #define _AUTO_COMPLETER_H
 
-#include "BeOSCompatibility.h"
 #include <MessageFilter.h>
 
 #include <Rect.h>
@@ -126,7 +125,7 @@ public:
 
 protected:
 								BAutoCompleter(
-									CompletionStyle* completionStyle = MY_NULLPTR);
+									CompletionStyle* completionStyle = nullptr);
 								BAutoCompleter(EditView* editView,
 									ChoiceModel* choiceModel,
 									ChoiceView* choiceView,

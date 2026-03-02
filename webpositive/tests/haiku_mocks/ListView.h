@@ -50,11 +50,11 @@ public:
     }
     int32 CountItems() const { return (int32)fItems.size(); }
     BListItem* ItemAt(int32 index) const {
-        if (index < 0 || index >= (int32)fItems.size()) return MY_NULLPTR;
+        if (index < 0 || index >= (int32)fItems.size()) return nullptr;
         return fItems[index];
     }
     virtual BListItem* RemoveItem(int32 index) {
-        if (index < 0 || index >= (int32)fItems.size()) return MY_NULLPTR;
+        if (index < 0 || index >= (int32)fItems.size()) return nullptr;
         BListItem* item = fItems[index];
         fItems.erase(fItems.begin() + index);
         return item;

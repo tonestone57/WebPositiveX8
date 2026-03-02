@@ -4,7 +4,7 @@
 #include "OS.h"
 class BLocker {
 public:
-    BLocker(const char* name = MY_NULLPTR) {}
+    BLocker(const char* name = nullptr) {}
     bool Lock() { return true; }
     void Unlock() {}
 };
