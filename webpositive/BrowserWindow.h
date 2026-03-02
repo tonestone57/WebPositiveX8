@@ -250,7 +250,7 @@ private:
 			BStringView*		fStatusText;
 			BStatusBar*			fLoadingProgressBar;
 
-			BGroupLayout*		fMenuGroup;
+			BGroupView*			fMenuGroup;
 			BLayoutItem*		fTabGroup;
 			BLayoutItem*		fNavigationGroup;
 			BLayoutItem*		fFindGroup;
@@ -262,13 +262,13 @@ private:
 			BButton*			fFindNextButton;
 			BButton*			fFindCloseButton;
 			BCheckBox*			fFindCaseSensitiveCheckBox;
-			TabManager*			fTabManager;
+			std::unique_ptr<TabManager> fTabManager;
 
 			bool				fIsFullscreen;
 			bool				fInterfaceVisible;
 			bool				fMenusRunning;
 			BRect				fNonFullscreenWindowFrame;
-			BMessageRunner*		fPulseRunner;
+			std::unique_ptr<BMessageRunner> fPulseRunner;
 			uint32				fVisibleInterfaceElements;
 			bigtime_t			fLastMouseMovedTime;
 			BPoint				fLastMousePos;
@@ -288,7 +288,7 @@ private:
 
 			BMenuItem*			fBookmarkBarMenuItem;
 			BookmarkBar*		fBookmarkBar;
-			BFilePanel*			fSavePanel;
+			std::unique_ptr<BFilePanel> fSavePanel;
 
 			bool				fIsDownloadOnly;
 			BUrl				fInitialURL;

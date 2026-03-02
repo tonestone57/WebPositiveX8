@@ -169,33 +169,30 @@ public:
 					|| message->FindString("url", &url) != B_OK)
 					break;
 
-				BBitmap* miniIcon = nullptr;
-				BBitmap* largeIcon = nullptr;
+				std::unique_ptr<BBitmap> miniIcon;
+				std::unique_ptr<BBitmap> largeIcon;
 
 				BMessage miniIconMsg;
 				if (message->FindMessage("miniIcon", &miniIconMsg) == B_OK) {
-					miniIcon = new(std::nothrow) BBitmap(&miniIconMsg);
+					miniIcon.reset(new(std::nothrow) BBitmap(&miniIconMsg));
 					if (miniIcon != nullptr && miniIcon->InitCheck() != B_OK) {
-						delete miniIcon;
-						miniIcon = nullptr;
+						miniIcon.reset();
 					}
 				}
 
 				BMessage largeIconMsg;
 				if (message->FindMessage("largeIcon", &largeIconMsg) == B_OK) {
-					largeIcon = new(std::nothrow) BBitmap(&largeIconMsg);
+					largeIcon.reset(new(std::nothrow) BBitmap(&largeIconMsg));
 					if (largeIcon != nullptr && largeIcon->InitCheck() != B_OK) {
-						delete largeIcon;
-						largeIcon = nullptr;
+						largeIcon.reset();
 					}
 				}
 
 				BPath path(pathString.String());
-				if (path.InitCheck() == B_OK)
-					_DoCreateBookmark(path, fileName, title, url, miniIcon, largeIcon);
-
-				delete miniIcon;
-				delete largeIcon;
+				if (path.InitCheck() == B_OK) {
+					_DoCreateBookmark(path, fileName, title, url, miniIcon.get(),
+						largeIcon.get());
+				}
 				break;
 			}
 			default:
@@ -412,8 +409,11 @@ public:
 		RemoveItems(0, CountItems(), true);
 		ForceRebuild();
 		BNavMenu::AttachedToWindow();
-		if (CountItems() > 0)
-			AddItem(new BSeparatorItem(), 0);
+		if (CountItems() > 0) {
+			BSeparatorItem* separator = new BSeparatorItem();
+			if (!AddItem(separator, 0))
+				delete separator;
+		}
 		_AddStaticItems();
 		DoLayout();
 	}
@@ -421,10 +421,15 @@ public:
 private:
 	void _AddStaticItems()
 	{
-		AddItem(new BMenuItem(B_TRANSLATE("Manage bookmarks"),
-			new BMessage(SHOW_BOOKMARKS), 'M'), 0);
-		AddItem(new BMenuItem(B_TRANSLATE("Bookmark this page"),
-			new BMessage(CREATE_BOOKMARK), 'B'), 0);
+		BMenuItem* manageBookmarks = new BMenuItem(B_TRANSLATE("Manage bookmarks"),
+			new BMessage(SHOW_BOOKMARKS), 'M');
+		if (!AddItem(manageBookmarks, 0))
+			delete manageBookmarks;
+
+		BMenuItem* bookmarkThisPage = new BMenuItem(B_TRANSLATE("Bookmark this page"),
+			new BMessage(CREATE_BOOKMARK), 'B');
+		if (!AddItem(bookmarkThisPage, 0))
+			delete bookmarkThisPage;
 	}
 };
 
@@ -434,8 +439,8 @@ public:
 	PageUserData(BView* focusedView)
 		:
 		fFocusedView(focusedView),
-		fPageIcon(0),
-		fPageLargeIcon(0),
+		fPageIcon(nullptr),
+		fPageLargeIcon(nullptr),
 		fURLInputSelectionStart(-1),
 		fURLInputSelectionEnd(-1)
 	{
@@ -443,8 +448,6 @@ public:
 
 	~PageUserData()
 	{
-		delete fPageIcon;
-		delete fPageLargeIcon;
 	}
 
 	void SetFocusedView(BView* focusedView)
@@ -460,30 +463,26 @@ public:
 	void SetPageIcon(const BBitmap* icon)
 	{
 		if (icon == nullptr) {
-			delete fPageIcon;
-			fPageIcon = nullptr;
-			delete fPageLargeIcon;
-			fPageLargeIcon = nullptr;
+			fPageIcon.reset();
+			fPageLargeIcon.reset();
 			return;
 		}
 
 		if (icon->Bounds().IntegerWidth() + 1 <= 16) {
-			delete fPageIcon;
-			fPageIcon = new BBitmap(icon);
+			fPageIcon.reset(new BBitmap(icon));
 		} else {
-			delete fPageLargeIcon;
-			fPageLargeIcon = new BBitmap(icon);
+			fPageLargeIcon.reset(new BBitmap(icon));
 		}
 	}
 
 	const BBitmap* PageIcon() const
 	{
-		return fPageIcon;
+		return fPageIcon.get();
 	}
 
 	const BBitmap* PageLargeIcon() const
 	{
-		return fPageLargeIcon;
+		return fPageLargeIcon.get();
 	}
 
 	void SetURLInputContents(const char* text)
@@ -513,10 +512,10 @@ public:
 	}
 
 private:
-	BView*		fFocusedView;
-	BBitmap*	fPageIcon;
-	BBitmap*	fPageLargeIcon;
-	BString		fURLInputContents;
+	BView*						fFocusedView;
+	std::unique_ptr<BBitmap>	fPageIcon;
+	std::unique_ptr<BBitmap>	fPageLargeIcon;
+	BString						fURLInputContents;
 	int32		fURLInputSelectionStart;
 	int32		fURLInputSelectionEnd;
 };
@@ -644,7 +643,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	newTabMessage->AddString("url", "");
 	newTabMessage->AddPointer("window", this);
 	newTabMessage->AddBool("select", true);
-	fTabManager = new TabManager(BMessenger(this), newTabMessage);
+	fTabManager.reset(new TabManager(BMessenger(this), newTabMessage));
 
 	// Menu
 #if INTEGRATE_MENU_INTO_TAB_BAR
@@ -657,96 +656,196 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	newWindowMessage->AddString("url", "");
 	BMenuItem* newItem = new BMenuItem(B_TRANSLATE("New window"),
 		newWindowMessage, 'N');
-	menu->AddItem(newItem);
-	newItem->SetTarget(be_app);
+	if (menu->AddItem(newItem))
+		newItem->SetTarget(be_app);
+	else
+		delete newItem;
+
 	newItem = new BMenuItem(B_TRANSLATE("New tab"),
 		new BMessage(*newTabMessage), 'T');
-	menu->AddItem(newItem);
-	newItem->SetTarget(be_app);
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Open location"),
-		new BMessage(OPEN_LOCATION), 'L'));
+	if (menu->AddItem(newItem))
+		newItem->SetTarget(be_app);
+	else
+		delete newItem;
+
+	BMenuItem* item = new BMenuItem(B_TRANSLATE("Open location"),
+		new BMessage(OPEN_LOCATION), 'L');
+	if (!menu->AddItem(item))
+		delete item;
+
 	menu->AddSeparatorItem();
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Close window"),
-		new BMessage(B_QUIT_REQUESTED), 'W', B_SHIFT_KEY));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Close tab"),
-		new BMessage(CLOSE_TAB), 'W'));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Save page as" B_UTF8_ELLIPSIS),
-		new BMessage(SAVE_PAGE), 'S'));
+
+	item = new BMenuItem(B_TRANSLATE("Close window"),
+		new BMessage(B_QUIT_REQUESTED), 'W', B_SHIFT_KEY);
+	if (!menu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Close tab"),
+		new BMessage(CLOSE_TAB), 'W');
+	if (!menu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Save page as" B_UTF8_ELLIPSIS),
+		new BMessage(SAVE_PAGE), 'S');
+	if (!menu->AddItem(item))
+		delete item;
+
 	menu->AddSeparatorItem();
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Downloads"),
-		new BMessage(SHOW_DOWNLOAD_WINDOW), 'D'));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Settings"),
-		new BMessage(SHOW_SETTINGS_WINDOW), ','));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Cookie manager"),
-		new BMessage(SHOW_COOKIE_WINDOW)));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Script console"),
-		new BMessage(SHOW_CONSOLE_WINDOW)));
+
+	item = new BMenuItem(B_TRANSLATE("Downloads"),
+		new BMessage(SHOW_DOWNLOAD_WINDOW), 'D');
+	if (!menu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Settings"),
+		new BMessage(SHOW_SETTINGS_WINDOW), ',');
+	if (!menu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Cookie manager"),
+		new BMessage(SHOW_COOKIE_WINDOW));
+	if (!menu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Script console"),
+		new BMessage(SHOW_CONSOLE_WINDOW));
+	if (!menu->AddItem(item))
+		delete item;
+
 	BMenuItem* aboutItem = new BMenuItem(B_TRANSLATE("About"),
 		new BMessage(B_ABOUT_REQUESTED));
-	menu->AddItem(aboutItem);
-	aboutItem->SetTarget(be_app);
+	if (menu->AddItem(aboutItem))
+		aboutItem->SetTarget(be_app);
+	else
+		delete aboutItem;
+
 	menu->AddSeparatorItem();
+
 	BMenuItem* quitItem = new BMenuItem(B_TRANSLATE("Quit"),
 		new BMessage(B_QUIT_REQUESTED), 'Q');
-	menu->AddItem(quitItem);
-	quitItem->SetTarget(be_app);
-	mainMenu->AddItem(menu);
+	if (menu->AddItem(quitItem))
+		quitItem->SetTarget(be_app);
+	else
+		delete quitItem;
+
+	if (!mainMenu->AddItem(menu))
+		delete menu;
 
 	menu = new BMenu(B_TRANSLATE("Edit"));
-	menu->AddItem(fCutMenuItem = new BMenuItem(B_TRANSLATE("Cut"),
-		new BMessage(B_CUT), 'X'));
-	menu->AddItem(fCopyMenuItem = new BMenuItem(B_TRANSLATE("Copy"),
-		new BMessage(B_COPY), 'C'));
-	menu->AddItem(fPasteMenuItem = new BMenuItem(B_TRANSLATE("Paste"),
-		new BMessage(B_PASTE), 'V'));
+	fCutMenuItem = new BMenuItem(B_TRANSLATE("Cut"), new BMessage(B_CUT), 'X');
+	if (!menu->AddItem(fCutMenuItem)) {
+		delete fCutMenuItem;
+		fCutMenuItem = nullptr;
+	}
+
+	fCopyMenuItem = new BMenuItem(B_TRANSLATE("Copy"), new BMessage(B_COPY), 'C');
+	if (!menu->AddItem(fCopyMenuItem)) {
+		delete fCopyMenuItem;
+		fCopyMenuItem = nullptr;
+	}
+
+	fPasteMenuItem = new BMenuItem(B_TRANSLATE("Paste"), new BMessage(B_PASTE), 'V');
+	if (!menu->AddItem(fPasteMenuItem)) {
+		delete fPasteMenuItem;
+		fPasteMenuItem = nullptr;
+	}
+
 	menu->AddSeparatorItem();
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Find"),
-		new BMessage(EDIT_SHOW_FIND_GROUP), 'F'));
-	menu->AddItem(fFindPreviousMenuItem
-		= new BMenuItem(B_TRANSLATE("Find previous"),
-		new BMessage(EDIT_FIND_PREVIOUS), 'G', B_SHIFT_KEY));
-	menu->AddItem(fFindNextMenuItem = new BMenuItem(B_TRANSLATE("Find next"),
-		new BMessage(EDIT_FIND_NEXT), 'G'));
-	mainMenu->AddItem(menu);
-	fFindPreviousMenuItem->SetEnabled(false);
-	fFindNextMenuItem->SetEnabled(false);
+
+	item = new BMenuItem(B_TRANSLATE("Find"), new BMessage(EDIT_SHOW_FIND_GROUP), 'F');
+	if (!menu->AddItem(item))
+		delete item;
+
+	fFindPreviousMenuItem = new BMenuItem(B_TRANSLATE("Find previous"),
+		new BMessage(EDIT_FIND_PREVIOUS), 'G', B_SHIFT_KEY);
+	if (!menu->AddItem(fFindPreviousMenuItem)) {
+		delete fFindPreviousMenuItem;
+		fFindPreviousMenuItem = nullptr;
+	}
+
+	fFindNextMenuItem = new BMenuItem(B_TRANSLATE("Find next"),
+		new BMessage(EDIT_FIND_NEXT), 'G');
+	if (!menu->AddItem(fFindNextMenuItem)) {
+		delete fFindNextMenuItem;
+		fFindNextMenuItem = nullptr;
+	}
+
+	if (!mainMenu->AddItem(menu))
+		delete menu;
+
+	if (fFindPreviousMenuItem != nullptr)
+		fFindPreviousMenuItem->SetEnabled(false);
+	if (fFindNextMenuItem != nullptr)
+		fFindNextMenuItem->SetEnabled(false);
 
 	menu = new BMenu(B_TRANSLATE("View"));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Reload"), new BMessage(RELOAD),
-		'R'));
+	item = new BMenuItem(B_TRANSLATE("Reload"), new BMessage(RELOAD), 'R');
+	if (!menu->AddItem(item))
+		delete item;
+
 	// the label will be replaced with the appropriate text later on
 	fBookmarkBarMenuItem = new BMenuItem(B_TRANSLATE("Show bookmark bar"),
 		new BMessage(SHOW_HIDE_BOOKMARK_BAR));
-	menu->AddItem(fBookmarkBarMenuItem);
+	if (!menu->AddItem(fBookmarkBarMenuItem))
+		delete fBookmarkBarMenuItem;
+
 	menu->AddSeparatorItem();
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Increase size"),
-		new BMessage(ZOOM_FACTOR_INCREASE), '+'));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Decrease size"),
-		new BMessage(ZOOM_FACTOR_DECREASE), '-'));
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Reset size"),
-		new BMessage(ZOOM_FACTOR_RESET), '0'));
+
+	item = new BMenuItem(B_TRANSLATE("Increase size"),
+		new BMessage(ZOOM_FACTOR_INCREASE), '+');
+	if (!menu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Decrease size"),
+		new BMessage(ZOOM_FACTOR_DECREASE), '-');
+	if (!menu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Reset size"),
+		new BMessage(ZOOM_FACTOR_RESET), '0');
+	if (!menu->AddItem(item))
+		delete item;
+
 	fZoomTextOnlyMenuItem = new BMenuItem(B_TRANSLATE("Zoom text only"),
 		new BMessage(ZOOM_TEXT_ONLY));
 	fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
-	menu->AddItem(fZoomTextOnlyMenuItem);
+	if (!menu->AddItem(fZoomTextOnlyMenuItem))
+		delete fZoomTextOnlyMenuItem;
 
 	menu->AddSeparatorItem();
+
 	fFullscreenItem = new BMenuItem(B_TRANSLATE("Full screen"),
 		new BMessage(TOGGLE_FULLSCREEN), B_RETURN);
-	menu->AddItem(fFullscreenItem);
-	menu->AddItem(new BMenuItem(B_TRANSLATE("Page source"),
-		new BMessage(SHOW_PAGE_SOURCE), 'U'));
-	mainMenu->AddItem(menu);
+	if (!menu->AddItem(fFullscreenItem))
+		delete fFullscreenItem;
+
+	item = new BMenuItem(B_TRANSLATE("Page source"),
+		new BMessage(SHOW_PAGE_SOURCE), 'U');
+	if (!menu->AddItem(item))
+		delete item;
+
+	if (!mainMenu->AddItem(menu))
+		delete menu;
 
 	fHistoryMenu = new BMenu(B_TRANSLATE("History"));
-	fHistoryMenu->AddItem(fBackMenuItem = new BMenuItem(B_TRANSLATE("Back"),
-		new BMessage(GO_BACK), B_LEFT_ARROW));
-	fHistoryMenu->AddItem(fForwardMenuItem
-		= new BMenuItem(B_TRANSLATE("Forward"), new BMessage(GO_FORWARD),
-		B_RIGHT_ARROW));
+	fBackMenuItem = new BMenuItem(B_TRANSLATE("Back"),
+		new BMessage(GO_BACK), B_LEFT_ARROW);
+	if (!fHistoryMenu->AddItem(fBackMenuItem)) {
+		delete fBackMenuItem;
+		fBackMenuItem = nullptr;
+	}
+
+	fForwardMenuItem = new BMenuItem(B_TRANSLATE("Forward"),
+		new BMessage(GO_FORWARD), B_RIGHT_ARROW);
+	if (!fHistoryMenu->AddItem(fForwardMenuItem)) {
+		delete fForwardMenuItem;
+		fForwardMenuItem = nullptr;
+	}
+
 	fHistoryMenu->AddSeparatorItem();
 	fHistoryMenuFixedItemCount = fHistoryMenu->CountItems();
-	mainMenu->AddItem(fHistoryMenu);
+	if (!mainMenu->AddItem(fHistoryMenu))
+		delete fHistoryMenu;
 
 	BPath bookmarkPath;
 	entry_ref bookmarkRef;
@@ -754,7 +853,8 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		&& get_ref_for_path(bookmarkPath.Path(), &bookmarkRef) == B_OK) {
 		BMenu* bookmarkMenu
 			= new BookmarkMenu(B_TRANSLATE("Bookmarks"), this, &bookmarkRef);
-		mainMenu->AddItem(bookmarkMenu);
+		if (!mainMenu->AddItem(bookmarkMenu))
+			delete bookmarkMenu;
 
 		BDirectory barDir(&bookmarkRef);
 		BEntry bookmarkBar(&barDir, kBookmarkBarSubdir);
@@ -875,13 +975,15 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 #if !INTEGRATE_MENU_INTO_TAB_BAR
 	BMenu* mainMenuItem = mainMenu;
-	fMenuGroup = (new BGroupView(B_HORIZONTAL, 0))->GroupLayout();
+	fMenuGroup = new BGroupView(B_HORIZONTAL, 0);
+	BGroupLayout* menuLayout = fMenuGroup->GroupLayout();
 #else
 	BMenu* mainMenuItem = new BMenuBar("Main menu");
-	mainMenuItem->AddItem(mainMenu);
-	fMenuGroup = fTabManager->MenuContainerLayout();
+	if (!mainMenuItem->AddItem(mainMenu))
+		delete mainMenu;
+	BGroupLayout* menuLayout = fTabManager->MenuContainerLayout();
 #endif
-	BLayoutBuilder::Group<>(fMenuGroup)
+	BLayoutBuilder::Group<>(menuLayout)
 		.Add(mainMenuItem)
 		.Add(toggleFullscreenButton, 0.0f)
 	;
@@ -891,8 +993,8 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	else
 		_ShowBookmarkBar(false);
 
-	fSavePanel = new BFilePanel(B_SAVE_PANEL, new BMessenger(this), 0, nullptr,
-		false);
+	fSavePanel.reset(new BFilePanel(B_SAVE_PANEL, new BMessenger(this), 0,
+		nullptr, false));
 
 	// Layout
 	BGroupView* topView = new BGroupView(B_VERTICAL, 0.0);
@@ -967,9 +1069,6 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 BrowserWindow::~BrowserWindow()
 {
 	fAppSettings->RemoveListener(BMessenger(this));
-	delete fTabManager;
-	delete fPulseRunner;
-	delete fSavePanel;
 }
 
 
@@ -1316,8 +1415,10 @@ BrowserWindow::MessageReceived(BMessage* message)
 		case FIND_TEXT_CHANGED:
 		{
 			bool findTextAvailable = strlen(fFindTextControl->Text()) > 0;
-			fFindPreviousMenuItem->SetEnabled(findTextAvailable);
-			fFindNextMenuItem->SetEnabled(findTextAvailable);
+			if (fFindPreviousMenuItem != nullptr)
+				fFindPreviousMenuItem->SetEnabled(findTextAvailable);
+			if (fFindNextMenuItem != nullptr)
+				fFindNextMenuItem->SetEnabled(findTextAvailable);
 			break;
 		}
 		case EDIT_FIND_PREVIOUS:
@@ -1366,9 +1467,12 @@ BrowserWindow::MessageReceived(BMessage* message)
 				canCopy = false;
 			if (message->FindBool("can paste", &canPaste) != B_OK)
 				canPaste = false;
-			fCutMenuItem->SetEnabled(canCut);
-			fCopyMenuItem->SetEnabled(canCopy);
-			fPasteMenuItem->SetEnabled(canPaste);
+			if (fCutMenuItem != nullptr)
+				fCutMenuItem->SetEnabled(canCut);
+			if (fCopyMenuItem != nullptr)
+				fCopyMenuItem->SetEnabled(canCopy);
+			if (fPasteMenuItem != nullptr)
+				fPasteMenuItem->SetEnabled(canPaste);
 			break;
 		}
 
@@ -2085,7 +2189,7 @@ BrowserWindow::SetMenuBarVisible(bool flag, BWebView* view)
 
 	if (fInterfaceVisible) {
 #if !INTEGRATE_MENU_INTO_TAB_BAR
-		fMenuGroup->SetVisible(flag);
+		fMenuGroup->GroupLayout()->SetVisible(flag);
 #endif
 	}
 }
@@ -2131,8 +2235,10 @@ BrowserWindow::NavigationCapabilitiesChanged(bool canGoBackward,
 	fForwardButton->SetEnabled(canGoForward);
 	fStopButton->SetEnabled(canStop);
 
-	fBackMenuItem->SetEnabled(canGoBackward);
-	fForwardMenuItem->SetEnabled(canGoForward);
+	if (fBackMenuItem != nullptr)
+		fBackMenuItem->SetEnabled(canGoBackward);
+	if (fForwardMenuItem != nullptr)
+		fForwardMenuItem->SetEnabled(canGoForward);
 }
 
 
@@ -2324,9 +2430,13 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 
 		const void* bits;
 		ssize_t length;
+		std::unique_ptr<BBitmap> miniIcon;
+		std::unique_ptr<BBitmap> largeIcon;
+
 		if (originatorData.FindData("miniIcon", B_COLOR_8_BIT_TYPE, &bits,
 				&length) == B_OK) {
-			miniIcon = new(std::nothrow) BBitmap(BRect(0, 0, 15, 15), B_BITMAP_NO_SERVER_LINK, B_CMAP8);
+			miniIcon.reset(new(std::nothrow) BBitmap(BRect(0, 0, 15, 15),
+				B_BITMAP_NO_SERVER_LINK, B_CMAP8));
 			if (miniIcon != nullptr && miniIcon->InitCheck() == B_OK
 				&& length == (ssize_t)miniIcon->BitsLength()) {
 				memcpy(miniIcon->Bits(), bits, length);
@@ -2334,7 +2444,8 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 		}
 		if (originatorData.FindData("largeIcon", B_COLOR_8_BIT_TYPE, &bits,
 				&length) == B_OK) {
-			largeIcon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK, B_CMAP8);
+			largeIcon.reset(new(std::nothrow) BBitmap(BRect(0, 0, 31, 31),
+				B_BITMAP_NO_SERVER_LINK, B_CMAP8));
 			if (largeIcon != nullptr && largeIcon->InitCheck() == B_OK
 				&& length == (ssize_t)largeIcon->BitsLength()) {
 				memcpy(largeIcon->Bits(), bits, length);
@@ -2342,7 +2453,8 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 		}
 
 		if (validData == true) {
-			_CreateBookmark(BPath(&ref), BString(fileName), BString(title), BString(url), miniIcon, largeIcon);
+			_CreateBookmark(BPath(&ref), BString(fileName), BString(title),
+				BString(url), miniIcon.get(), largeIcon.get());
 		} else {
 			BString message(B_TRANSLATE("There was an error setting up "
 				"the bookmark."));
@@ -2353,8 +2465,6 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 			alert->Go();
 		}
 
-		delete miniIcon;
-		delete largeIcon;
 		return;
 }
 
@@ -2369,23 +2479,24 @@ BrowserWindow::_CreateBookmark()
 	BPath path;
 	status_t status = _BookmarkPath(path);
 
-	BBitmap* miniIcon = nullptr;
-	BBitmap* largeIcon = nullptr;
+	std::unique_ptr<BBitmap> miniIcon;
+	std::unique_ptr<BBitmap> largeIcon;
 	PageUserData* userData = static_cast<PageUserData*>(CurrentWebView()->GetUserData());
 	if (userData != nullptr) {
 		if (userData->PageIcon() != nullptr) {
-			miniIcon = new BBitmap(BRect(0, 0, 15, 15), B_CMAP8);
+			miniIcon.reset(new BBitmap(BRect(0, 0, 15, 15), B_CMAP8));
 			miniIcon->ImportBits(userData->PageIcon());
 		}
 		if (userData->PageLargeIcon() != nullptr) {
-			largeIcon = new BBitmap(BRect(0, 0, 31, 31), B_CMAP8);
+			largeIcon.reset(new BBitmap(BRect(0, 0, 31, 31), B_CMAP8));
 			largeIcon->ImportBits(userData->PageLargeIcon());
 		}
 	}
 
-	if (status == B_OK)
-		_CreateBookmark(path, fileName, title, url, miniIcon, largeIcon);
-	else {
+	if (status == B_OK) {
+		_CreateBookmark(path, fileName, title, url, miniIcon.get(),
+			largeIcon.get());
+	} else {
 		BString message(B_TRANSLATE_COMMENT("There was an error retrieving "
 			"the bookmark folder.\n\nError: %error", "Don't translate the "
 			"variable %error"));
@@ -2396,9 +2507,6 @@ BrowserWindow::_CreateBookmark()
 		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 		alert->Go();
 	}
-
-	delete miniIcon;
-	delete largeIcon;
 	return;
 }
 
@@ -2517,31 +2625,38 @@ addItemToMenuOrSubmenu(BMenu* menu, BMenuItem* newItem)
 		if (label.FindFirst(baseURLLabel) >= 0) {
 			if (item->Submenu()) {
 				// Submenu was already added in previous iteration.
-				item->Submenu()->AddItem(newItem);
+				if (!item->Submenu()->AddItem(newItem))
+					delete newItem;
 				return;
 			} else {
 				menu->RemoveItem(item);
 				BMenu* subMenu = new BMenu(baseURLLabel.String());
-				subMenu->AddItem(item);
-				subMenu->AddItem(newItem);
+				if (!subMenu->AddItem(item))
+					delete item;
+				if (!subMenu->AddItem(newItem))
+					delete newItem;
 				// Add common submenu for this base URL, clickable.
 				BMessage* message = new BMessage(GOTO_URL);
 				message->AddString("url", baseURLLabel.String());
-				menu->AddItem(new BMenuItem(subMenu, message), i);
+				BMenuItem* subMenuItem = new BMenuItem(subMenu, message);
+				if (!menu->AddItem(subMenuItem, i))
+					delete subMenuItem;
 				return;
 			}
 		}
 	}
-	menu->AddItem(newItem);
+	if (!menu->AddItem(newItem))
+		delete newItem;
 }
 
 
 static void
 addOrDeleteMenu(BMenu* menu, BMenu* toMenu)
 {
-	if (menu->CountItems() > 0)
-		toMenu->AddItem(menu);
-	else
+	if (menu->CountItems() > 0) {
+		if (!toMenu->AddItem(menu))
+			delete menu;
+	} else
 		delete menu;
 }
 
@@ -2561,7 +2676,8 @@ BrowserWindow::_UpdateHistoryMenu()
 	BMenuItem* clearHistoryItem = new BMenuItem(B_TRANSLATE("Clear history"),
 		new BMessage(CLEAR_HISTORY));
 	clearHistoryItem->SetEnabled(count > 0);
-	fHistoryMenu->AddItem(clearHistoryItem);
+	if (!fHistoryMenu->AddItem(clearHistoryItem))
+		delete clearHistoryItem;
 	if (count == 0) {
 		history->Unlock();
 		return;
@@ -2653,9 +2769,12 @@ BrowserWindow::_UpdateClipboardItems()
 				canPaste = data->HasData("text/plain", B_MIME_TYPE);
 			be_clipboard->Unlock();
 		}
-		fCutMenuItem->SetEnabled(hasSelection);
-		fCopyMenuItem->SetEnabled(hasSelection);
-		fPasteMenuItem->SetEnabled(canPaste);
+		if (fCutMenuItem != nullptr)
+			fCutMenuItem->SetEnabled(hasSelection);
+		if (fCopyMenuItem != nullptr)
+			fCopyMenuItem->SetEnabled(hasSelection);
+		if (fPasteMenuItem != nullptr)
+			fPasteMenuItem->SetEnabled(canPaste);
 	} else if (CurrentWebView() != nullptr) {
 		// Trigger update of the clipboard items, even if the
 		// BWebView doesn't have focus, we'll dispatch these message
@@ -2665,9 +2784,12 @@ BrowserWindow::_UpdateClipboardItems()
 		// standard shortcut handling is always wrapped inside MenusBeginning()
 		// and MenusEnded(), and since we update items asynchronously, we need
 		// to have them enabled to begin with.
-		fCutMenuItem->SetEnabled(true);
-		fCopyMenuItem->SetEnabled(true);
-		fPasteMenuItem->SetEnabled(true);
+		if (fCutMenuItem != nullptr)
+			fCutMenuItem->SetEnabled(true);
+		if (fCopyMenuItem != nullptr)
+			fCopyMenuItem->SetEnabled(true);
+		if (fPasteMenuItem != nullptr)
+			fPasteMenuItem->SetEnabled(true);
 
 		CurrentWebView()->WebPage()->SendEditingCapabilities();
 	}
@@ -2715,10 +2837,10 @@ BrowserWindow::_SetAutoHideInterfaceInFullscreen(bool doIt)
 
 	if (fAutoHideInterfaceInFullscreenMode) {
 		BMessage message(CHECK_AUTO_HIDE_INTERFACE);
-		fPulseRunner = new BMessageRunner(BMessenger(this), &message, 300000);
+		fPulseRunner.reset(new BMessageRunner(BMessenger(this), &message,
+			300000));
 	} else {
-		delete fPulseRunner;
-		fPulseRunner = nullptr;
+		fPulseRunner.reset();
 		_ShowInterface(true);
 	}
 }
@@ -2754,7 +2876,7 @@ BrowserWindow::_ShowInterface(bool show)
 
 	if (show) {
 #if !INTEGRATE_MENU_INTO_TAB_BAR
-		fMenuGroup->SetVisible(
+		fMenuGroup->GroupLayout()->SetVisible(
 			(fVisibleInterfaceElements & INTERFACE_ELEMENT_MENU) != 0);
 #endif
 		fTabGroup->SetVisible(_TabGroupShouldBeVisible());
@@ -2763,7 +2885,9 @@ BrowserWindow::_ShowInterface(bool show)
 		fStatusGroup->SetVisible(
 			(fVisibleInterfaceElements & INTERFACE_ELEMENT_STATUS) != 0);
 	} else {
-		fMenuGroup->SetVisible(false);
+#if !INTEGRATE_MENU_INTO_TAB_BAR
+		fMenuGroup->GroupLayout()->SetVisible(false);
+#endif
 		fTabGroup->SetVisible(false);
 		fNavigationGroup->SetVisible(false);
 		fStatusGroup->SetVisible(false);
