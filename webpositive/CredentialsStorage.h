@@ -63,7 +63,7 @@ public:
 
 private:
 								CredentialsStorage(bool persistent);
-	virtual						~CredentialsStorage();
+	virtual						~CredentialsStorage() override;
 
 			void				_EnsureSettingsLoaded();
 			void				_LoadSettings();

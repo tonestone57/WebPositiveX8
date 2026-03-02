@@ -82,7 +82,7 @@ protected:
 								BrowsingHistory();
 								BrowsingHistory(bool startThreads);
 
-	virtual						~BrowsingHistory();
+	virtual						~BrowsingHistory() override;
 
 private:
 			void				_Clear();

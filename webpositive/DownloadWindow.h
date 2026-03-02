@@ -8,6 +8,7 @@
 
 
 #include <Locker.h>
+#include <memory>
 #include <OS.h>
 #include <String.h>
 #include <Window.h>
@@ -26,13 +27,13 @@ class DownloadWindow : public BWindow {
 public:
 								DownloadWindow(BRect frame, bool visible,
 									SettingsMessage* settings);
-	virtual						~DownloadWindow();
+	virtual						~DownloadWindow() override;
 
 	virtual	void				DispatchMessage(BMessage* message,
 									BHandler* target);
 	virtual void				FrameResized(float newWidth, float newHeight);
-	virtual	void				MessageReceived(BMessage* message);
-	virtual	bool				QuitRequested();
+	virtual	void				MessageReceived(BMessage* message) override;
+	virtual	bool				QuitRequested() override;
 
 			bool				DownloadsInProgress();
 			void				SetMinimizeOnClose(bool minimize);
@@ -71,7 +72,7 @@ private:
 			thread_id			fSaveThread;
 			sem_id				fSaveSem;
 			bool				fQuitting;
-			BMessage* fPendingSaveMessage;
+			std::unique_ptr<BMessage> fPendingSaveMessage;
 			BLocker				fSaveLock;
 };
 
