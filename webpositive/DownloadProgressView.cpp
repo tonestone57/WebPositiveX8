@@ -212,7 +212,7 @@ public:
 		if (fDimmedIcon) {
 			SetDrawingMode(B_OP_ALPHA);
 			SetBlendingMode(B_CONSTANT_ALPHA, B_ALPHA_OVERLAY);
-			SetHighColor(0, 0, MY_NULLPTR, 100);
+			SetHighColor(0, 0, 0, 100);
 		}
 		DrawBitmapAsync(&fIconBitmap);
 	}
@@ -488,7 +488,7 @@ DownloadProgressView::MessageReceived(BMessage* message)
 				if (!isExecutable) {
 					struct stat st;
 					if (node.GetStat(&st) == B_OK && S_ISREG(st.st_mode)
-						&& (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != MY_NULLPTR) {
+						&& (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0) {
 						isExecutable = true;
 					}
 				}
