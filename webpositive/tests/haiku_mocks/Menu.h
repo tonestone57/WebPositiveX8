@@ -16,15 +16,16 @@ public:
     virtual ~BMenu() {
         for (auto item : fItems) delete item;
     }
-    void AddItem(BMenuItem* item) { fItems.push_back(item); }
-    void AddItem(BMenuItem* item, int32 index) {
+    bool AddItem(BMenuItem* item) { fItems.push_back(item); return true; }
+    bool AddItem(BMenuItem* item, int32 index) {
         if (index >= 0 && index <= (int32)fItems.size())
             fItems.insert(fItems.begin() + index, item);
         else
             fItems.push_back(item);
+        return true;
     }
-    void AddItem(BMenu* menu) { AddItem(new BMenuItem(menu)); }
-    void AddItem(BMenu* menu, int32 index) { AddItem(new BMenuItem(menu), index); }
+    bool AddItem(BMenu* menu) { return AddItem(new BMenuItem(menu)); }
+    bool AddItem(BMenu* menu, int32 index) { return AddItem(new BMenuItem(menu), index); }
 
     bool RemoveItem(BMenuItem* item) {
         for (auto it = fItems.begin(); it != fItems.end(); ++it) {

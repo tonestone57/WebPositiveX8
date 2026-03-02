@@ -783,10 +783,10 @@ TabManager::Target() const
 
 
 #if INTEGRATE_MENU_INTO_TAB_BAR
-BGroupLayout*
-TabManager::MenuContainerLayout() const
+BView*
+TabManager::MenuContainerView() const
 {
-	return fMenuContainer->GroupLayout();
+	return fMenuContainer;
 }
 #endif
 

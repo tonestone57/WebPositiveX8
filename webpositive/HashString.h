@@ -3,7 +3,6 @@
 
 #include <String.h>
 #include <functional>
-#include <string>
 
 namespace BPrivate {
 
@@ -24,7 +23,16 @@ template<>
 struct hash<HashString> {
 	size_t operator()(const HashString& s) const
 	{
-		return hash<string>()(s.String());
+		const char* str = s.String();
+		if (str == nullptr)
+			return 0;
+		// Simple FNV-1a hash for performance
+		size_t h = 0x811c9dc5;
+		while (*str) {
+			h ^= (unsigned char)*str++;
+			h *= 0x01000193;
+		}
+		return h;
 	}
 };
 

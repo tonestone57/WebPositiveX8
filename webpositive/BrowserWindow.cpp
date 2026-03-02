@@ -75,6 +75,7 @@
 #include <UnicodeChar.h>
 #include <map>
 
+#include <memory>
 #include <new>
 #include <stdio.h>
 #include <stdlib.h>
@@ -786,8 +787,10 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	// the label will be replaced with the appropriate text later on
 	fBookmarkBarMenuItem = new BMenuItem(B_TRANSLATE("Show bookmark bar"),
 		new BMessage(SHOW_HIDE_BOOKMARK_BAR));
-	if (!menu->AddItem(fBookmarkBarMenuItem))
+	if (!menu->AddItem(fBookmarkBarMenuItem)) {
 		delete fBookmarkBarMenuItem;
+		fBookmarkBarMenuItem = nullptr;
+	}
 
 	menu->AddSeparatorItem();
 
@@ -808,16 +811,21 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 	fZoomTextOnlyMenuItem = new BMenuItem(B_TRANSLATE("Zoom text only"),
 		new BMessage(ZOOM_TEXT_ONLY));
-	fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
-	if (!menu->AddItem(fZoomTextOnlyMenuItem))
+	if (fZoomTextOnlyMenuItem != nullptr)
+		fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
+	if (!menu->AddItem(fZoomTextOnlyMenuItem)) {
 		delete fZoomTextOnlyMenuItem;
+		fZoomTextOnlyMenuItem = nullptr;
+	}
 
 	menu->AddSeparatorItem();
 
 	fFullscreenItem = new BMenuItem(B_TRANSLATE("Full screen"),
 		new BMessage(TOGGLE_FULLSCREEN), B_RETURN);
-	if (!menu->AddItem(fFullscreenItem))
+	if (!menu->AddItem(fFullscreenItem)) {
 		delete fFullscreenItem;
+		fFullscreenItem = nullptr;
+	}
 
 	item = new BMenuItem(B_TRANSLATE("Page source"),
 		new BMessage(SHOW_PAGE_SOURCE), 'U');
@@ -844,8 +852,10 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 	fHistoryMenu->AddSeparatorItem();
 	fHistoryMenuFixedItemCount = fHistoryMenu->CountItems();
-	if (!mainMenu->AddItem(fHistoryMenu))
+	if (!mainMenu->AddItem(fHistoryMenu)) {
 		delete fHistoryMenu;
+		fHistoryMenu = nullptr;
+	}
 
 	BPath bookmarkPath;
 	entry_ref bookmarkRef;
@@ -868,9 +878,12 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 				hasBookmarks = true;
 			}
 		}
-		fBookmarkBarMenuItem->SetEnabled(hasBookmarks);
-	} else
-		fBookmarkBarMenuItem->SetEnabled(false);
+		if (fBookmarkBarMenuItem != nullptr)
+			fBookmarkBarMenuItem->SetEnabled(hasBookmarks);
+	} else {
+		if (fBookmarkBarMenuItem != nullptr)
+			fBookmarkBarMenuItem->SetEnabled(false);
+	}
 
 	// Back, Forward, Stop & Home buttons
 	fBackButton = new BIconButton("Back", 0, new BMessage(GO_BACK));
@@ -975,18 +988,22 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 #if !INTEGRATE_MENU_INTO_TAB_BAR
 	BMenu* mainMenuItem = mainMenu;
-	fMenuGroup = new BGroupView(B_HORIZONTAL, 0);
-	BGroupLayout* menuLayout = fMenuGroup->GroupLayout();
+	BGroupView* menuGroupView = new BGroupView(B_HORIZONTAL, 0.0);
+	fMenuGroup = menuGroupView;
+	BLayoutBuilder::Group<>(menuGroupView)
+		.Add(mainMenuItem)
+		.Add(toggleFullscreenButton, 0.0f)
+	;
 #else
 	BMenu* mainMenuItem = new BMenuBar("Main menu");
 	if (!mainMenuItem->AddItem(mainMenu))
 		delete mainMenu;
-	BGroupLayout* menuLayout = fTabManager->MenuContainerLayout();
-#endif
-	BLayoutBuilder::Group<>(menuLayout)
+	fMenuGroup = fTabManager->MenuContainerView();
+	BLayoutBuilder::Group<>(fMenuGroup)
 		.Add(mainMenuItem)
 		.Add(toggleFullscreenButton, 0.0f)
 	;
+#endif
 
 	if (fAppSettings->GetValue(kSettingsShowBookmarkBar, true))
 		_ShowBookmarkBar(true);
@@ -1000,7 +1017,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	BGroupView* topView = new BGroupView(B_VERTICAL, 0.0);
 
 #if !INTEGRATE_MENU_INTO_TAB_BAR
-	topView->AddChild(fMenuGroup);
+	topView->AddChild(menuGroupView);
 #endif
 	topView->AddChild(fTabManager->TabGroup());
 	topView->AddChild(navigationGroup);
@@ -1382,7 +1399,8 @@ BrowserWindow::MessageReceived(BMessage* message)
 			break;
 		case ZOOM_TEXT_ONLY:
 			fZoomTextOnly = !fZoomTextOnly;
-			fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
+			if (fZoomTextOnlyMenuItem != nullptr)
+				fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
 			fAppSettings->SetValue("zoom text only", fZoomTextOnly);
 			if (CurrentWebView() != nullptr)
 				CurrentWebView()->SetZoomTextOnly(fZoomTextOnly);
@@ -1853,7 +1871,8 @@ BrowserWindow::ToggleFullscreen()
 		SetLook(B_TITLED_WINDOW_LOOK);
 	}
 	fIsFullscreen = !fIsFullscreen;
-	fFullscreenItem->SetMarked(fIsFullscreen);
+	if (fFullscreenItem != nullptr)
+		fFullscreenItem->SetMarked(fIsFullscreen);
 	fToggleFullscreenButton->SetVisible(fIsFullscreen);
 }
 
@@ -2188,9 +2207,7 @@ BrowserWindow::SetMenuBarVisible(bool flag, BWebView* view)
 		fVisibleInterfaceElements &= ~INTERFACE_ELEMENT_MENU;
 
 	if (fInterfaceVisible) {
-#if !INTEGRATE_MENU_INTO_TAB_BAR
-		fMenuGroup->GroupLayout()->SetVisible(flag);
-#endif
+		fMenuGroup->SetVisible(flag);
 	}
 }
 
@@ -2664,6 +2681,9 @@ addOrDeleteMenu(BMenu* menu, BMenu* toMenu)
 void
 BrowserWindow::_UpdateHistoryMenu()
 {
+	if (fHistoryMenu == nullptr)
+		return;
+
 	BMenuItem* menuItem;
 	while ((menuItem = fHistoryMenu->RemoveItem(fHistoryMenuFixedItemCount)))
 		delete menuItem;
@@ -2875,19 +2895,15 @@ BrowserWindow::_ShowInterface(bool show)
 	fInterfaceVisible = show;
 
 	if (show) {
-#if !INTEGRATE_MENU_INTO_TAB_BAR
-		fMenuGroup->GroupLayout()->SetVisible(
+		fMenuGroup->SetVisible(
 			(fVisibleInterfaceElements & INTERFACE_ELEMENT_MENU) != 0);
-#endif
 		fTabGroup->SetVisible(_TabGroupShouldBeVisible());
 		fNavigationGroup->SetVisible(
 			(fVisibleInterfaceElements & INTERFACE_ELEMENT_NAVIGATION) != 0);
 		fStatusGroup->SetVisible(
 			(fVisibleInterfaceElements & INTERFACE_ELEMENT_STATUS) != 0);
 	} else {
-#if !INTEGRATE_MENU_INTO_TAB_BAR
-		fMenuGroup->GroupLayout()->SetVisible(false);
-#endif
+		fMenuGroup->SetVisible(false);
 		fTabGroup->SetVisible(false);
 		fNavigationGroup->SetVisible(false);
 		fStatusGroup->SetVisible(false);
@@ -2961,7 +2977,7 @@ BrowserWindow::_EncodeURIComponent(const BString& search)
 	// We have to take care of some of the escaping before we hand over the
 	// search string to WebKit, if we want queries like "4+3" to not be
 	// searched as "4 3".
-	const BString escCharList = " $&`:<>[]{}\"+#%@/;=?\\^|~\',";
+	const BString escCharList = " $&`:<>[]{}\"+#%@/;=?\\^|~',";
 	BString result = search;
 	char hexcode[4];
 
@@ -3029,7 +3045,7 @@ BrowserWindow::_IsValidDomainChar(char ch) const
 }
 
 
-/*! \brief "smart" parser for user-entered URLs
+/*! \brief \"smart\" parser for user-entered URLs
 
 	We try to be flexible in what we accept as a valid URL. The protocol may
 	be missing, or something we can't handle (in that case we run the matching
@@ -3080,12 +3096,12 @@ BrowserWindow::_SmartURLHandler(const BString& url)
 	// There is no protocol or only an unsupported one. So let's try harder to
 	// guess what the request is.
 
-	// "localhost" is a special case, it is a valid domain name but has no dots.
+	// \"localhost\" is a special case, it is a valid domain name but has no dots.
 	// Handle it separately.
 	if (url == "localhost")
 		_VisitURL("http://localhost/");
 	else {
-		// Also handle URLs starting with "localhost" followed by a path.
+		// Also handle URLs starting with \"localhost\" followed by a path.
 		const char* localhostPrefix = "localhost/";
 
 		if (url.Compare(localhostPrefix, strlen(localhostPrefix)) == 0)
@@ -3270,11 +3286,13 @@ BrowserWindow::_ShowBookmarkBar(bool show)
 	// It is not allowed to show the bookmark bar when it is empty
 	if (show && (fBookmarkBar == nullptr || fBookmarkBar->CountItems() <= 1))
 	{
-		fBookmarkBarMenuItem->SetMarked(false);
+		if (fBookmarkBarMenuItem != nullptr)
+			fBookmarkBarMenuItem->SetMarked(false);
 		return;
 	}
 
-	fBookmarkBarMenuItem->SetMarked(show);
+	if (fBookmarkBarMenuItem != nullptr)
+		fBookmarkBarMenuItem->SetMarked(show);
 
 	if (fBookmarkBar == nullptr || fBookmarkBar->IsHidden() != show)
 		return;

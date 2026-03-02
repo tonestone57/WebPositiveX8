@@ -1,8 +1,11 @@
 /*
- * Copyright (C) 2007 Ryan Leavengood <leavengood@gmail.com>
+ * Copyright (C) 2007 Andrea Anzani <andrea.anzani@gmail.com>
+ * Copyright (C) 2007, 2010 Ryan Leavengood <leavengood@gmail.com>
  * Copyright (C) 2009 Maxime Simon <simon.maxime@gmail.com>
  * Copyright (C) 2010 Stephan Aßmus <superstippi@gmx.de>
- * Copyright 2013-2014 Haiku, Inc. All rights reserved.
+ * Copyright (C) 2010 Michael Lotz <mmlr@mlotz.ch>
+ * Copyright (C) 2010 Rene Gollent <rene@gollent.com>
+ * Copyright 2013-2015 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +34,7 @@
 
 #include "WebWindow.h"
 
+#include <memory>
 #include <Messenger.h>
 #include <String.h>
 #include <Url.h>
@@ -250,7 +254,7 @@ private:
 			BStringView*		fStatusText;
 			BStatusBar*			fLoadingProgressBar;
 
-			BGroupView*			fMenuGroup;
+			BView*				fMenuGroup;
 			BLayoutItem*		fTabGroup;
 			BLayoutItem*		fNavigationGroup;
 			BLayoutItem*		fFindGroup;
