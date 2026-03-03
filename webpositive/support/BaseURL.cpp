@@ -15,6 +15,14 @@ baseURL(const BString& string)
 
 	baseURLStart += 3;
 	int32 baseURLEnd = string.FindFirst("/", baseURLStart);
+	int32 queryStart = string.FindFirst("?", baseURLStart);
+	int32 fragmentStart = string.FindFirst("#", baseURLStart);
+
+	if (baseURLEnd < 0 || (queryStart >= 0 && queryStart < baseURLEnd))
+		baseURLEnd = queryStart;
+	if (baseURLEnd < 0 || (fragmentStart >= 0 && fragmentStart < baseURLEnd))
+		baseURLEnd = fragmentStart;
+
 	BString result;
 	if (baseURLEnd < 0)
 		result.SetTo(string.String() + baseURLStart);

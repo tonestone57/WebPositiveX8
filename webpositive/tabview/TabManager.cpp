@@ -221,9 +221,9 @@ public:
 		:
 		BGroupView(B_HORIZONTAL, 0.0),
 		fTabContainerView(tabContainerView),
-		fScrollLeftTabButton(0),
-		fScrollRightTabButton(0),
-		fTabMenuButton(0)
+		fScrollLeftTabButton(nullptr),
+		fScrollRightTabButton(nullptr),
+		fTabMenuButton(nullptr)
 	{
 	}
 
@@ -460,7 +460,7 @@ private:
 WebTabView::WebTabView(TabManagerController* controller)
 	:
 	TabView(),
-	fIcon(0),
+	fIcon(nullptr),
 	fController(controller),
 	fOverCloseRect(false),
 	fClicked(false)
@@ -681,7 +681,7 @@ WebTabView::_DrawCloseButton(BView* owner, BRect& frame,
 TabManagerController::TabManagerController(TabManager* manager)
 	:
 	fManager(manager),
-	fTabContainerGroup(0),
+	fTabContainerGroup(nullptr),
 	fCloseButtonsAvailable(false),
 	fDoubleClickOutsideTabsMessage()
 {
@@ -696,7 +696,7 @@ TabManagerController::~TabManagerController()
 TabView*
 TabManagerController::CreateTabView()
 {
-	return new WebTabView(this);
+	return new(std::nothrow) WebTabView(this);
 }
 
 
@@ -728,24 +728,29 @@ TabManagerController::SetDoubleClickOutsideTabsMessage(const BMessage& message,
 
 TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
 	:
-	fController(new TabManagerController(this)),
+	fController(new(std::nothrow) TabManagerController(this)),
 	fTarget(target)
 {
+	if (fController == nullptr)
+		return;
+
 	fController->SetDoubleClickOutsideTabsMessage(*newTabMessage,
 		be_app_messenger);
 
-	fContainerView = new BView("web view container", 0);
-	fCardLayout = new BCardLayout();
-	fContainerView->SetLayout(fCardLayout);
+	fContainerView = new(std::nothrow) BView("web view container", 0);
+	fCardLayout = new(std::nothrow) BCardLayout();
+	if (fContainerView != nullptr)
+		fContainerView->SetLayout(fCardLayout);
 
-	fTabContainerView = new TabContainerView(fController.get());
-	fTabContainerGroup = new TabContainerGroup(fTabContainerView);
-	fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
+	fTabContainerView = new(std::nothrow) TabContainerView(fController.get());
+	fTabContainerGroup = new(std::nothrow) TabContainerGroup(fTabContainerView);
+	if (fTabContainerGroup != nullptr)
+		fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
 
 	fController->SetTabContainerGroup(fTabContainerGroup);
 
 #if INTEGRATE_MENU_INTO_TAB_BAR
-	fMenuContainer = new BGroupView(B_HORIZONTAL, 0);
+	fMenuContainer = new(std::nothrow) BGroupView(B_HORIZONTAL, 0);
 	fMenuContainer->GroupLayout()->SetInsets(0, -3, 0, -3);
 	fTabContainerGroup->GroupLayout()->AddView(fMenuContainer, 0.0f);
 #endif

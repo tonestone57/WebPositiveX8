@@ -214,7 +214,7 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	// Block calling thread
 	// Get the originating window, if it exists, to let it redraw itself.
 	BWindow* window = dynamic_cast<BWindow*>
-		(BLooper::LooperForThread(find_thread(0)));
+		(BLooper::LooperForThread(find_thread(nullptr)));
 	if (window) {
 		status_t err;
 		for (;;) {
