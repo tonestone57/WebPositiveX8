@@ -229,6 +229,7 @@ private:
 			void				_HandlePageSourceResult(
 									const BMessage* message);
 	static	status_t			_HandlePageSourceThread(void* data);
+	static	status_t			_HandleSavePageThread(void* data);
 
 			void				_ShowBookmarkBar(bool show);
 

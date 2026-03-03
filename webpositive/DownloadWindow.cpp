@@ -261,7 +261,7 @@ DownloadWindow::MessageReceived(BMessage* message)
 			_LoadSettings();
 			// Small trick to get the correct enabled status of the Remove
 			// finished button
-			_DownloadFinished(0);
+			_DownloadFinished(nullptr);
 			break;
 		}
 		case B_DOWNLOAD_ADDED:

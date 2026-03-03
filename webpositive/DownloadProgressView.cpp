@@ -86,12 +86,14 @@ public:
 						if (entry.GetNodeRef(&nref) != B_OK)
 							exists = false;
 						else {
-							icon = new BBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32);
-							BNode node(&entry);
-							BNodeInfo info(&node);
-							if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
-								delete icon;
-								icon = nullptr;
+							icon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32);
+							if (icon != nullptr) {
+								BNode node(&entry);
+								BNodeInfo info(&node);
+								if (info.GetTrackerIcon(icon, B_LARGE_ICON) != B_OK) {
+									delete icon;
+									icon = nullptr;
+								}
 							}
 						}
 					}
@@ -274,7 +276,7 @@ DownloadProgressView::DownloadProgressView(BWebDownload* download)
 DownloadProgressView::DownloadProgressView(const BMessage* archive)
 	:
 	BGroupView(B_HORIZONTAL, 8),
-	fDownload(0),
+	fDownload(nullptr),
 	fURL(),
 	fPath()
 {

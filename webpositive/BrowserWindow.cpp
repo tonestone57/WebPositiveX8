@@ -45,6 +45,7 @@
 #include <Entry.h>
 #include <File.h>
 #include <FilePanel.h>
+#include <MallocIO.h>
 #include <FindDirectory.h>
 #include <GridLayoutBuilder.h>
 #include <GroupLayout.h>
@@ -329,8 +330,8 @@ private:
 				"bookmark file.\n\nError: %error", "Don't translate variable "
 				"%error"));
 			message.ReplaceFirst("%error", strerror(status));
-			BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-				message.String(), B_TRANSLATE("OK"), 0, nullptr,
+			BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Bookmark error"),
+				message.String(), B_TRANSLATE("OK"), nullptr, nullptr,
 				B_WIDTH_AS_USUAL, B_STOP_ALERT);
 			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 			alert->Go();
@@ -363,7 +364,7 @@ GetBookmarkWorker()
 {
 	BAutolock _(sBookmarkWorkerLock);
 	if (sBookmarkWorker == nullptr)
-		sBookmarkWorker = new BookmarkWorker();
+		sBookmarkWorker = new(std::nothrow) BookmarkWorker();
 	return sBookmarkWorker;
 }
 
@@ -411,9 +412,11 @@ public:
 		ForceRebuild();
 		BNavMenu::AttachedToWindow();
 		if (CountItems() > 0) {
-			BSeparatorItem* separator = new BSeparatorItem();
-			if (!AddItem(separator, 0))
-				delete separator;
+			BSeparatorItem* separator = new(std::nothrow) BSeparatorItem();
+			if (separator != nullptr) {
+				if (!AddItem(separator, 0))
+					delete separator;
+			}
 		}
 		_AddStaticItems();
 		DoLayout();
@@ -422,15 +425,23 @@ public:
 private:
 	void _AddStaticItems()
 	{
-		BMenuItem* manageBookmarks = new BMenuItem(B_TRANSLATE("Manage bookmarks"),
-			new BMessage(SHOW_BOOKMARKS), 'M');
-		if (!AddItem(manageBookmarks, 0))
-			delete manageBookmarks;
+		BMessage* showBookmarks = new(std::nothrow) BMessage(SHOW_BOOKMARKS);
+		BMenuItem* manageBookmarks = new(std::nothrow) BMenuItem(
+			B_TRANSLATE("Manage bookmarks"), showBookmarks, 'M');
+		if (manageBookmarks != nullptr) {
+			if (!AddItem(manageBookmarks, 0))
+				delete manageBookmarks;
+		} else
+			delete showBookmarks;
 
-		BMenuItem* bookmarkThisPage = new BMenuItem(B_TRANSLATE("Bookmark this page"),
-			new BMessage(CREATE_BOOKMARK), 'B');
-		if (!AddItem(bookmarkThisPage, 0))
-			delete bookmarkThisPage;
+		BMessage* createBookmark = new(std::nothrow) BMessage(CREATE_BOOKMARK);
+		BMenuItem* bookmarkThisPage = new(std::nothrow) BMenuItem(
+			B_TRANSLATE("Bookmark this page"), createBookmark, 'B');
+		if (bookmarkThisPage != nullptr) {
+			if (!AddItem(bookmarkThisPage, 0))
+				delete bookmarkThisPage;
+		} else
+			delete createBookmark;
 	}
 };
 
@@ -470,9 +481,9 @@ public:
 		}
 
 		if (icon->Bounds().IntegerWidth() + 1 <= 16) {
-			fPageIcon.reset(new BBitmap(icon));
+			fPageIcon.reset(new(std::nothrow) BBitmap(icon));
 		} else {
-			fPageLargeIcon.reset(new BBitmap(icon));
+			fPageLargeIcon.reset(new(std::nothrow) BBitmap(icon));
 		}
 	}
 
@@ -609,7 +620,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	fIsFullscreen(false),
 	fInterfaceVisible(false),
 	fMenusRunning(false),
-	fPulseRunner(0),
+	fPulseRunner(nullptr),
 	fVisibleInterfaceElements(interfaceElements),
 	fContext(context),
 	fAppSettings(appSettings),
@@ -617,7 +628,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	fShowTabsIfSinglePageOpen(true),
 	fAutoHideInterfaceInFullscreenMode(false),
 	fAutoHidePointer(false),
-	fBookmarkBar(0),
+	fBookmarkBar(nullptr),
 	fIsDownloadOnly(forDownload),
 	fInitialURL(url)
 {
@@ -648,43 +659,65 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 	// Menu
 #if INTEGRATE_MENU_INTO_TAB_BAR
-	BMenu* mainMenu = new BMenu("≡");
+	BMenu* mainMenu = new(std::nothrow) BMenu("≡");
 #else
-	BMenu* mainMenu = new BMenuBar("Main menu");
+	BMenu* mainMenu = new(std::nothrow) BMenuBar("Main menu");
 #endif
-	BMenu* menu = new BMenu(B_TRANSLATE("Window"));
-	BMessage* newWindowMessage = new BMessage(NEW_WINDOW);
-	newWindowMessage->AddString("url", "");
-	BMenuItem* newItem = new BMenuItem(B_TRANSLATE("New window"),
+	BMenu* menu = new(std::nothrow) BMenu(B_TRANSLATE("Window"));
+	BMessage* newWindowMessage = new(std::nothrow) BMessage(NEW_WINDOW);
+	if (newWindowMessage != nullptr)
+		newWindowMessage->AddString("url", "");
+	BMenuItem* newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New window"),
 		newWindowMessage, 'N');
-	if (menu->AddItem(newItem))
-		newItem->SetTarget(be_app);
-	else
-		delete newItem;
+	if (newItem != nullptr) {
+		if (menu != nullptr && menu->AddItem(newItem))
+			newItem->SetTarget(be_app);
+		else
+			delete newItem;
+	}
 
-	newItem = new BMenuItem(B_TRANSLATE("New tab"),
-		new BMessage(*newTabMessage), 'T');
-	if (menu->AddItem(newItem))
-		newItem->SetTarget(be_app);
-	else
-		delete newItem;
+	BMessage* newTabCopy = nullptr;
+	if (newTabMessage != nullptr)
+		newTabCopy = new(std::nothrow) BMessage(*newTabMessage);
 
-	BMenuItem* item = new BMenuItem(B_TRANSLATE("Open location"),
-		new BMessage(OPEN_LOCATION), 'L');
-	if (!menu->AddItem(item))
-		delete item;
+	newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New tab"),
+		newTabCopy, 'T');
+	if (newItem != nullptr) {
+		if (menu != nullptr && menu->AddItem(newItem))
+			newItem->SetTarget(be_app);
+		else
+			delete newItem;
+	}
 
-	menu->AddSeparatorItem();
+	BMessage* openLocationMsg = new(std::nothrow) BMessage(OPEN_LOCATION);
+	BMenuItem* item = new(std::nothrow) BMenuItem(B_TRANSLATE("Open location"),
+		openLocationMsg, 'L');
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
+			delete item;
+	} else
+		delete openLocationMsg;
 
-	item = new BMenuItem(B_TRANSLATE("Close window"),
-		new BMessage(B_QUIT_REQUESTED), 'W', B_SHIFT_KEY);
-	if (!menu->AddItem(item))
-		delete item;
+	if (menu != nullptr)
+		menu->AddSeparatorItem();
 
-	item = new BMenuItem(B_TRANSLATE("Close tab"),
-		new BMessage(CLOSE_TAB), 'W');
-	if (!menu->AddItem(item))
-		delete item;
+	BMessage* closeWindowMsg = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close window"),
+		closeWindowMsg, 'W', B_SHIFT_KEY);
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
+			delete item;
+	} else
+		delete closeWindowMsg;
+
+	BMessage* closeTabMsg = new(std::nothrow) BMessage(CLOSE_TAB);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close tab"),
+		closeTabMsg, 'W');
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
+			delete item;
+	} else
+		delete closeTabMsg;
 
 	item = new BMenuItem(B_TRANSLATE("Save page as" B_UTF8_ELLIPSIS),
 		new BMessage(SAVE_PAGE), 'S');
@@ -1238,10 +1271,31 @@ BrowserWindow::MessageReceived(BMessage* message)
 
 			if (message->FindRef("directory", &ref) == B_OK
 				&& message->FindString("name", &name) == B_OK) {
-				BDirectory dir(&ref);
-				BFile output(&dir, name,
-					B_WRITE_ONLY | B_CREATE_FILE | B_ERASE_FILE);
-				CurrentWebView()->WebPage()->GetContentsAsMHTML(output);
+				BMallocIO* buffer = new(std::nothrow) BMallocIO();
+				if (buffer == nullptr)
+					break;
+
+				CurrentWebView()->WebPage()->GetContentsAsMHTML(*buffer);
+
+				BMessage* workerMessage = new(std::nothrow) BMessage(*message);
+				if (workerMessage == nullptr) {
+					delete buffer;
+					break;
+				}
+
+				if (workerMessage->AddPointer("buffer", buffer) != B_OK) {
+					delete workerMessage;
+					delete buffer;
+					break;
+				}
+
+				thread_id thread = spawn_thread(_HandleSavePageThread,
+					"save page worker", B_LOW_PRIORITY, workerMessage);
+				if (thread < 0) {
+					delete workerMessage;
+					delete buffer;
+				} else
+					resume_thread(thread);
 			}
 
 			break;
@@ -1661,7 +1715,7 @@ BrowserWindow::QuitRequested()
 
 	// Iterate over all tabs to delete all BWebViews.
 	// Do this here, so WebKit tear down happens earlier.
-	SetCurrentWebView(0);
+	SetCurrentWebView(nullptr);
 	while (fTabManager->CountTabs() > 0)
 		_ShutdownTab(0);
 
@@ -1781,7 +1835,7 @@ BrowserWindow::SetCurrentWebView(BWebView* webView)
 					userData->URLInputSelectionEnd());
 			}
 		} else {
-			fURLInputGroup->SetPageIcon(0);
+			fURLInputGroup->SetPageIcon(nullptr);
 			fURLInputGroup->SetText(webView->MainFrameURL());
 		}
 
@@ -1831,7 +1885,7 @@ BrowserWindow::CreateNewTab(const BString& _url, bool select,
 		fTabManager->SelectTab(fTabManager->CountTabs() - 1);
 		SetCurrentWebView(webView);
 		webView->WebPage()->ResendNotifications();
-		fURLInputGroup->SetPageIcon(0);
+		fURLInputGroup->SetPageIcon(nullptr);
 		fURLInputGroup->SetText(url.String());
 		fURLInputGroup->MakeFocus(true);
 	}
@@ -2610,7 +2664,7 @@ BrowserWindow::_SetPageIcon(BWebView* view, const BBitmap* icon)
 {
 	PageUserData* userData = static_cast<PageUserData*>(view->GetUserData());
 	if (userData == nullptr) {
-		userData = new(std::nothrow) PageUserData(0);
+		userData = new(std::nothrow) PageUserData(nullptr);
 		if (userData == nullptr)
 			return;
 		view->SetUserData(userData);
@@ -2857,8 +2911,8 @@ BrowserWindow::_SetAutoHideInterfaceInFullscreen(bool doIt)
 
 	if (fAutoHideInterfaceInFullscreenMode) {
 		BMessage message(CHECK_AUTO_HIDE_INTERFACE);
-		fPulseRunner.reset(new BMessageRunner(BMessenger(this), &message,
-			300000));
+		fPulseRunner.reset(new(std::nothrow) BMessageRunner(BMessenger(this),
+			&message, 300000));
 	} else {
 		fPulseRunner.reset();
 		_ShowInterface(true);
@@ -2978,16 +3032,19 @@ BrowserWindow::_EncodeURIComponent(const BString& search)
 	// search string to WebKit, if we want queries like "4+3" to not be
 	// searched as "4 3".
 	const BString escCharList = " $&`:<>[]{}\"+#%@/;=?\\^|~',";
-	BString result = search;
+	BString result;
+	int32 length = search.Length();
+	result.Preallocate(length * 3);
 	char hexcode[4];
 
-	for (int32 i = 0; i < result.Length(); i++) {
-		if (escCharList.FindFirst(result[i]) != B_ERROR) {
+	for (int32 i = 0; i < length; i++) {
+		char c = search[i];
+		if (escCharList.FindFirst(c) != B_ERROR) {
 			snprintf(hexcode, sizeof(hexcode), "%02X",
-				(unsigned int)(unsigned char)result[i]);
-			result.SetByteAt(i, '%');
-			result.Insert(hexcode, i + 1);
-			i += 2;
+				(unsigned int)(unsigned char)c);
+			result << '%' << hexcode;
+		} else {
+			result << c;
 		}
 	}
 
@@ -3277,6 +3334,53 @@ BrowserWindow::_HandlePageSourceResult(const BMessage* message)
 		delete messageCopy;
 	else
 		resume_thread(thread);
+}
+
+
+status_t
+BrowserWindow::_HandleSavePageThread(void* data)
+{
+	if (data == nullptr)
+		return B_BAD_VALUE;
+	BMessage* message = static_cast<BMessage*>(data);
+
+	BMallocIO* buffer = nullptr;
+	message->FindPointer("buffer", (void**)&buffer);
+
+	if (buffer == nullptr) {
+		delete message;
+		return B_BAD_VALUE;
+	}
+
+	entry_ref ref;
+	BString name;
+
+	status_t ret = message->FindRef("directory", &ref);
+	if (ret == B_OK)
+		ret = message->FindString("name", &name);
+
+	if (ret == B_OK) {
+		BDirectory dir(&ref);
+		BFile output(&dir, name, B_WRITE_ONLY | B_CREATE_FILE | B_ERASE_FILE);
+		ret = output.InitCheck();
+		if (ret == B_OK) {
+			output.Write(buffer->Buffer(), buffer->BufferLength());
+		}
+	}
+
+	if (ret != B_OK) {
+		char errorBuffer[1024];
+		snprintf(errorBuffer, sizeof(errorBuffer), B_TRANSLATE("Failed to save the "
+			"page source: %s\n"), strerror(ret));
+		BAlert* alert = new BAlert(B_TRANSLATE("Save error"), errorBuffer,
+			B_TRANSLATE("OK"));
+		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+		alert->Go(0);
+	}
+
+	delete buffer;
+	delete message;
+	return B_OK;
 }
 
 

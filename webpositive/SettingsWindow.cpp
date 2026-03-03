@@ -97,7 +97,7 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 	fRevertButton = new BButton(B_TRANSLATE("Revert"),
 		new BMessage(MSG_REVERT));
 
-	fOpenFilePanel = 0;
+	fOpenFilePanel = nullptr;
 
 	float spacing = be_control_look->DefaultItemSpacing();
 

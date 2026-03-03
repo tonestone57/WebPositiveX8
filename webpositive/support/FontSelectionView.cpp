@@ -53,8 +53,8 @@ FontSelectionView::FontSelectionView(const char* name, const char* label,
 		bool separateStyles, const BFont* currentFont)
 	:
 	BHandler(name),
-	fMessage(0),
-	fTarget(0)
+	fMessage(nullptr),
+	fTarget(nullptr)
 {
 	if (currentFont == nullptr)
 		fCurrentFont = _DefaultFont();
@@ -516,7 +516,7 @@ FontSelectionView::_BuildSizesMenu()
 	const int32 sizes[] = {7, 8, 9, 10, 11, 12, 13, 14, 18, 21, 24, 0};
 
 	// build size menu
-	for (int32 i = 0; sizes[i]; i++) {
+	for (int32 i = 0; sizes[i] != 0; i++) {
 		int32 size = sizes[i];
 		if (size < kMinSize || size > kMaxSize)
 			continue;
