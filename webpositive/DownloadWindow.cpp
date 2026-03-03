@@ -95,7 +95,7 @@ class DownloadContainerScrollView : public BScrollView {
 public:
 	DownloadContainerScrollView(BView* target)
 		:
-		BScrollView("Downloads scroll view", target, nullptr, true, true,
+		BScrollView("Downloads scroll view", target, 0, true, true,
 			B_NO_BORDER)
 	{
 	}
@@ -259,6 +259,13 @@ DownloadWindow::~DownloadWindow()
 	wait_for_thread(fSaveThread, &exitValue);
 
 	delete_sem(fSaveSem);
+
+	if (fDownloadsScrollView != nullptr && fDownloadsScrollView->Parent() == nullptr)
+		delete fDownloadsScrollView;
+	if (fRemoveFinishedButton != nullptr && fRemoveFinishedButton->Parent() == nullptr)
+		delete fRemoveFinishedButton;
+	if (fRemoveMissingButton != nullptr && fRemoveMissingButton->Parent() == nullptr)
+		delete fRemoveMissingButton;
 }
 
 

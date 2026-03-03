@@ -71,6 +71,19 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 
 AuthenticationPanel::~AuthenticationPanel()
 {
+	if (m_usernameTextControl != nullptr && m_usernameTextControl->Parent() == nullptr)
+		delete m_usernameTextControl;
+	if (m_passwordTextControl != nullptr && m_passwordTextControl->Parent() == nullptr)
+		delete m_passwordTextControl;
+	if (m_hidePasswordCheckBox != nullptr && m_hidePasswordCheckBox->Parent() == nullptr)
+		delete m_hidePasswordCheckBox;
+	if (m_rememberCredentialsCheckBox != nullptr && m_rememberCredentialsCheckBox->Parent() == nullptr)
+		delete m_rememberCredentialsCheckBox;
+	if (m_okButton != nullptr && m_okButton->Parent() == nullptr)
+		delete m_okButton;
+	if (m_cancelButton != nullptr && m_cancelButton->Parent() == nullptr)
+		delete m_cancelButton;
+
 	delete_sem(m_exitSemaphore);
 	delete m_jitterRunner;
 }
@@ -129,10 +142,13 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 void
 AuthenticationPanel::_UpdatePasswordVisibility()
 {
+	if (m_hidePasswordCheckBox == nullptr || m_passwordTextControl == nullptr)
+		return;
+
 	bool hide = m_hidePasswordCheckBox->Value() == B_CONTROL_ON;
 	BTextView* textView = m_passwordTextControl->TextView();
 
-	if (textView->IsTypingHidden() == hide)
+	if (textView == nullptr || textView->IsTypingHidden() == hide)
 		return;
 
 	// BTextView::HideTyping() is destructive when enabling, as it deletes
@@ -170,51 +186,65 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	textView->MakeEditable(false);
 	textView->MakeSelectable(false);
 
-	m_usernameTextControl->SetText(previousUser.String());
-	// Ignore the previous password, if it didn't work.
-	if (!badPassword)
-		m_passwordTextControl->SetText(previousPass.String());
-	else
-		m_passwordTextControl->SetText("");
+	if (m_usernameTextControl != nullptr)
+		m_usernameTextControl->SetText(previousUser.String());
 
-	m_hidePasswordCheckBox->SetValue(B_CONTROL_ON);
-	_UpdatePasswordVisibility();
-	m_rememberCredentialsCheckBox->SetValue(previousRememberCredentials);
+	// Ignore the previous password, if it didn't work.
+	if (m_passwordTextControl != nullptr) {
+		if (!badPassword)
+			m_passwordTextControl->SetText(previousPass.String());
+		else
+			m_passwordTextControl->SetText("");
+	}
+
+	if (m_hidePasswordCheckBox != nullptr) {
+		m_hidePasswordCheckBox->SetValue(B_CONTROL_ON);
+		_UpdatePasswordVisibility();
+	}
+	if (m_rememberCredentialsCheckBox != nullptr)
+		m_rememberCredentialsCheckBox->SetValue(previousRememberCredentials);
 
 	// create layout
 	BGroupLayout* layout = new(std::nothrow) BGroupLayout(B_VERTICAL, 0.0);
-	if (layout != nullptr)
+	if (layout != nullptr) {
 		SetLayout(layout);
-	float spacing = be_control_look->DefaultItemSpacing();
-	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
-		.Add(BGridLayoutBuilder(0, spacing)
-			.Add(textView, 0, nullptr, 2)
-			.Add(m_usernameTextControl != nullptr ? m_usernameTextControl->CreateLabelLayoutItem() : nullptr, 0, 1)
-			.Add(m_usernameTextControl != nullptr ? m_usernameTextControl->CreateTextViewLayoutItem() : nullptr, 1, 1)
-			.Add(m_passwordTextControl != nullptr ? m_passwordTextControl->CreateLabelLayoutItem() : nullptr, 0, 2)
-			.Add(m_passwordTextControl != nullptr ? m_passwordTextControl->CreateTextViewLayoutItem() : nullptr, 1, 2)
-			.Add(BSpaceLayoutItem::CreateGlue(), 0, 3)
-			.Add(m_hidePasswordCheckBox, 1, 3)
-			.Add(m_rememberCredentialsCheckBox, 0, 4, 2)
-			.SetInsets(spacing, spacing, spacing, spacing)
-		)
-		.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
-		.Add(BGroupLayoutBuilder(B_HORIZONTAL, spacing)
-			.AddGlue()
-			.Add(m_cancelButton)
-			.Add(m_okButton)
-			.SetInsets(spacing, spacing, spacing, spacing)
-		)
-	);
+		float spacing = be_control_look->DefaultItemSpacing();
+		AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
+			.Add(BGridLayoutBuilder(0, spacing)
+				.Add(textView, 0, nullptr, 2)
+				.Add(m_usernameTextControl != nullptr ? m_usernameTextControl->CreateLabelLayoutItem() : nullptr, 0, 1)
+				.Add(m_usernameTextControl != nullptr ? m_usernameTextControl->CreateTextViewLayoutItem() : nullptr, 1, 1)
+				.Add(m_passwordTextControl != nullptr ? m_passwordTextControl->CreateLabelLayoutItem() : nullptr, 0, 2)
+				.Add(m_passwordTextControl != nullptr ? m_passwordTextControl->CreateTextViewLayoutItem() : nullptr, 1, 2)
+				.Add(BSpaceLayoutItem::CreateGlue(), 0, 3)
+				.Add(m_hidePasswordCheckBox, 1, 3)
+				.Add(m_rememberCredentialsCheckBox, 0, 4, 2)
+				.SetInsets(spacing, spacing, spacing, spacing)
+			)
+			.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+			.Add(BGroupLayoutBuilder(B_HORIZONTAL, spacing)
+				.AddGlue()
+				.Add(m_cancelButton)
+				.Add(m_okButton)
+				.SetInsets(spacing, spacing, spacing, spacing)
+			)
+		);
+	} else {
+		delete textView;
+		return false;
+	}
 
 	float textHeight = textView->LineHeight(0) * textView->CountLines();
 	textView->SetExplicitMinSize(BSize(B_SIZE_UNSET, textHeight));
 
 	SetDefaultButton(m_okButton);
-	if (badPassword && previousUser.Length())
-		m_passwordTextControl->MakeFocus(true);
-	else
-		m_usernameTextControl->MakeFocus(true);
+	if (badPassword && previousUser.Length()) {
+		if (m_passwordTextControl != nullptr)
+			m_passwordTextControl->MakeFocus(true);
+	} else {
+		if (m_usernameTextControl != nullptr)
+			m_usernameTextControl->MakeFocus(true);
+	}
 
 	if (m_parentWindowFrame.IsValid())
 		CenterIn(m_parentWindowFrame);
@@ -256,11 +286,14 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	// AuthenticationPanel wants to quit.
 	Lock();
 
-	user = m_usernameTextControl->Text();
-	pass = m_passwordTextControl->Text();
-	if (rememberCredentials)
+	if (m_usernameTextControl != nullptr)
+		user = m_usernameTextControl->Text();
+	if (m_passwordTextControl != nullptr)
+		pass = m_passwordTextControl->Text();
+	if (rememberCredentials && m_rememberCredentialsCheckBox != nullptr) {
 		*rememberCredentials = m_rememberCredentialsCheckBox->Value()
 			== B_CONTROL_ON;
+	}
 
 	bool canceled = m_cancelled;
 	Quit();
