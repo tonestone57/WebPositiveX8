@@ -95,7 +95,7 @@ class DownloadContainerScrollView : public BScrollView {
 public:
 	DownloadContainerScrollView(BView* target)
 		:
-		BScrollView("Downloads scroll view", target, 0, true, true,
+		BScrollView("Downloads scroll view", target, nullptr, true, true,
 			B_NO_BORDER)
 	{
 	}
@@ -202,19 +202,9 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 
 	fDownloadsScrollView = new(std::nothrow) DownloadContainerScrollView(downloadsGroupView);
 
-	if (layout != nullptr && menuBar != nullptr && fDownloadsScrollView != nullptr) {
-		BGroupLayoutBuilder(layout)
-			.Add(menuBar)
-			.Add(fDownloadsScrollView)
-			.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
-			.Add(BGroupLayoutBuilder(B_HORIZONTAL, spacing)
-				.AddGlue()
-				.Add(fRemoveMissingButton)
-				.Add(fRemoveFinishedButton)
-				.SetInsets(12, 5, 12, 5)
-			)
-		;
-	}
+	const float spacing = be_control_look->DefaultItemSpacing();
+
+	BMessage* rmFinishedMsg = new(std::nothrow) BMessage(REMOVE_FINISHED_DOWNLOADS);
 	fRemoveFinishedButton = new(std::nothrow) BButton(B_TRANSLATE("Remove finished"),
 		rmFinishedMsg);
 	if (fRemoveFinishedButton != nullptr)
@@ -233,7 +223,19 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 	if (fRemoveFinishedButton == nullptr || fRemoveMissingButton == nullptr)
 		return;
 
-	const float spacing = be_control_look->DefaultItemSpacing();
+	if (layout != nullptr && menuBar != nullptr && fDownloadsScrollView != nullptr) {
+		BGroupLayoutBuilder(layout)
+			.Add(menuBar)
+			.Add(fDownloadsScrollView)
+			.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+			.Add(BGroupLayoutBuilder(B_HORIZONTAL, spacing)
+				.AddGlue()
+				.Add(fRemoveMissingButton)
+				.Add(fRemoveFinishedButton)
+				.SetInsets(12, 5, 12, 5)
+			)
+		;
+	}
 
 
 	PostMessage(INIT);
@@ -257,13 +259,6 @@ DownloadWindow::~DownloadWindow()
 	wait_for_thread(fSaveThread, &exitValue);
 
 	delete_sem(fSaveSem);
-
-	if (fDownloadsScrollView != nullptr && fDownloadsScrollView->Parent() == nullptr)
-		delete fDownloadsScrollView;
-	if (fRemoveFinishedButton != nullptr && fRemoveFinishedButton->Parent() == nullptr)
-		delete fRemoveFinishedButton;
-	if (fRemoveMissingButton != nullptr && fRemoveMissingButton->Parent() == nullptr)
-		delete fRemoveMissingButton;
 }
 
 

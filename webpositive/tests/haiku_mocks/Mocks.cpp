@@ -26,7 +26,9 @@ BApplication::BApplication(const char* signature) : BLooper(signature) {
 }
 BApplication* be_app = nullptr;
 
-void BWindow::AddChild(BView* view) {}
+void BWindow::AddChild(BView* view) {
+    if (view) view->SetParent((BView*)this); // Type punning for mock
+}
 
 BMessenger be_app_messenger;
 

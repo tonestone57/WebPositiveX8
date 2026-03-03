@@ -68,6 +68,7 @@ public:
     }
     int32 CountChildren() const { return (int32)fChildren.size(); }
     BView* Parent() const { return fParent; }
+    void SetParent(BView* parent) { fParent = parent; }
     BWindow* Window() const { return fWindow; }
 
     BRect Bounds() const { return BRect(0, 0, fFrame.Width(), fFrame.Height()); }
