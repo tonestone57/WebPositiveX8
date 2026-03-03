@@ -54,13 +54,27 @@ BookmarkBar::BookmarkBar(const char* title, BHandler* target,
 	fOverflowMenuAdded = false;
 
 	fPopUpMenu = new BPopUpMenu("Bookmark Popup", false, false);
-	fPopUpMenu->AddItem(
-		new BMenuItem(B_TRANSLATE("Open in new tab"), new BMessage(kOpenNewTabMsg)));
-	fPopUpMenu->AddItem(new BMenuItem(B_TRANSLATE("Rename"), new BMessage(kAskBookmarkNameMsg)));
-	fPopUpMenu->AddItem(
-		new BMenuItem(B_TRANSLATE("Show in Tracker"), new BMessage(kShowInTrackerMsg)));
-	fPopUpMenu->AddItem(new BSeparatorItem());
-	fPopUpMenu->AddItem(new BMenuItem(B_TRANSLATE("Delete"), new BMessage(kDeleteMsg)));
+	BMenuItem* item = new BMenuItem(B_TRANSLATE("Open in new tab"),
+		new BMessage(kOpenNewTabMsg));
+	if (!fPopUpMenu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Rename"), new BMessage(kAskBookmarkNameMsg));
+	if (!fPopUpMenu->AddItem(item))
+		delete item;
+
+	item = new BMenuItem(B_TRANSLATE("Show in Tracker"),
+		new BMessage(kShowInTrackerMsg));
+	if (!fPopUpMenu->AddItem(item))
+		delete item;
+
+	BSeparatorItem* separator = new BSeparatorItem();
+	if (!fPopUpMenu->AddItem(separator))
+		delete separator;
+
+	item = new BMenuItem(B_TRANSLATE("Delete"), new BMessage(kDeleteMsg));
+	if (!fPopUpMenu->AddItem(item))
+		delete item;
 }
 
 
@@ -433,10 +447,13 @@ BookmarkBar::FrameResized(float width, float height)
 			BRect frame = extraItem->Frame();
 			if (frame.Width() + rightmost > width - overflowMenuWidth)
 				break;
-			AddItem(fOverflowMenu->RemoveItem((int32)0), i);
-			i++;
+			BMenuItem* item = fOverflowMenu->RemoveItem((int32)0);
+			if (AddItem(item, i)) {
+				i++;
+				rightmost = ItemAt(i)->Frame().right;
+			} else
+				delete item;
 
-			rightmost = ItemAt(i)->Frame().right;
 			if (fOverflowMenu->CountItems() <= 1)
 				overflowMenuWidth = 0;
 			extraItem = fOverflowMenu->ItemAt(0);
@@ -451,12 +468,18 @@ BookmarkBar::FrameResized(float width, float height)
 		// Counting backwards avoids complications when indices shift
 		// after an item is removed, and keeps bookmarks in the same order,
 		// provided they are added at index 0 of the "more" menu.
-		for (int j = count - 1; j >= i; j--)
-			fOverflowMenu->AddItem(RemoveItem(j), 0);
+		for (int j = count - 1; j >= i; j--) {
+			BMenuItem* item = RemoveItem(j);
+			if (!fOverflowMenu->AddItem(item, 0))
+				delete item;
+		}
 
 		if (IndexOf(fOverflowMenu) == B_ERROR) {
-			AddItem(fOverflowMenu);
-			fOverflowMenuAdded = true;
+			if (!AddItem(fOverflowMenu)) {
+				// We can't really delete fOverflowMenu here as it is a member.
+				fOverflowMenuAdded = false;
+			} else
+				fOverflowMenuAdded = true;
 		}
 	}
 
@@ -540,8 +563,10 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 	if (IndexOf(fOverflowMenu) != B_ERROR)
 		count--;
 
-	BMenuBar::AddItem(item, count);
-	fItemsMap[inode] = item;
+	if (BMenuBar::AddItem(item, count))
+		fItemsMap[inode] = item;
+	else
+		delete item;
 
 	// Move the item to the "more" menu if it overflows.
 	BRect rect = Bounds();

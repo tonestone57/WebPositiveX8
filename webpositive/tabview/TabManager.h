@@ -37,7 +37,7 @@ public:
 			const BMessenger&	Target() const;
 
 #if INTEGRATE_MENU_INTO_TAB_BAR
-			BGroupLayout*		MenuContainerLayout() const;
+			BView*				MenuContainerView() const;
 #endif
 
 			BView*				TabGroup() const;

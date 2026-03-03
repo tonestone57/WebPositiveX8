@@ -117,8 +117,8 @@ BrowserApp::BrowserApp()
 
 	BString sessionStoreSubPath(kApplicationName);
 	sessionStoreSubPath << "/" << kSettingsFileNameSession;
-	fSession = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-		sessionStoreSubPath.String());
+	fSession.reset(new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+		sessionStoreSubPath.String()));
 }
 
 
@@ -128,10 +128,6 @@ BrowserApp::~BrowserApp()
 		status_t exitValue;
 		wait_for_thread(fCookieLoaderThread, &exitValue);
 	}
-	delete fLaunchRefsMessage;
-	delete fSettings;
-	delete fCookies;
-	delete fSession;
 }
 
 
@@ -209,8 +205,8 @@ BrowserApp::ReadyToRun()
 
 	BString mainSettingsSubPath(kApplicationName);
 	mainSettingsSubPath << "/" << kSettingsFileNameApplication;
-	fSettings = new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
-		mainSettingsSubPath.String());
+	fSettings.reset(new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+		mainSettingsSubPath.String()));
 
 	fLastWindowFrame = fSettings->GetValue("window frame", fLastWindowFrame);
 	BRect defaultDownloadWindowFrame(-10, -10, 365, 265);
@@ -225,7 +221,7 @@ BrowserApp::ReadyToRun()
 	bool showDownloads = fSettings->GetValue("show downloads", false);
 
 	fDownloadWindow = new DownloadWindow(downloadWindowFrame, showDownloads,
-		fSettings);
+		fSettings.get());
 	if (downloadWindowFrame == defaultDownloadWindowFrame) {
 		// Initially put download window in lower right of screen.
 		BRect screenFrame = BScreen().Frame();
@@ -239,7 +235,7 @@ BrowserApp::ReadyToRun()
 			screenFrame.Height() - fDownloadWindow->Frame().Height()
 			- borderWidth);
 	}
-	fSettingsWindow = new SettingsWindow(settingsWindowFrame, fSettings);
+	fSettingsWindow = new SettingsWindow(settingsWindowFrame, fSettings.get());
 
 	BWebPage::SetDownloadListener(BMessenger(fDownloadWindow));
 
@@ -274,7 +270,7 @@ BrowserApp::ReadyToRun()
 				BString url;
 				archivedWindow.FindString("tab", 0, &url);
 				BrowserWindow* window = new(std::nothrow) BrowserWindow(frame,
-				fSettings, url, fContext, INTERFACE_ELEMENT_ALL, 0,
+				fSettings.get(), url, fContext, INTERFACE_ELEMENT_ALL, 0,
 					workspaces);
 
 				if (window != nullptr) {
@@ -292,9 +288,8 @@ BrowserApp::ReadyToRun()
 	}
 	// If there is fLauchRefs message,
 	if (fLaunchRefsMessage != nullptr) {
-		_RefsReceived(fLaunchRefsMessage, &pagesCreated, &fullscreen);
-		delete fLaunchRefsMessage;
-		fLaunchRefsMessage = nullptr;
+		_RefsReceived(fLaunchRefsMessage.get(), &pagesCreated, &fullscreen);
+		fLaunchRefsMessage.reset();
 	}
 
 	// If previous session did not contain any window on this workspace, create a new empty one.
@@ -410,8 +405,7 @@ void
 BrowserApp::RefsReceived(BMessage* message)
 {
 	if (!fInitialized) {
-		delete fLaunchRefsMessage;
-		fLaunchRefsMessage = new BMessage(*message);
+		fLaunchRefsMessage.reset(new BMessage(*message));
 		return;
 	}
 
@@ -641,7 +635,7 @@ BrowserApp::_CreateNewWindow(const BString& url, bool fullscreen,
 	if (!BScreen().Frame().Contains(fLastWindowFrame))
 		fLastWindowFrame.OffsetTo(50, 50);
 
-	BrowserWindow* window = new BrowserWindow(fLastWindowFrame, fSettings,
+	BrowserWindow* window = new BrowserWindow(fLastWindowFrame, fSettings.get(),
 		url, fContext, INTERFACE_ELEMENT_ALL, 0, B_CURRENT_WORKSPACE,
 		forDownload);
 	if (fullscreen)
@@ -696,8 +690,7 @@ BrowserApp::_CookieLoaderThread(void* data)
 	}
 
 	if (self->Lock()) {
-		delete self->fCookies;
-		self->fCookies = cookies;
+		self->fCookies.reset(cookies);
 		self->Unlock();
 	} else {
 		delete cookies;
