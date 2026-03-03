@@ -8,6 +8,8 @@
 
 #include "AutoCompleter.h"
 
+#include <new>
+
 #include <Looper.h>
 #include <Message.h>
 
@@ -20,12 +22,12 @@
 
 
 BAutoCompleter::CompletionStyle::CompletionStyle(EditView* editView,
-		ChoiceModel* choiceModel, ChoiceView* choiceView, 
+		ChoiceModel* choiceModel, ChoiceView* choiceView,
 		PatternSelector* patternSelector)
 	:
 	fEditView(editView),
 	fPatternSelector(patternSelector ? patternSelector
-		: new BDefaultPatternSelector()),
+		: new(std::nothrow) BDefaultPatternSelector()),
 	fChoiceModel(choiceModel),
 	fChoiceView(choiceView)
 {
@@ -95,8 +97,8 @@ BAutoCompleter::BAutoCompleter(CompletionStyle* completionStyle)
 BAutoCompleter::BAutoCompleter(EditView* editView, ChoiceModel* choiceModel,
 		ChoiceView* choiceView, PatternSelector* patternSelector)
 	:
-	fCompletionStyle(new BDefaultCompletionStyle(editView, choiceModel,
-		choiceView, patternSelector))
+	fCompletionStyle(new(std::nothrow) BDefaultCompletionStyle(editView,
+		choiceModel, choiceView, patternSelector))
 {
 }
 

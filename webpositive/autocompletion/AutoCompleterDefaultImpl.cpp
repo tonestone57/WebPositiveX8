@@ -8,6 +8,7 @@
 
 #include "AutoCompleterDefaultImpl.h"
 
+#include <new>
 #include <ListView.h>
 #include <Screen.h>
 #include <ScrollView.h>
@@ -327,8 +328,8 @@ BDefaultChoiceView::ListItem::DrawItem(BView* owner, BRect frame,
 
 BDefaultChoiceView::BDefaultChoiceView()
 	:
-	fWindow(0),
-	fListView(0),
+	fWindow(nullptr),
+	fListView(nullptr),
 	fMaxVisibleChoices(8)
 {
 	
@@ -378,12 +379,12 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 		);
 	}
 
-	BScrollView *scrollView = 0;
+	BScrollView *scrollView = nullptr;
 	if (count > fMaxVisibleChoices) {
-		scrollView = new BScrollView("", fListView, B_FOLLOW_NONE, 0, false, true, B_NO_BORDER);
+		scrollView = new(std::nothrow) BScrollView("", fListView, B_FOLLOW_NONE, 0, false, true, B_NO_BORDER);
 	}
 
-	fWindow = new BWindow(BRect(0, 0, 100, 100), "", B_BORDERED_WINDOW_LOOK, 
+	fWindow = new(std::nothrow) BWindow(BRect(0, 0, 100, 100), "", B_BORDERED_WINDOW_LOOK,
 		B_NORMAL_WINDOW_FEEL, B_NOT_MOVABLE | B_WILL_ACCEPT_FIRST_CLICK 
 			| B_AVOID_FOCUS | B_ASYNCHRONOUS_CONTROLS);
 	if (scrollView != nullptr)
@@ -426,8 +427,8 @@ BDefaultChoiceView::HideChoices()
 {
 	if (fWindow && fWindow->Lock()) {
 		fWindow->Quit();
-		fWindow = 0;
-		fListView = 0;
+		fWindow = nullptr;
+		fListView = nullptr;
 	}
 }
 
