@@ -475,9 +475,12 @@ BrowserApp::QuitRequested()
 
 	BWebPage::ShutdownOnce();
 
-	BMessenger worker(kApplicationSignature, find_thread("Bookmark worker"));
-	if (worker.IsValid())
-		worker.SendMessage(B_QUIT_REQUESTED);
+	thread_id workerThread = find_thread("Bookmark worker");
+	if (workerThread >= 0) {
+		BLooper* worker = BLooper::LooperForThread(workerThread);
+		if (worker != nullptr)
+			worker->PostMessage(B_QUIT_REQUESTED);
+	}
 
 	fSettings->SetValue("window frame", fLastWindowFrame);
 	if (fDownloadWindow->Lock()) {

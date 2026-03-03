@@ -668,10 +668,6 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		return;
 
 	BMenu* menu = new(std::nothrow) BMenu(B_TRANSLATE("Window"));
-	if (menu == nullptr) {
-		delete mainMenu;
-		return;
-	}
 
 	BMessage* newWindowMessage = new(std::nothrow) BMessage(NEW_WINDOW);
 	if (newWindowMessage != nullptr)
@@ -692,42 +688,51 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 	newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New tab"),
 		newTabCopy, 'T');
-	if (newItem != nullptr) {
+	if (newItem != nullptr && menu != nullptr) {
 		if (menu->AddItem(newItem))
 			newItem->SetTarget(be_app);
 		else
 			delete newItem;
-	} else
+	} else {
+		delete newItem;
 		delete newTabCopy;
+	}
 
 	BMessage* openLocationMsg = new(std::nothrow) BMessage(OPEN_LOCATION);
 	BMenuItem* item = new(std::nothrow) BMenuItem(B_TRANSLATE("Open location"),
 		openLocationMsg, 'L');
-	if (item != nullptr) {
+	if (item != nullptr && menu != nullptr) {
 		if (!menu->AddItem(item))
 			delete item;
-	} else
+	} else {
+		delete item;
 		delete openLocationMsg;
+	}
 
-	menu->AddSeparatorItem();
+	if (menu != nullptr)
+		menu->AddSeparatorItem();
 
 	BMessage* closeWindowMsg = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close window"),
 		closeWindowMsg, 'W', B_SHIFT_KEY);
-	if (item != nullptr) {
+	if (item != nullptr && menu != nullptr) {
 		if (!menu->AddItem(item))
 			delete item;
-	} else
+	} else {
+		delete item;
 		delete closeWindowMsg;
+	}
 
 	BMessage* closeTabMsg = new(std::nothrow) BMessage(CLOSE_TAB);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close tab"),
 		closeTabMsg, 'W');
-	if (item != nullptr) {
+	if (item != nullptr && menu != nullptr) {
 		if (!menu->AddItem(item))
 			delete item;
-	} else
+	} else {
+		delete item;
 		delete closeTabMsg;
+	}
 
 	item = new BMenuItem(B_TRANSLATE("Save page as" B_UTF8_ELLIPSIS),
 		new BMessage(SAVE_PAGE), 'S');
@@ -772,20 +777,23 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	else
 		delete quitItem;
 
-	if (!mainMenu->AddItem(menu))
+	if (mainMenu != nullptr && menu != nullptr && !mainMenu->AddItem(menu))
 		delete menu;
 
 	menu = new(std::nothrow) BMenu(B_TRANSLATE("Edit"));
-	if (menu == nullptr) {
-		delete mainMenu;
-		return;
-	}
 
+	BMessage* cutMsg = new(std::nothrow) BMessage(B_CUT);
 	fCutMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Cut"),
-		new(std::nothrow) BMessage(B_CUT), 'X');
-	if (!menu->AddItem(fCutMenuItem)) {
+		cutMsg, 'X');
+	if (fCutMenuItem != nullptr && menu != nullptr) {
+		if (!menu->AddItem(fCutMenuItem)) {
+			delete fCutMenuItem;
+			fCutMenuItem = nullptr;
+		}
+	} else {
 		delete fCutMenuItem;
 		fCutMenuItem = nullptr;
+		delete cutMsg;
 	}
 
 	fCopyMenuItem = new BMenuItem(B_TRANSLATE("Copy"), new BMessage(B_COPY), 'C');
@@ -820,7 +828,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		fFindNextMenuItem = nullptr;
 	}
 
-	if (!mainMenu->AddItem(menu))
+	if (mainMenu != nullptr && menu != nullptr && !mainMenu->AddItem(menu))
 		delete menu;
 
 	if (fFindPreviousMenuItem != nullptr)
@@ -3063,6 +3071,7 @@ BrowserWindow::_EncodeURIComponent(const BString& search)
 	const char* escCharList = " $&`:<>[]{}\"+#%@/;=?\\^|~',";
 	BString result;
 	int32 length = search.Length();
+	result.Preallocate(length * 3);
 	char hexcode[4];
 
 	for (int32 i = 0; i < length; i++) {
