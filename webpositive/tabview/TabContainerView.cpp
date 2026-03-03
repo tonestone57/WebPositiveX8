@@ -218,6 +218,9 @@ TabContainerView::AddTab(TabView* tab, int32 index)
 TabView*
 TabContainerView::RemoveTab(int32 index)
 {
+	if (index < 0 || index >= GroupLayout()->CountItems() - 1)
+		return nullptr;
+
 	TabLayoutItem* item
 		= dynamic_cast<TabLayoutItem*>(GroupLayout()->RemoveItem(index));
 	if (item == nullptr)
