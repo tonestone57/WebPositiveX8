@@ -681,15 +681,13 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		newWindowMessage->AddString("url", "");
 	BMenuItem* newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New window"),
 		newWindowMessage, 'N');
-	if (newItem != nullptr && menu != nullptr) {
-		if (menu->AddItem(newItem))
+	if (newItem != nullptr) {
+		if (menu != nullptr && menu->AddItem(newItem))
 			newItem->SetTarget(be_app);
 		else
 			delete newItem;
-	} else {
-		delete newItem;
+	} else
 		delete newWindowMessage;
-	}
 
 	BMessage* newTabCopy = nullptr;
 	if (newTabMessage != nullptr)
@@ -697,26 +695,22 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 	newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New tab"),
 		newTabCopy, 'T');
-	if (newItem != nullptr && menu != nullptr) {
-		if (menu->AddItem(newItem))
+	if (newItem != nullptr) {
+		if (menu != nullptr && menu->AddItem(newItem))
 			newItem->SetTarget(be_app);
 		else
 			delete newItem;
-	} else {
-		delete newItem;
+	} else
 		delete newTabCopy;
-	}
 
 	BMessage* openLocationMsg = new(std::nothrow) BMessage(OPEN_LOCATION);
 	BMenuItem* item = new(std::nothrow) BMenuItem(B_TRANSLATE("Open location"),
 		openLocationMsg, 'L');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete openLocationMsg;
-	}
 
 	if (menu != nullptr)
 		menu->AddSeparatorItem();
@@ -724,35 +718,29 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	BMessage* closeWindowMsg = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close window"),
 		closeWindowMsg, 'W', B_SHIFT_KEY);
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete closeWindowMsg;
-	}
 
 	BMessage* closeTabMsg = new(std::nothrow) BMessage(CLOSE_TAB);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close tab"),
 		closeTabMsg, 'W');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete closeTabMsg;
-	}
 
 	BMessage* savePageMsg = new(std::nothrow) BMessage(SAVE_PAGE);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Save page as" B_UTF8_ELLIPSIS),
 		savePageMsg, 'S');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete savePageMsg;
-	}
 
 	if (menu != nullptr)
 		menu->AddSeparatorItem();
@@ -760,59 +748,49 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	BMessage* downloadMsg = new(std::nothrow) BMessage(SHOW_DOWNLOAD_WINDOW);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Downloads"),
 		downloadMsg, 'D');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete downloadMsg;
-	}
 
 	BMessage* settingsMsg = new(std::nothrow) BMessage(SHOW_SETTINGS_WINDOW);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Settings"),
 		settingsMsg, ',');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete settingsMsg;
-	}
 
 	BMessage* cookieMsg = new(std::nothrow) BMessage(SHOW_COOKIE_WINDOW);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Cookie manager"),
 		cookieMsg);
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete cookieMsg;
-	}
 
 	BMessage* consoleMsg = new(std::nothrow) BMessage(SHOW_CONSOLE_WINDOW);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Script console"),
 		consoleMsg);
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete consoleMsg;
-	}
 
 	BMessage* aboutMsg = new(std::nothrow) BMessage(B_ABOUT_REQUESTED);
 	BMenuItem* aboutItem = new(std::nothrow) BMenuItem(B_TRANSLATE("About"),
 		aboutMsg);
-	if (aboutItem != nullptr && menu != nullptr) {
-		if (menu->AddItem(aboutItem))
+	if (aboutItem != nullptr) {
+		if (menu != nullptr && menu->AddItem(aboutItem))
 			aboutItem->SetTarget(be_app);
 		else
 			delete aboutItem;
-	} else {
-		delete aboutItem;
+	} else
 		delete aboutMsg;
-	}
 
 	if (menu != nullptr)
 		menu->AddSeparatorItem();
@@ -820,15 +798,13 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	BMessage* quitMsg = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
 	BMenuItem* quitItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Quit"),
 		quitMsg, 'Q');
-	if (quitItem != nullptr && menu != nullptr) {
-		if (menu->AddItem(quitItem))
+	if (quitItem != nullptr) {
+		if (menu != nullptr && menu->AddItem(quitItem))
 			quitItem->SetTarget(be_app);
 		else
 			delete quitItem;
-	} else {
-		delete quitItem;
+	} else
 		delete quitMsg;
-	}
 
 	if (mainMenu != nullptr && menu != nullptr && !mainMenu->AddItem(menu))
 		delete menu;
@@ -838,42 +814,36 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	BMessage* cutMsg = new(std::nothrow) BMessage(B_CUT);
 	fCutMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Cut"),
 		cutMsg, 'X');
-	if (fCutMenuItem != nullptr && menu != nullptr) {
-		if (!menu->AddItem(fCutMenuItem)) {
+	if (fCutMenuItem != nullptr) {
+		if (menu == nullptr || !menu->AddItem(fCutMenuItem)) {
 			delete fCutMenuItem;
 			fCutMenuItem = nullptr;
 		}
 	} else {
-		delete fCutMenuItem;
-		fCutMenuItem = nullptr;
 		delete cutMsg;
 	}
 
 	BMessage* copyMsg = new(std::nothrow) BMessage(B_COPY);
 	fCopyMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Copy"),
 		copyMsg, 'C');
-	if (fCopyMenuItem != nullptr && menu != nullptr) {
-		if (!menu->AddItem(fCopyMenuItem)) {
+	if (fCopyMenuItem != nullptr) {
+		if (menu == nullptr || !menu->AddItem(fCopyMenuItem)) {
 			delete fCopyMenuItem;
 			fCopyMenuItem = nullptr;
 		}
 	} else {
-		delete fCopyMenuItem;
-		fCopyMenuItem = nullptr;
 		delete copyMsg;
 	}
 
 	BMessage* pasteMsg = new(std::nothrow) BMessage(B_PASTE);
 	fPasteMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Paste"),
 		pasteMsg, 'V');
-	if (fPasteMenuItem != nullptr && menu != nullptr) {
-		if (!menu->AddItem(fPasteMenuItem)) {
+	if (fPasteMenuItem != nullptr) {
+		if (menu == nullptr || !menu->AddItem(fPasteMenuItem)) {
 			delete fPasteMenuItem;
 			fPasteMenuItem = nullptr;
 		}
 	} else {
-		delete fPasteMenuItem;
-		fPasteMenuItem = nullptr;
 		delete pasteMsg;
 	}
 
@@ -882,41 +852,33 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 	BMessage* findMsg = new(std::nothrow) BMessage(EDIT_SHOW_FIND_GROUP);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Find"), findMsg, 'F');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete findMsg;
-	}
 
 	BMessage* findPrevMsg = new(std::nothrow) BMessage(EDIT_FIND_PREVIOUS);
 	fFindPreviousMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Find previous"),
 		findPrevMsg, 'G', B_SHIFT_KEY);
-	if (fFindPreviousMenuItem != nullptr && menu != nullptr) {
-		if (!menu->AddItem(fFindPreviousMenuItem)) {
+	if (fFindPreviousMenuItem != nullptr) {
+		if (menu == nullptr || !menu->AddItem(fFindPreviousMenuItem)) {
 			delete fFindPreviousMenuItem;
 			fFindPreviousMenuItem = nullptr;
 		}
-	} else {
-		delete fFindPreviousMenuItem;
-		fFindPreviousMenuItem = nullptr;
+	} else
 		delete findPrevMsg;
-	}
 
 	BMessage* findNextMsg = new(std::nothrow) BMessage(EDIT_FIND_NEXT);
 	fFindNextMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Find next"),
 		findNextMsg, 'G');
-	if (fFindNextMenuItem != nullptr && menu != nullptr) {
-		if (!menu->AddItem(fFindNextMenuItem)) {
+	if (fFindNextMenuItem != nullptr) {
+		if (menu == nullptr || !menu->AddItem(fFindNextMenuItem)) {
 			delete fFindNextMenuItem;
 			fFindNextMenuItem = nullptr;
 		}
-	} else {
-		delete fFindNextMenuItem;
-		fFindNextMenuItem = nullptr;
+	} else
 		delete findNextMsg;
-	}
 
 	if (mainMenu != nullptr && menu != nullptr && !mainMenu->AddItem(menu))
 		delete menu;
@@ -930,28 +892,23 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 	BMessage* reloadMsg = new(std::nothrow) BMessage(RELOAD);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Reload"), reloadMsg, 'R');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete reloadMsg;
-	}
 
 	// the label will be replaced with the appropriate text later on
 	BMessage* showBookmarkBarMsg = new(std::nothrow) BMessage(SHOW_HIDE_BOOKMARK_BAR);
 	fBookmarkBarMenuItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Show bookmark bar"), showBookmarkBarMsg);
-	if (fBookmarkBarMenuItem != nullptr && menu != nullptr) {
-		if (!menu->AddItem(fBookmarkBarMenuItem)) {
+	if (fBookmarkBarMenuItem != nullptr) {
+		if (menu == nullptr || !menu->AddItem(fBookmarkBarMenuItem)) {
 			delete fBookmarkBarMenuItem;
 			fBookmarkBarMenuItem = nullptr;
 		}
-	} else {
-		delete fBookmarkBarMenuItem;
-		fBookmarkBarMenuItem = nullptr;
+	} else
 		delete showBookmarkBarMsg;
-	}
 
 	if (menu != nullptr)
 		menu->AddSeparatorItem();
@@ -959,50 +916,41 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	BMessage* increaseSizeMsg = new(std::nothrow) BMessage(ZOOM_FACTOR_INCREASE);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Increase size"),
 		increaseSizeMsg, '+');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete increaseSizeMsg;
-	}
 
 	BMessage* decreaseSizeMsg = new(std::nothrow) BMessage(ZOOM_FACTOR_DECREASE);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Decrease size"),
 		decreaseSizeMsg, '-');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete decreaseSizeMsg;
-	}
 
 	BMessage* resetSizeMsg = new(std::nothrow) BMessage(ZOOM_FACTOR_RESET);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Reset size"),
 		resetSizeMsg, '0');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete resetSizeMsg;
-	}
 
 	BMessage* zoomTextOnlyMsg = new(std::nothrow) BMessage(ZOOM_TEXT_ONLY);
 	fZoomTextOnlyMenuItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Zoom text only"), zoomTextOnlyMsg);
-	if (fZoomTextOnlyMenuItem != nullptr && menu != nullptr) {
+	if (fZoomTextOnlyMenuItem != nullptr) {
 		fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
-		if (!menu->AddItem(fZoomTextOnlyMenuItem)) {
+		if (menu == nullptr || !menu->AddItem(fZoomTextOnlyMenuItem)) {
 			delete fZoomTextOnlyMenuItem;
 			fZoomTextOnlyMenuItem = nullptr;
 		}
-	} else {
-		delete fZoomTextOnlyMenuItem;
-		fZoomTextOnlyMenuItem = nullptr;
+	} else
 		delete zoomTextOnlyMsg;
-	}
 
 	if (menu != nullptr)
 		menu->AddSeparatorItem();
@@ -1010,27 +958,22 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	BMessage* fullscreenMsg = new(std::nothrow) BMessage(TOGGLE_FULLSCREEN);
 	fFullscreenItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Full screen"),
 		fullscreenMsg, B_RETURN);
-	if (fFullscreenItem != nullptr && menu != nullptr) {
-		if (!menu->AddItem(fFullscreenItem)) {
+	if (fFullscreenItem != nullptr) {
+		if (menu == nullptr || !menu->AddItem(fFullscreenItem)) {
 			delete fFullscreenItem;
 			fFullscreenItem = nullptr;
 		}
-	} else {
-		delete fFullscreenItem;
-		fFullscreenItem = nullptr;
+	} else
 		delete fullscreenMsg;
-	}
 
 	BMessage* showSourceMsg = new(std::nothrow) BMessage(SHOW_PAGE_SOURCE);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Page source"),
 		showSourceMsg, 'U');
-	if (item != nullptr && menu != nullptr) {
-		if (!menu->AddItem(item))
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
 			delete item;
-	} else {
-		delete item;
+	} else
 		delete showSourceMsg;
-	}
 
 	if (mainMenu != nullptr && menu != nullptr && !mainMenu->AddItem(menu))
 		delete menu;
@@ -1040,30 +983,24 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	BMessage* backMsg = new(std::nothrow) BMessage(GO_BACK);
 	fBackMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Back"),
 		backMsg, B_LEFT_ARROW);
-	if (fBackMenuItem != nullptr && fHistoryMenu != nullptr) {
-		if (!fHistoryMenu->AddItem(fBackMenuItem)) {
+	if (fBackMenuItem != nullptr) {
+		if (fHistoryMenu == nullptr || !fHistoryMenu->AddItem(fBackMenuItem)) {
 			delete fBackMenuItem;
 			fBackMenuItem = nullptr;
 		}
-	} else {
-		delete fBackMenuItem;
-		fBackMenuItem = nullptr;
+	} else
 		delete backMsg;
-	}
 
 	BMessage* forwardMsg = new(std::nothrow) BMessage(GO_FORWARD);
 	fForwardMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Forward"),
 		forwardMsg, B_RIGHT_ARROW);
-	if (fForwardMenuItem != nullptr && fHistoryMenu != nullptr) {
-		if (!fHistoryMenu->AddItem(fForwardMenuItem)) {
+	if (fForwardMenuItem != nullptr) {
+		if (fHistoryMenu == nullptr || !fHistoryMenu->AddItem(fForwardMenuItem)) {
 			delete fForwardMenuItem;
 			fForwardMenuItem = nullptr;
 		}
-	} else {
-		delete fForwardMenuItem;
-		fForwardMenuItem = nullptr;
+	} else
 		delete forwardMsg;
-	}
 
 	if (fHistoryMenu != nullptr) {
 		fHistoryMenu->AddSeparatorItem();
@@ -1285,8 +1222,9 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	else
 		_ShowBookmarkBar(false);
 
+	BMessenger messenger(this);
 	fSavePanel.reset(new(std::nothrow) BFilePanel(B_SAVE_PANEL,
-		new(std::nothrow) BMessenger(this), 0, nullptr, false));
+		&messenger, nullptr, 0, false));
 
 	// Layout
 	BGroupView* topView = new(std::nothrow) BGroupView(B_VERTICAL, 0.0);
@@ -2984,27 +2922,27 @@ addItemToMenuOrSubmenu(BMenu* menu, BMenuItem* newItem)
 			} else {
 				menu->RemoveItem(item);
 				BMenu* subMenu = new(std::nothrow) BMenu(baseURLLabel.String());
-				if (subMenu == nullptr) {
-					delete item;
-					delete newItem;
-					return;
-				}
-				if (!subMenu->AddItem(item))
-					delete item;
-				if (!subMenu->AddItem(newItem))
-					delete newItem;
-				// Add common submenu for this base URL, clickable.
-				BMessage* message = new(std::nothrow) BMessage(GOTO_URL);
-				if (message != nullptr)
-					message->AddString("url", baseURLLabel.String());
-				BMenuItem* subMenuItem = new(std::nothrow) BMenuItem(subMenu,
-					message);
-				if (subMenuItem != nullptr) {
-					if (!menu->AddItem(subMenuItem, i))
-						delete subMenuItem;
+				if (subMenu != nullptr) {
+					if (!subMenu->AddItem(item))
+						delete item;
+					if (!subMenu->AddItem(newItem))
+						delete newItem;
+
+					// Add common submenu for this base URL, clickable.
+					BMessage* message = new(std::nothrow) BMessage(GOTO_URL);
+					BMenuItem* subMenuItem = new(std::nothrow) BMenuItem(subMenu,
+						message);
+					if (subMenuItem != nullptr) {
+						message->AddString("url", baseURLLabel.String());
+						if (!menu->AddItem(subMenuItem, i))
+							delete subMenuItem;
+					} else {
+						delete message;
+						delete subMenu;
+					}
 				} else {
-					delete subMenu;
-					delete message;
+					delete item;
+					delete newItem;
 				}
 				return;
 			}

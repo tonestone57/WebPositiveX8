@@ -61,8 +61,11 @@ BookmarkBar::BookmarkBar(const char* title, BHandler* target,
 	BMessage* openMsg = new(std::nothrow) BMessage(kOpenNewTabMsg);
 	BMenuItem* item = new(std::nothrow) BMenuItem(B_TRANSLATE("Open in new tab"),
 		openMsg);
-	if (!fPopUpMenu->AddItem(item))
-		delete item;
+	if (item != nullptr) {
+		if (fPopUpMenu == nullptr || !fPopUpMenu->AddItem(item))
+			delete item;
+	} else
+		delete openMsg;
 
 	BMessage* renameMsg = new(std::nothrow) BMessage(kAskBookmarkNameMsg);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Rename"), renameMsg);
@@ -606,10 +609,12 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 	if (IndexOf(fOverflowMenu) != B_ERROR)
 		count--;
 
-	if (BMenuBar::AddItem(item, count))
-		fItemsMap[inode] = item;
-	else
-		delete item;
+	if (item != nullptr) {
+		if (BMenuBar::AddItem(item, count))
+			fItemsMap[inode] = item;
+		else
+			delete item;
+	}
 
 	// Move the item to the "more" menu if it overflows.
 	BRect rect = Bounds();

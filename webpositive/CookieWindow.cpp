@@ -220,6 +220,12 @@ CookieWindow::QuitRequested()
 
 CookieWindow::~CookieWindow()
 {
+	if (fDomains != nullptr) {
+		for (int32 i = fDomains->FullListCountItems() - 1; i >= 0; i--) {
+			delete fDomains->FullListItemAt(i);
+		}
+	}
+
 	for (auto it = fCookieMap.GetIterator(); it.HasNext();) {
 		delete it.Next().second;
 	}

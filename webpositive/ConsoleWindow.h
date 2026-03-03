@@ -22,6 +22,7 @@ class ConsoleWindow : public BWindow {
 	friend class ConsoleWindowTest;
 public:
 								ConsoleWindow(BRect frame);
+	virtual						~ConsoleWindow();
 	virtual	void				MessageReceived(BMessage* message);
 	virtual	bool				QuitRequested();
 

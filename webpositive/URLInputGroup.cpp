@@ -179,13 +179,32 @@ URLInputGroup::URLTextView::MouseDown(BPoint where)
 			clearItem->SetEnabled(strlen(Text()) > 0);
 
 		BPopUpMenu* menu = new(std::nothrow) BPopUpMenu("url context");
-		menu->AddItem(cutItem);
-		menu->AddItem(copyItem);
-		menu->AddItem(pasteItem);
-		menu->AddItem(clearItem);
+		if (menu != nullptr) {
+			if (cutItem != nullptr && !menu->AddItem(cutItem)) {
+				delete cutItem;
+				cutItem = nullptr;
+			}
+			if (copyItem != nullptr && !menu->AddItem(copyItem)) {
+				delete copyItem;
+				copyItem = nullptr;
+			}
+			if (pasteItem != nullptr && !menu->AddItem(pasteItem)) {
+				delete pasteItem;
+				pasteItem = nullptr;
+			}
+			if (clearItem != nullptr && !menu->AddItem(clearItem)) {
+				delete clearItem;
+				clearItem = nullptr;
+			}
 
-		menu->SetTargetForItems(this);
-		menu->Go(ConvertToScreen(where), true, true, true);
+			menu->SetTargetForItems(this);
+			menu->Go(ConvertToScreen(where), true, true, true);
+		} else {
+			delete cutItem;
+			delete copyItem;
+			delete pasteItem;
+			delete clearItem;
+		}
 		return;
 	}
 

@@ -341,35 +341,59 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	} else
 		delete dlFolderMsg;
 
+	BMessage* startUpMsg = new(std::nothrow) BMessage(MSG_START_UP_BEHAVIOR_CHANGED);
 	fStartUpBehaviorResumePriorSession = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Resume prior session"),
-		new(std::nothrow) BMessage(MSG_START_UP_BEHAVIOR_CHANGED));
+		B_TRANSLATE("Resume prior session"), startUpMsg);
+	if (fStartUpBehaviorResumePriorSession == nullptr)
+		delete startUpMsg;
+
+	startUpMsg = new(std::nothrow) BMessage(MSG_START_UP_BEHAVIOR_CHANGED);
 	fStartUpBehaviorStartNewSession = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Start new session"),
-		new(std::nothrow) BMessage(MSG_START_UP_BEHAVIOR_CHANGED));
+		B_TRANSLATE("Start new session"), startUpMsg);
+	if (fStartUpBehaviorStartNewSession == nullptr)
+		delete startUpMsg;
 
+	BMessage* newWinMsg = new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED);
 	fNewWindowBehaviorOpenHomeItem = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Open start page"),
-		new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
-	fNewWindowBehaviorOpenSearchItem = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Open search page"),
-		new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
-	fNewWindowBehaviorOpenBlankItem = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Open blank page"),
-		new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
+		B_TRANSLATE("Open start page"), newWinMsg);
+	if (fNewWindowBehaviorOpenHomeItem == nullptr)
+		delete newWinMsg;
 
+	newWinMsg = new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED);
+	fNewWindowBehaviorOpenSearchItem = new(std::nothrow) BMenuItem(
+		B_TRANSLATE("Open search page"), newWinMsg);
+	if (fNewWindowBehaviorOpenSearchItem == nullptr)
+		delete newWinMsg;
+
+	newWinMsg = new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED);
+	fNewWindowBehaviorOpenBlankItem = new(std::nothrow) BMenuItem(
+		B_TRANSLATE("Open blank page"), newWinMsg);
+	if (fNewWindowBehaviorOpenBlankItem == nullptr)
+		delete newWinMsg;
+
+	BMessage* newTabMsg = new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED);
 	fNewTabBehaviorCloneCurrentItem = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Clone current page"),
-		new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
+		B_TRANSLATE("Clone current page"), newTabMsg);
+	if (fNewTabBehaviorCloneCurrentItem == nullptr)
+		delete newTabMsg;
+
+	newTabMsg = new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED);
 	fNewTabBehaviorOpenHomeItem = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Open start page"),
-		new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
+		B_TRANSLATE("Open start page"), newTabMsg);
+	if (fNewTabBehaviorOpenHomeItem == nullptr)
+		delete newTabMsg;
+
+	newTabMsg = new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED);
 	fNewTabBehaviorOpenSearchItem = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Open search page"),
-		new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
+		B_TRANSLATE("Open search page"), newTabMsg);
+	if (fNewTabBehaviorOpenSearchItem == nullptr)
+		delete newTabMsg;
+
+	newTabMsg = new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED);
 	fNewTabBehaviorOpenBlankItem = new(std::nothrow) BMenuItem(
-		B_TRANSLATE("Open blank page"),
-		new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
+		B_TRANSLATE("Open blank page"), newTabMsg);
+	if (fNewTabBehaviorOpenBlankItem == nullptr)
+		delete newTabMsg;
 
 	BMessage* chooseDlMsg = new(std::nothrow) BMessage(MSG_CHOOSE_DOWNLOAD_FOLDER);
 	fChooseButton = new(std::nothrow) BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
@@ -381,8 +405,11 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	fNewTabBehaviorOpenBlankItem->SetMarked(true);
 	fStartUpBehaviorResumePriorSession->SetMarked(true);
 
+	BMessage* customMsg = new(std::nothrow) BMessage(MSG_SEARCH_PAGE_CHANGED_MENU);
 	BMenuItem* searchPageCustom = new(std::nothrow) BMenuItem(B_TRANSLATE("Custom"),
-		new(std::nothrow) BMessage(MSG_SEARCH_PAGE_CHANGED_MENU));
+		customMsg);
+	if (searchPageCustom == nullptr)
+		delete customMsg;
 	if (searchPageCustom != nullptr)
 		searchPageCustom->SetMarked(true);
 
@@ -402,7 +429,6 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 				} else
 					delete message;
 			}
-
 		}
 		searchPageMenu->AddItem(new(std::nothrow) BSeparatorItem());
 		if (searchPageCustom != nullptr) {
