@@ -78,6 +78,8 @@ public:
 			void				SetMaxHistoryItemAge(int32 days);
 			int32				MaxHistoryItemAge() const;
 
+			uint32				HistoryGeneration() const;
+
 protected:
 								BrowsingHistory();
 								BrowsingHistory(bool startThreads);
@@ -103,6 +105,7 @@ private:
 			HistoryList			fHistoryItems;
 			HashMap<HashString, BrowsingHistoryItem*> fHistoryMap;
 			int32				fMaxHistoryItemAge;
+			uint32				fGeneration;
 
 	static	BrowsingHistory		sDefaultInstance;
 			bool				fSettingsLoaded;

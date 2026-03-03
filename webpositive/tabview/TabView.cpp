@@ -27,8 +27,8 @@
 
 TabView::TabView()
 	:
-	fContainerView(0),
-	fLayoutItem(new TabLayoutItem(this)),
+	fContainerView(nullptr),
+	fLayoutItem(new(std::nothrow) TabLayoutItem(this)),
 	fLabel()
 {
 }

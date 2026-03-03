@@ -142,7 +142,7 @@ GetAsyncWorker()
 {
 	BAutolock _(sAsyncWorkerLock);
 	if (sAsyncWorker == nullptr)
-		sAsyncWorker = new AsyncWorker();
+		sAsyncWorker = new(std::nothrow) AsyncWorker();
 	return sAsyncWorker;
 }
 
@@ -301,38 +301,58 @@ DownloadProgressView::Init(BMessage* archive)
 	SetFlags(Flags() | B_FULL_UPDATE_ON_RESIZE | B_WILL_DRAW);
 
 	if (archive) {
-		fStatusBar = new BStatusBar("download progress", fPath.Leaf());
+		fStatusBar = new(std::nothrow) BStatusBar("download progress",
+			fPath.Leaf());
 		float value;
-		if (archive->FindFloat("value", &value) == B_OK)
+		if (fStatusBar != nullptr && archive->FindFloat("value", &value) == B_OK)
 			fStatusBar->SetTo(value);
-	} else
-		fStatusBar = new BStatusBar("download progress", "Download");
-	fStatusBar->SetMaxValue(100);
-	fStatusBar->SetBarHeight(12);
+	} else {
+		fStatusBar = new(std::nothrow) BStatusBar("download progress",
+			"Download");
+	}
+	if (fStatusBar != nullptr) {
+		fStatusBar->SetMaxValue(100);
+		fStatusBar->SetBarHeight(12);
+	}
 
 	if (archive)
-		fIconView = new IconView(archive);
+		fIconView = new(std::nothrow) IconView(archive);
 	else
-		fIconView = new IconView();
+		fIconView = new(std::nothrow) IconView();
 
-	if (!fDownload && fStatusBar->CurrentValue() < 100) {
-		fTopButton = new SmallButton(B_TRANSLATE("Restart"),
-			new BMessage(RESTART_DOWNLOAD));
+	if (!fDownload && fStatusBar != nullptr && fStatusBar->CurrentValue() < 100) {
+		BMessage* restartMsg = new(std::nothrow) BMessage(RESTART_DOWNLOAD);
+		fTopButton = new(std::nothrow) SmallButton(B_TRANSLATE("Restart"),
+			restartMsg);
+		if (fTopButton == nullptr)
+			delete restartMsg;
 	} else {
-		fTopButton = new SmallButton(B_TRANSLATE("Open"),
-			new BMessage(OPEN_DOWNLOAD));
-		fTopButton->SetEnabled(fDownload == nullptr);
+		BMessage* openMsg = new(std::nothrow) BMessage(OPEN_DOWNLOAD);
+		fTopButton = new(std::nothrow) SmallButton(B_TRANSLATE("Open"),
+			openMsg);
+		if (fTopButton != nullptr)
+			fTopButton->SetEnabled(fDownload == nullptr);
+		else
+			delete openMsg;
 	}
+
 	if (fDownload) {
-		fBottomButton = new SmallButton(B_TRANSLATE("Cancel"),
-			new BMessage(CANCEL_DOWNLOAD));
+		BMessage* cancelMsg = new(std::nothrow) BMessage(CANCEL_DOWNLOAD);
+		fBottomButton = new(std::nothrow) SmallButton(B_TRANSLATE("Cancel"),
+			cancelMsg);
+		if (fBottomButton == nullptr)
+			delete cancelMsg;
 	} else {
-		fBottomButton = new SmallButton(B_TRANSLATE("Remove"),
-			new BMessage(REMOVE_DOWNLOAD));
-		fBottomButton->SetEnabled(fDownload == nullptr);
+		BMessage* removeMsg = new(std::nothrow) BMessage(REMOVE_DOWNLOAD);
+		fBottomButton = new(std::nothrow) SmallButton(B_TRANSLATE("Remove"),
+			removeMsg);
+		if (fBottomButton != nullptr)
+			fBottomButton->SetEnabled(fDownload == nullptr);
+		else
+			delete removeMsg;
 	}
 
-	fInfoView = new BStringView("info view", "");
+	fInfoView = new(std::nothrow) BStringView("info view", "");
 	fInfoView->SetViewColor(ViewColor());
 
 	BSize topButtonSize = fTopButton->PreferredSize();
@@ -498,22 +518,26 @@ DownloadProgressView::MessageReceived(BMessage* message)
 					BString text(B_TRANSLATE("The file \"%name%\" is an executable program. "
 						"Are you sure you want to run it?"));
 					text.ReplaceFirst("%name%", fPath.Leaf());
-					BAlert* alert = new BAlert(B_TRANSLATE("Open executable"), text,
-						B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), 0,
+		BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Open executable"),
+			text, B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), nullptr,
 						B_WIDTH_AS_USUAL, B_WARNING_ALERT);
-					alert->SetShortcut(0, B_ESCAPE);
-					if (alert->Go() != 1)
-						break;
+		if (alert != nullptr) {
+			alert->SetShortcut(0, B_ESCAPE);
+			if (alert->Go() != 1)
+				break;
+		}
 				}
 
 				status = be_roster->Launch(&ref);
 			}
 			if (status != B_OK && status != B_ALREADY_RUNNING) {
-				BAlert* alert = new BAlert(B_TRANSLATE("Open download error"),
+	BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Open download error"),
 					B_TRANSLATE("The download could not be opened."),
 					B_TRANSLATE("OK"));
-				alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-				alert->Go(0);
+	if (alert != nullptr) {
+		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+		alert->Go(0);
+	}
 			}
 			break;
 		}
@@ -565,9 +589,11 @@ DownloadProgressView::MessageReceived(BMessage* message)
 				fIconView->SetIconDimmed(false);
 			} else {
 				fIconView->SetIconDimmed(true);
-				if (fStatusBar->CurrentValue() == 100) {
+				if (fStatusBar != nullptr && fStatusBar->CurrentValue() == 100) {
 					fTopButton->SetLabel(B_TRANSLATE("Restart"));
-					fTopButton->SetMessage(new BMessage(RESTART_DOWNLOAD));
+					BMessage* restartMsg = new(std::nothrow) BMessage(RESTART_DOWNLOAD);
+					if (restartMsg != nullptr)
+						fTopButton->SetMessage(restartMsg);
 				}
 			}
 			break;
@@ -702,14 +728,28 @@ DownloadProgressView::ShowContextMenu(BPoint screenWhere)
 {
 	screenWhere += BPoint(2, 2);
 
-	BPopUpMenu* contextMenu = new BPopUpMenu("download context");
-	BMenuItem* copyURL = new BMenuItem(B_TRANSLATE("Copy URL to clipboard"),
-		new BMessage(COPY_URL_TO_CLIPBOARD));
-	copyURL->SetEnabled(fURL.Length() > 0);
-	contextMenu->AddItem(copyURL);
-	BMenuItem* openFolder = new BMenuItem(B_TRANSLATE("Open containing folder"),
-		new BMessage(OPEN_CONTAINING_FOLDER));
-	contextMenu->AddItem(openFolder);
+	BPopUpMenu* contextMenu = new(std::nothrow) BPopUpMenu("download context");
+	if (contextMenu == nullptr)
+		return;
+
+	BMessage* copyUrlMsg = new(std::nothrow) BMessage(COPY_URL_TO_CLIPBOARD);
+	BMenuItem* copyURL = new(std::nothrow) BMenuItem(
+		B_TRANSLATE("Copy URL to clipboard"), copyUrlMsg);
+	if (copyURL != nullptr) {
+		copyURL->SetEnabled(fURL.Length() > 0);
+		if (!contextMenu->AddItem(copyURL))
+			delete copyURL;
+	} else
+		delete copyUrlMsg;
+
+	BMessage* openFolderMsg = new(std::nothrow) BMessage(OPEN_CONTAINING_FOLDER);
+	BMenuItem* openFolder = new(std::nothrow) BMenuItem(
+		B_TRANSLATE("Open containing folder"), openFolderMsg);
+	if (openFolder != nullptr) {
+		if (!contextMenu->AddItem(openFolder))
+			delete openFolder;
+	} else
+		delete openFolderMsg;
 
 	contextMenu->SetTargetForItems(this);
 	contextMenu->Go(screenWhere, true, true, true);
@@ -749,12 +789,15 @@ DownloadProgressView::DownloadFinished()
 {
 	fDownload = nullptr;
 	if (fExpectedSize == -1) {
-		fStatusBar->SetTo(100.0);
+		if (fStatusBar != nullptr)
+			fStatusBar->SetTo(100.0);
 		fExpectedSize = fCurrentSize;
 	}
 	fTopButton->SetEnabled(true);
 	fBottomButton->SetLabel(B_TRANSLATE("Remove"));
-	fBottomButton->SetMessage(new BMessage(REMOVE_DOWNLOAD));
+	BMessage* removeMsg = new(std::nothrow) BMessage(REMOVE_DOWNLOAD);
+	if (removeMsg != nullptr)
+		fBottomButton->SetMessage(removeMsg);
 	fBottomButton->SetEnabled(true);
 	fInfoView->SetText("");
 	fStatusBar->SetBarColor(ui_color(B_SUCCESS_COLOR));
@@ -796,10 +839,14 @@ DownloadProgressView::CancelDownload()
 
 	fDownload = nullptr;
 	fTopButton->SetLabel(B_TRANSLATE("Restart"));
-	fTopButton->SetMessage(new BMessage(RESTART_DOWNLOAD));
+	BMessage* restartMsg = new(std::nothrow) BMessage(RESTART_DOWNLOAD);
+	if (restartMsg != nullptr)
+		fTopButton->SetMessage(restartMsg);
 	fTopButton->SetEnabled(true);
 	fBottomButton->SetLabel(B_TRANSLATE("Remove"));
-	fBottomButton->SetMessage(new BMessage(REMOVE_DOWNLOAD));
+	BMessage* removeMsg = new(std::nothrow) BMessage(REMOVE_DOWNLOAD);
+	if (removeMsg != nullptr)
+		fBottomButton->SetMessage(removeMsg);
 	fBottomButton->SetEnabled(true);
 	fInfoView->SetText("");
 

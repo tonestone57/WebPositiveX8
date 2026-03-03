@@ -66,11 +66,11 @@ public:
 		fCookie(cookie)
 	{
 		list->AddRow(this);
-		SetField(new BStringField(cookie.Name().String()), 0);
-		SetField(new BStringField(cookie.Path().String()), 1);
+		SetField(new(std::nothrow) BStringField(cookie.Name().String()), 0);
+		SetField(new(std::nothrow) BStringField(cookie.Path().String()), 1);
 		time_t expiration = cookie.ExpirationDate();
-		SetField(new BDateField(&expiration), 2);
-		SetField(new BStringField(cookie.Value().String()), 3);
+		SetField(new(std::nothrow) BDateField(&expiration), 2);
+		SetField(new(std::nothrow) BStringField(cookie.Value().String()), 3);
 
 		BString flags;
 		if (cookie.Secure())
@@ -80,7 +80,7 @@ public:
 
 		if (cookie.IsHostOnly())
 			flags += "hostOnly";
-		SetField(new BStringField(flags.String()), 4);
+		SetField(new(std::nothrow) BStringField(flags.String()), 4);
 	}
 
 	BPrivate::Network::BNetworkCookie& Cookie() {
@@ -115,32 +115,38 @@ CookieWindow::CookieWindow(BRect frame,
 		B_AUTO_UPDATE_SIZE_LIMITS | B_ASYNCHRONOUS_CONTROLS | B_NOT_ZOOMABLE),
 	fCookieJar(&jar)
 {
-	BGroupLayout* root = new BGroupLayout(B_HORIZONTAL, 0.0);
+	BGroupLayout* root = new(std::nothrow) BGroupLayout(B_HORIZONTAL, 0.0);
 	SetLayout(root);
 
-	fDomains = new BOutlineListView("domain list");
-	root->AddView(new BScrollView("scroll", fDomains, 0, false, true), 1);
+	fDomains = new(std::nothrow) BOutlineListView("domain list");
+	if (root != nullptr) {
+		root->AddView(new(std::nothrow) BScrollView("scroll", fDomains, 0,
+			false, true), 1);
+	}
 
-	fHeaderView = new BStringView("label",
+	fHeaderView = new(std::nothrow) BStringView("label",
 		B_TRANSLATE("The cookie jar is empty!"));
-	fCookies = new BColumnListView("cookie list", B_WILL_DRAW, B_FANCY_BORDER,
-		false);
+	fCookies = new(std::nothrow) BColumnListView("cookie list", B_WILL_DRAW,
+		B_FANCY_BORDER, false);
 
-	int em = fCookies->StringWidth("M");
-	int flagsLength = fCookies->StringWidth("Mhttps hostOnly" B_UTF8_ELLIPSIS);
+	if (fCookies != nullptr) {
+		int em = fCookies->StringWidth("M");
+		int flagsLength = fCookies->StringWidth("Mhttps hostOnly" B_UTF8_ELLIPSIS);
 
-	fCookies->AddColumn(new BStringColumn(B_TRANSLATE("Name"),
-		20 * em, 10 * em, 50 * em, 0), 0);
-	fCookies->AddColumn(new BStringColumn(B_TRANSLATE("Path"),
-		10 * em, 10 * em, 50 * em, 0), 1);
-	fCookies->AddColumn(new CookieDateColumn(B_TRANSLATE("Expiration"),
-		fCookies->StringWidth("88/88/8888 88:88:88 AM")), 2);
-	fCookies->AddColumn(new BStringColumn(B_TRANSLATE("Value"),
-		20 * em, 10 * em, 50 * em, 0), 3);
-	fCookies->AddColumn(new BStringColumn(B_TRANSLATE("Flags"),
-		flagsLength, flagsLength, flagsLength, 0), 4);
+		fCookies->AddColumn(new(std::nothrow) BStringColumn(
+			B_TRANSLATE("Name"), 20 * em, 10 * em, 50 * em, 0), 0);
+		fCookies->AddColumn(new(std::nothrow) BStringColumn(
+			B_TRANSLATE("Path"), 10 * em, 10 * em, 50 * em, 0), 1);
+		fCookies->AddColumn(new(std::nothrow) CookieDateColumn(
+			B_TRANSLATE("Expiration"), fCookies->StringWidth("88/88/8888 88:88:88 AM")), 2);
+		fCookies->AddColumn(new(std::nothrow) BStringColumn(
+			B_TRANSLATE("Value"), 20 * em, 10 * em, 50 * em, 0), 3);
+		fCookies->AddColumn(new(std::nothrow) BStringColumn(
+			B_TRANSLATE("Flags"), flagsLength, flagsLength, flagsLength, 0), 4);
+	}
 
-	root->AddItem(BGroupLayoutBuilder(B_VERTICAL, B_USE_DEFAULT_SPACING)
+	if (root != nullptr) {
+		root->AddItem(BGroupLayoutBuilder(B_VERTICAL, B_USE_DEFAULT_SPACING)
 		.SetInsets(5, 5, 5, 5)
 		.AddGroup(B_HORIZONTAL, B_USE_DEFAULT_SPACING)
 			.Add(fHeaderView)
@@ -154,10 +160,12 @@ CookieWindow::CookieWindow(BRect frame,
 			.Add(new BButton("export", B_TRANSLATE("Export" B_UTF8_ELLIPSIS), 0))
 #endif
 			.AddGlue()
-			.Add(new BButton("delete", B_TRANSLATE("Delete"),
-				new BMessage(COOKIE_DELETE))), 3);
+			.Add(new(std::nothrow) BButton("delete", B_TRANSLATE("Delete"),
+				new(std::nothrow) BMessage(COOKIE_DELETE))), 3);
+	}
 
-	fDomains->SetSelectionMessage(new BMessage(DOMAIN_SELECTED));
+	if (fDomains != nullptr)
+		fDomains->SetSelectionMessage(new(std::nothrow) BMessage(DOMAIN_SELECTED));
 }
 
 
@@ -212,6 +220,12 @@ CookieWindow::QuitRequested()
 
 CookieWindow::~CookieWindow()
 {
+	if (fDomains != nullptr) {
+		for (int32 i = fDomains->FullListCountItems() - 1; i >= 0; i--) {
+			delete fDomains->FullListItemAt(i);
+		}
+	}
+
 	for (auto it = fCookieMap.GetIterator(); it.HasNext();) {
 		delete it.Next().second;
 	}
@@ -247,6 +261,7 @@ CookieWindow::_BuildDomainList()
 		delete it.Next().second;
 	}
 	fCookieMap.RemoveAll();
+	fDomainMap.RemoveAll();
 
 	// Populate the domain list and cookie cache
 	auto it = fCookieJar->GetIterator();
@@ -319,6 +334,13 @@ CookieWindow::_BuildDomainList()
 BStringItem*
 CookieWindow::_AddDomain(BString domain, bool fake)
 {
+	DomainItem* existingItem = fDomainMap.Get(domain);
+	if (existingItem != nullptr) {
+		if (!fake)
+			existingItem->fEmpty = false;
+		return existingItem;
+	}
+
 	BStringItem* parent = nullptr;
 	int firstDot = domain.FindFirst('.');
 	if (firstDot >= 0) {
@@ -332,7 +354,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 	int high = siblingCount - 1;
 	int insertIndex = siblingCount;
 
-	// check that we aren't already there
+	// find insertion point, keeping the list alphabetically sorted
 	while (low <= high) {
 		int mid = (low + high) / 2;
 		BStringItem* midItem = static_cast<BStringItem*>(
@@ -340,12 +362,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		if (midItem == nullptr)
 			break;
 		int cmp = strcmp(midItem->Text(), domain.String());
-		if (cmp == 0) {
-			DomainItem* stringItem = static_cast<DomainItem*>(midItem);
-			if (fake == false)
-				stringItem->fEmpty = false;
-			return stringItem;
-		} else if (cmp < 0) {
+		if (cmp < 0) {
 			low = mid + 1;
 		} else {
 			insertIndex = mid;
@@ -353,8 +370,10 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		}
 	}
 
-	// Insert the new item, keeping the list alphabetically sorted
-	BStringItem* domainItem = new DomainItem(domain, fake);
+	// Insert the new item
+	DomainItem* domainItem = new(std::nothrow) DomainItem(domain, fake);
+	if (domainItem == nullptr)
+		return nullptr;
 	domainItem->SetOutlineLevel(parent != nullptr ? parent->OutlineLevel() + 1 : 0);
 
 	if (insertIndex < siblingCount) {
@@ -378,6 +397,8 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		}
 	}
 
+	fDomainMap.Put(domain, domainItem);
+
 	return domainItem;
 }
 
@@ -399,7 +420,10 @@ CookieWindow::_ShowCookiesForDomain(BString domain)
 		return;
 
 	for (int32 i = 0; i < list->CountItems(); i++) {
-		new CookieRow(fCookies, *list->ItemAt(i));
+		CookieRow* row = new(std::nothrow) CookieRow(fCookies,
+			*list->ItemAt(i));
+		if (row == nullptr)
+			break;
 	}
 }
 

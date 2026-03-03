@@ -131,6 +131,8 @@ public:
     BString& SetTo(const char* s) { fString = s ? s : ""; return *this; }
     BString& SetTo(const char* s, int32 length) { fString.assign(s ? s : "", length); return *this; }
 
+    BString& Preallocate(int32 length) { fString.reserve((size_t)length); return *this; }
+
 private:
     std::string fString;
 };

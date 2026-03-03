@@ -249,7 +249,7 @@ TabContainerView::RemoveTab(int32 index)
 			TabView* tab = item->Parent();
 			tab->Update();
 			if (removedTab == fSelectedTab) {
-				fSelectedTab = 0;
+			fSelectedTab = nullptr;
 				SelectTab(tab);
 			}
 		}
