@@ -330,8 +330,8 @@ private:
 				"bookmark file.\n\nError: %error", "Don't translate variable "
 				"%error"));
 			message.ReplaceFirst("%error", strerror(status));
-			BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-				message.String(), B_TRANSLATE("OK"), 0, nullptr,
+			BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Bookmark error"),
+				message.String(), B_TRANSLATE("OK"), nullptr, nullptr,
 				B_WIDTH_AS_USUAL, B_STOP_ALERT);
 			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 			alert->Go();
@@ -364,7 +364,7 @@ GetBookmarkWorker()
 {
 	BAutolock _(sBookmarkWorkerLock);
 	if (sBookmarkWorker == nullptr)
-		sBookmarkWorker = new BookmarkWorker();
+		sBookmarkWorker = new(std::nothrow) BookmarkWorker();
 	return sBookmarkWorker;
 }
 
@@ -412,9 +412,11 @@ public:
 		ForceRebuild();
 		BNavMenu::AttachedToWindow();
 		if (CountItems() > 0) {
-			BSeparatorItem* separator = new BSeparatorItem();
-			if (!AddItem(separator, 0))
-				delete separator;
+			BSeparatorItem* separator = new(std::nothrow) BSeparatorItem();
+			if (separator != nullptr) {
+				if (!AddItem(separator, 0))
+					delete separator;
+			}
 		}
 		_AddStaticItems();
 		DoLayout();
@@ -423,15 +425,23 @@ public:
 private:
 	void _AddStaticItems()
 	{
-		BMenuItem* manageBookmarks = new BMenuItem(B_TRANSLATE("Manage bookmarks"),
-			new BMessage(SHOW_BOOKMARKS), 'M');
-		if (!AddItem(manageBookmarks, 0))
-			delete manageBookmarks;
+		BMessage* showBookmarks = new(std::nothrow) BMessage(SHOW_BOOKMARKS);
+		BMenuItem* manageBookmarks = new(std::nothrow) BMenuItem(
+			B_TRANSLATE("Manage bookmarks"), showBookmarks, 'M');
+		if (manageBookmarks != nullptr) {
+			if (!AddItem(manageBookmarks, 0))
+				delete manageBookmarks;
+		} else
+			delete showBookmarks;
 
-		BMenuItem* bookmarkThisPage = new BMenuItem(B_TRANSLATE("Bookmark this page"),
-			new BMessage(CREATE_BOOKMARK), 'B');
-		if (!AddItem(bookmarkThisPage, 0))
-			delete bookmarkThisPage;
+		BMessage* createBookmark = new(std::nothrow) BMessage(CREATE_BOOKMARK);
+		BMenuItem* bookmarkThisPage = new(std::nothrow) BMenuItem(
+			B_TRANSLATE("Bookmark this page"), createBookmark, 'B');
+		if (bookmarkThisPage != nullptr) {
+			if (!AddItem(bookmarkThisPage, 0))
+				delete bookmarkThisPage;
+		} else
+			delete createBookmark;
 	}
 };
 
@@ -471,9 +481,9 @@ public:
 		}
 
 		if (icon->Bounds().IntegerWidth() + 1 <= 16) {
-			fPageIcon.reset(new BBitmap(icon));
+			fPageIcon.reset(new(std::nothrow) BBitmap(icon));
 		} else {
-			fPageLargeIcon.reset(new BBitmap(icon));
+			fPageLargeIcon.reset(new(std::nothrow) BBitmap(icon));
 		}
 	}
 
@@ -649,43 +659,65 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 
 	// Menu
 #if INTEGRATE_MENU_INTO_TAB_BAR
-	BMenu* mainMenu = new BMenu("≡");
+	BMenu* mainMenu = new(std::nothrow) BMenu("≡");
 #else
-	BMenu* mainMenu = new BMenuBar("Main menu");
+	BMenu* mainMenu = new(std::nothrow) BMenuBar("Main menu");
 #endif
-	BMenu* menu = new BMenu(B_TRANSLATE("Window"));
-	BMessage* newWindowMessage = new BMessage(NEW_WINDOW);
-	newWindowMessage->AddString("url", "");
-	BMenuItem* newItem = new BMenuItem(B_TRANSLATE("New window"),
+	BMenu* menu = new(std::nothrow) BMenu(B_TRANSLATE("Window"));
+	BMessage* newWindowMessage = new(std::nothrow) BMessage(NEW_WINDOW);
+	if (newWindowMessage != nullptr)
+		newWindowMessage->AddString("url", "");
+	BMenuItem* newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New window"),
 		newWindowMessage, 'N');
-	if (menu->AddItem(newItem))
-		newItem->SetTarget(be_app);
-	else
-		delete newItem;
+	if (newItem != nullptr) {
+		if (menu != nullptr && menu->AddItem(newItem))
+			newItem->SetTarget(be_app);
+		else
+			delete newItem;
+	}
 
-	newItem = new BMenuItem(B_TRANSLATE("New tab"),
-		new BMessage(*newTabMessage), 'T');
-	if (menu->AddItem(newItem))
-		newItem->SetTarget(be_app);
-	else
-		delete newItem;
+	BMessage* newTabCopy = nullptr;
+	if (newTabMessage != nullptr)
+		newTabCopy = new(std::nothrow) BMessage(*newTabMessage);
 
-	BMenuItem* item = new BMenuItem(B_TRANSLATE("Open location"),
-		new BMessage(OPEN_LOCATION), 'L');
-	if (!menu->AddItem(item))
-		delete item;
+	newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New tab"),
+		newTabCopy, 'T');
+	if (newItem != nullptr) {
+		if (menu != nullptr && menu->AddItem(newItem))
+			newItem->SetTarget(be_app);
+		else
+			delete newItem;
+	}
 
-	menu->AddSeparatorItem();
+	BMessage* openLocationMsg = new(std::nothrow) BMessage(OPEN_LOCATION);
+	BMenuItem* item = new(std::nothrow) BMenuItem(B_TRANSLATE("Open location"),
+		openLocationMsg, 'L');
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
+			delete item;
+	} else
+		delete openLocationMsg;
 
-	item = new BMenuItem(B_TRANSLATE("Close window"),
-		new BMessage(B_QUIT_REQUESTED), 'W', B_SHIFT_KEY);
-	if (!menu->AddItem(item))
-		delete item;
+	if (menu != nullptr)
+		menu->AddSeparatorItem();
 
-	item = new BMenuItem(B_TRANSLATE("Close tab"),
-		new BMessage(CLOSE_TAB), 'W');
-	if (!menu->AddItem(item))
-		delete item;
+	BMessage* closeWindowMsg = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close window"),
+		closeWindowMsg, 'W', B_SHIFT_KEY);
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
+			delete item;
+	} else
+		delete closeWindowMsg;
+
+	BMessage* closeTabMsg = new(std::nothrow) BMessage(CLOSE_TAB);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close tab"),
+		closeTabMsg, 'W');
+	if (item != nullptr) {
+		if (menu == nullptr || !menu->AddItem(item))
+			delete item;
+	} else
+		delete closeTabMsg;
 
 	item = new BMenuItem(B_TRANSLATE("Save page as" B_UTF8_ELLIPSIS),
 		new BMessage(SAVE_PAGE), 'S');
@@ -2879,8 +2911,8 @@ BrowserWindow::_SetAutoHideInterfaceInFullscreen(bool doIt)
 
 	if (fAutoHideInterfaceInFullscreenMode) {
 		BMessage message(CHECK_AUTO_HIDE_INTERFACE);
-		fPulseRunner.reset(new BMessageRunner(BMessenger(this), &message,
-			300000));
+		fPulseRunner.reset(new(std::nothrow) BMessageRunner(BMessenger(this),
+			&message, 300000));
 	} else {
 		fPulseRunner.reset();
 		_ShowInterface(true);
