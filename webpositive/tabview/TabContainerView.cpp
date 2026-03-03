@@ -526,5 +526,5 @@ TabContainerView::_SendFakeMouseMoved()
 	uint32 buttons;
 	GetMouse(&where, &buttons, false);
 	if (Bounds().Contains(where))
-		_MouseMoved(where, B_INSIDE_VIEW, 0);
+		_MouseMoved(where, B_INSIDE_VIEW, nullptr);
 }

@@ -105,6 +105,8 @@ BrowserApp::BrowserApp()
 #endif
 
 	fContext = new(std::nothrow) BPrivate::Network::BUrlContext();
+	if (fContext == nullptr)
+		return;
 
 	fCookieLoaderThread = spawn_thread(_CookieLoaderThread, "cookie loader",
 		B_LOW_PRIORITY, this);
@@ -224,7 +226,10 @@ BrowserApp::ReadyToRun()
 
 	fDownloadWindow = new(std::nothrow) DownloadWindow(downloadWindowFrame,
 		showDownloads, fSettings.get());
-	if (fDownloadWindow != nullptr && downloadWindowFrame == defaultDownloadWindowFrame) {
+	if (fDownloadWindow == nullptr)
+		return;
+
+	if (downloadWindowFrame == defaultDownloadWindowFrame) {
 		// Initially put download window in lower right of screen.
 		BRect screenFrame = BScreen().Frame();
 		BMessage decoratorSettings;
@@ -245,6 +250,9 @@ BrowserApp::ReadyToRun()
 	fConsoleWindow = new(std::nothrow) ConsoleWindow(consoleWindowFrame);
 	fCookieWindow = new(std::nothrow) CookieWindow(cookieWindowFrame,
 		fContext->GetCookieJar());
+
+	if (fSettingsWindow == nullptr || fConsoleWindow == nullptr || fCookieWindow == nullptr)
+		return;
 
 	fInitialized = true;
 
@@ -274,7 +282,7 @@ BrowserApp::ReadyToRun()
 				BString url;
 				archivedWindow.FindString("tab", 0, &url);
 				BrowserWindow* window = new(std::nothrow) BrowserWindow(frame,
-				fSettings.get(), url, fContext, INTERFACE_ELEMENT_ALL, 0,
+				fSettings.get(), url, fContext, INTERFACE_ELEMENT_ALL, nullptr,
 					workspaces);
 
 				if (window != nullptr) {
@@ -651,7 +659,7 @@ BrowserApp::_CreateNewWindow(const BString& url, bool fullscreen,
 		fLastWindowFrame.OffsetTo(50, 50);
 
 	BrowserWindow* window = new(std::nothrow) BrowserWindow(fLastWindowFrame,
-		fSettings.get(), url, fContext, INTERFACE_ELEMENT_ALL, 0,
+		fSettings.get(), url, fContext, INTERFACE_ELEMENT_ALL, nullptr,
 		B_CURRENT_WORKSPACE, forDownload);
 	if (window != nullptr) {
 		if (fullscreen)
