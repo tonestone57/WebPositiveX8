@@ -69,8 +69,8 @@ TextViewCompleter::TextViewWrapper::GetAdjustmentFrame()
 TextViewCompleter::TextViewCompleter(BTextView* textView, ChoiceModel* model,
 		PatternSelector* patternSelector)
 	:
-	BAutoCompleter(new TextViewWrapper(textView), model,
-		new BDefaultChoiceView(), patternSelector),
+	BAutoCompleter(new(std::nothrow) TextViewWrapper(textView), model,
+		new(std::nothrow) BDefaultChoiceView(), patternSelector),
 	BMessageFilter(B_KEY_DOWN),
 	fTextView(textView),
 	fModificationsReported(false)

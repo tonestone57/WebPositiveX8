@@ -44,19 +44,28 @@ ConsoleWindow::ConsoleWindow(BRect frame)
 	fPreviousText(""),
 	fRepeatCounter(0)
 {
-	SetLayout(new BGroupLayout(B_VERTICAL, 0.0));
+	SetLayout(new(std::nothrow) BGroupLayout(B_VERTICAL, 0.0));
 
-	fMessagesListView = new BListView("Console messages",
+	fMessagesListView = new(std::nothrow) BListView("Console messages",
 		B_MULTIPLE_SELECTION_LIST);
 
-	fClearMessagesButton = new BButton(B_TRANSLATE("Clear"),
-		new BMessage(CLEAR_CONSOLE_MESSAGES));
-	fCopyMessagesButton = new BButton(B_TRANSLATE("Copy"),
-		new BMessage(B_COPY));
+	BMessage* clearMsg = new(std::nothrow) BMessage(CLEAR_CONSOLE_MESSAGES);
+	fClearMessagesButton = new(std::nothrow) BButton(B_TRANSLATE("Clear"),
+		clearMsg);
+	if (fClearMessagesButton == nullptr)
+		delete clearMsg;
+
+	BMessage* copyMsg = new(std::nothrow) BMessage(B_COPY);
+	fCopyMessagesButton = new(std::nothrow) BButton(B_TRANSLATE("Copy"),
+		copyMsg);
+	if (fCopyMessagesButton == nullptr)
+		delete copyMsg;
+
+	BScrollView* scrollView = new(std::nothrow) BScrollView(
+		"Console messages scroll", fMessagesListView, 0, true, true);
 
 	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
-		.Add(new BScrollView("Console messages scroll",
-			fMessagesListView, 0, true, true))
+		.Add(scrollView)
 		.Add(BGroupLayoutBuilder(B_HORIZONTAL, B_USE_SMALL_SPACING)
 			.AddGlue()
 			.Add(fClearMessagesButton)
@@ -113,7 +122,11 @@ ConsoleWindow::MessageReceived(BMessage* message)
 				fPreviousText = finalText;
 				fRepeatCounter = 0;
 			}
-			fMessagesListView->AddItem(new BStringItem(finalText.String()));
+			BStringItem* newItem = new(std::nothrow) BStringItem(finalText.String());
+			if (newItem != nullptr) {
+				if (!fMessagesListView->AddItem(newItem))
+					delete newItem;
+			}
 			break;
 		}
 		case CLEAR_CONSOLE_MESSAGES:

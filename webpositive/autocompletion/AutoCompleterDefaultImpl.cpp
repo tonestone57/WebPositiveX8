@@ -164,7 +164,7 @@ void
 BDefaultCompletionStyle::EditViewStateChanged(bool updateChoices)
 {
 	if (fIgnoreEditViewStateChanges || !fChoiceModel || !fChoiceView
-		|| !fEditView) {
+		|| !fEditView || !fPatternSelector) {
 		return;
 	}
 
@@ -216,7 +216,7 @@ void
 BDefaultChoiceView::ListView::AttachedToWindow()
 {
 	SetTarget(this);
-	SetInvocationMessage(new BMessage(MSG_INVOKED));
+	SetInvocationMessage(new(std::nothrow) BMessage(MSG_INVOKED));
 	BListView::AttachedToWindow();
 }
 
@@ -371,12 +371,16 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 	if (!editView || !choiceModel || choiceModel->CountChoices() == 0)
 		return;
 
-	fListView = new ListView(completer);
+	fListView = new(std::nothrow) ListView(completer);
+	if (fListView == nullptr)
+		return;
 	int32 count = choiceModel->CountChoices();
 	for(int32 i = 0; i<count; ++i) {
-		fListView->AddItem(
-			new ListItem(choiceModel->ChoiceAt(i))
-		);
+		ListItem* item = new(std::nothrow) ListItem(choiceModel->ChoiceAt(i));
+		if (item != nullptr) {
+			if (!fListView->AddItem(item))
+				delete item;
+		}
 	}
 
 	BScrollView *scrollView = nullptr;

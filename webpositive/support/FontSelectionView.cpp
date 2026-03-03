@@ -63,17 +63,18 @@ FontSelectionView::FontSelectionView(const char* name, const char* label,
 
 	fSavedFont = fCurrentFont;
 
-	fSizesMenu = new BPopUpMenu("size menu");
-	fFontsMenu = new BPopUpMenu("font menu");
+	fSizesMenu = new(std::nothrow) BPopUpMenu("size menu");
+	fFontsMenu = new(std::nothrow) BPopUpMenu("font menu");
 
 	// font menu
-	fFontsMenuField = new BMenuField("fonts", label, fFontsMenu, B_WILL_DRAW);
-	fFontsMenuField->SetAlignment(B_ALIGN_RIGHT);
+	fFontsMenuField = new(std::nothrow) BMenuField("fonts", label, fFontsMenu, B_WILL_DRAW);
+	if (fFontsMenuField != nullptr)
+		fFontsMenuField->SetAlignment(B_ALIGN_RIGHT);
 
 	// styles menu, if desired
 	if (separateStyles) {
-		fStylesMenu = new BPopUpMenu("styles menu");
-		fStylesMenuField = new BMenuField("styles", B_TRANSLATE("Style:"),
+		fStylesMenu = new(std::nothrow) BPopUpMenu("styles menu");
+		fStylesMenuField = new(std::nothrow) BMenuField("styles", B_TRANSLATE("Style:"),
 			fStylesMenu, B_WILL_DRAW);
 	} else {
 		fStylesMenu = nullptr;
@@ -81,40 +82,45 @@ FontSelectionView::FontSelectionView(const char* name, const char* label,
 	}
 
 	// size menu
-	fSizesMenuField = new BMenuField("size", B_TRANSLATE("Size:"), fSizesMenu,
+	fSizesMenuField = new(std::nothrow) BMenuField("size", B_TRANSLATE("Size:"), fSizesMenu,
 		B_WILL_DRAW);
-	fSizesMenuField->SetAlignment(B_ALIGN_RIGHT);
+	if (fSizesMenuField != nullptr)
+		fSizesMenuField->SetAlignment(B_ALIGN_RIGHT);
 
 	// preview
 	// A string view would be enough if only it handled word-wrap.
-	fPreviewTextView = new BTextView("preview text");
-	fPreviewTextView->SetFontAndColor(&fCurrentFont);
-	fPreviewTextView->SetText(kPreviewText);
-	fPreviewTextView->MakeResizable(false);
-	fPreviewTextView->SetWordWrap(true);
-	fPreviewTextView->MakeEditable(false);
-	fPreviewTextView->MakeSelectable(false);
-	fPreviewTextView->SetInsets(0, 0, 0, 0);
-	fPreviewTextView->SetViewUIColor(B_PANEL_BACKGROUND_COLOR);
-	fPreviewTextView->SetHighUIColor(B_PANEL_TEXT_COLOR);
+	fPreviewTextView = new(std::nothrow) BTextView("preview text");
+	if (fPreviewTextView != nullptr) {
+		fPreviewTextView->SetFontAndColor(&fCurrentFont);
+		fPreviewTextView->SetText(kPreviewText);
+		fPreviewTextView->MakeResizable(false);
+		fPreviewTextView->SetWordWrap(true);
+		fPreviewTextView->MakeEditable(false);
+		fPreviewTextView->MakeSelectable(false);
+		fPreviewTextView->SetInsets(0, 0, 0, 0);
+		fPreviewTextView->SetViewUIColor(B_PANEL_BACKGROUND_COLOR);
+		fPreviewTextView->SetHighUIColor(B_PANEL_TEXT_COLOR);
 
-	// determine initial line count using fCurrentFont
-	fPreviewTextWidth = be_control_look->DefaultLabelSpacing() * 58.0f;
-	float lineCount = ceilf(fCurrentFont.StringWidth(kPreviewText) / fPreviewTextWidth);
-	fPreviewTextView->SetExplicitSize(
-		BSize(fPreviewTextWidth, fPreviewTextView->LineHeight(0) * lineCount));
+		// determine initial line count using fCurrentFont
+		fPreviewTextWidth = be_control_look->DefaultLabelSpacing() * 58.0f;
+		float lineCount = ceilf(fCurrentFont.StringWidth(kPreviewText) / fPreviewTextWidth);
+		fPreviewTextView->SetExplicitSize(
+			BSize(fPreviewTextWidth, fPreviewTextView->LineHeight(0) * lineCount));
+	}
 
 	// box around preview
-	fPreviewBox = new BBox("preview box", B_WILL_DRAW | B_FRAME_EVENTS);
-	fPreviewBox->AddChild(BGroupLayoutBuilder(B_VERTICAL)
+	fPreviewBox = new(std::nothrow) BBox("preview box", B_WILL_DRAW | B_FRAME_EVENTS);
+	if (fPreviewBox != nullptr) {
+		fPreviewBox->AddChild(BGroupLayoutBuilder(B_VERTICAL)
 		.AddGroup(B_HORIZONTAL, 0)
 			.Add(fPreviewTextView)
 			.AddGlue()
 			.End()
-		.SetInsets(B_USE_SMALL_SPACING, B_USE_SMALL_SPACING,
-			B_USE_SMALL_SPACING, B_USE_SMALL_SPACING)
-		.TopView()
-	);
+			.SetInsets(B_USE_SMALL_SPACING, B_USE_SMALL_SPACING,
+				B_USE_SMALL_SPACING, B_USE_SMALL_SPACING)
+			.TopView()
+		);
+	}
 	_UpdateFontPreview();
 }
 
@@ -363,23 +369,39 @@ FontSelectionView::UpdateFontsMenu()
 
 		font.SetFamilyAndFace(family, B_REGULAR_FACE);
 
-		BMessage* message = new BMessage(kMsgSetFamily);
+		BMessage* message = new(std::nothrow) BMessage(kMsgSetFamily);
+		if (message == nullptr)
+			continue;
 		message->AddString("family", family);
 		message->AddString("name", Name());
 
-		BMenuItem* familyItem;
+		BMenuItem* familyItem = nullptr;
 		if (fStylesMenuField != nullptr) {
-			familyItem = new BMenuItem(family, message);
+			familyItem = new(std::nothrow) BMenuItem(family, message);
 		} else {
 			// Each family item has a submenu with all styles for that font.
-			BMenu* stylesMenu = new BMenu(family);
-			_AddStylesToMenu(font, stylesMenu);
-			familyItem = new BMenuItem(stylesMenu, message);
+			BMenu* stylesMenu = new(std::nothrow) BMenu(family);
+			if (stylesMenu != nullptr) {
+				_AddStylesToMenu(font, stylesMenu);
+				familyItem = new(std::nothrow) BMenuItem(stylesMenu, message);
+				if (familyItem == nullptr)
+					delete stylesMenu;
+			}
+		}
+
+		if (familyItem == nullptr) {
+			delete message;
+			continue;
 		}
 
 		familyItem->SetMarked(strcmp(family, currentFamily) == 0);
-		fFontsMenu->AddItem(familyItem);
-		familyItem->SetTarget(this);
+		if (fFontsMenu != nullptr) {
+			if (fFontsMenu->AddItem(familyItem))
+				familyItem->SetTarget(this);
+			else
+				delete familyItem;
+		} else
+			delete familyItem;
 	}
 
 	// Separate styles menu for only the current font.
@@ -524,16 +546,27 @@ FontSelectionView::_BuildSizesMenu()
 		char label[32];
 		snprintf(label, sizeof(label), "%" B_PRId32, size);
 
-		BMessage* message = new BMessage(kMsgSetSize);
+		BMessage* message = new(std::nothrow) BMessage(kMsgSetSize);
+		if (message == nullptr)
+			continue;
 		message->AddInt32("size", size);
 		message->AddString("name", Name());
 
-		BMenuItem* item = new BMenuItem(label, message);
+		BMenuItem* item = new(std::nothrow) BMenuItem(label, message);
+		if (item == nullptr) {
+			delete message;
+			continue;
+		}
 		if (size == fCurrentFont.Size())
 			item->SetMarked(true);
 
-		fSizesMenu->AddItem(item);
-		item->SetTarget(this);
+		if (fSizesMenu != nullptr) {
+			if (!fSizesMenu->AddItem(item))
+				delete item;
+			else
+				item->SetTarget(this);
+		} else
+			delete item;
 	}
 }
 
@@ -555,15 +588,23 @@ FontSelectionView::_AddStylesToMenu(const BFont& font, BMenu* stylesMenu) const
 		if (get_font_style(family, j, &style) != B_OK)
 			continue;
 
-		BMessage* message = new BMessage(kMsgSetStyle);
+		BMessage* message = new(std::nothrow) BMessage(kMsgSetStyle);
+		if (message == nullptr)
+			continue;
 		message->AddString("family", (char*)family);
 		message->AddString("style", (char*)style);
 
-		BMenuItem* item = new BMenuItem(style, message);
+		BMenuItem* item = new(std::nothrow) BMenuItem(style, message);
+		if (item == nullptr) {
+			delete message;
+			continue;
+		}
 		item->SetMarked(currentStyle == style);
 
-		stylesMenu->AddItem(item);
-		item->SetTarget(this);
+		if (!stylesMenu->AddItem(item))
+			delete item;
+		else
+			item->SetTarget(this);
 	}
 }
 

@@ -51,31 +51,49 @@ BookmarkBar::BookmarkBar(const char* title, BHandler* target,
 	SetFlags(Flags() | B_FRAME_EVENTS);
 	BEntry(navDir).GetNodeRef(&fNodeRef);
 
-	fOverflowMenu = new BMenu(B_UTF8_ELLIPSIS);
+	fOverflowMenu = new(std::nothrow) BMenu(B_UTF8_ELLIPSIS);
 	fOverflowMenuAdded = false;
 
-	fPopUpMenu = new BPopUpMenu("Bookmark Popup", false, false);
-	BMenuItem* item = new BMenuItem(B_TRANSLATE("Open in new tab"),
-		new BMessage(kOpenNewTabMsg));
+	fPopUpMenu = new(std::nothrow) BPopUpMenu("Bookmark Popup", false, false);
+	if (fPopUpMenu == nullptr)
+		return;
+
+	BMessage* openMsg = new(std::nothrow) BMessage(kOpenNewTabMsg);
+	BMenuItem* item = new(std::nothrow) BMenuItem(B_TRANSLATE("Open in new tab"),
+		openMsg);
 	if (!fPopUpMenu->AddItem(item))
 		delete item;
 
-	item = new BMenuItem(B_TRANSLATE("Rename"), new BMessage(kAskBookmarkNameMsg));
-	if (!fPopUpMenu->AddItem(item))
-		delete item;
+	BMessage* renameMsg = new(std::nothrow) BMessage(kAskBookmarkNameMsg);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Rename"), renameMsg);
+	if (item != nullptr) {
+		if (!fPopUpMenu->AddItem(item))
+			delete item;
+	} else
+		delete renameMsg;
 
-	item = new BMenuItem(B_TRANSLATE("Show in Tracker"),
-		new BMessage(kShowInTrackerMsg));
-	if (!fPopUpMenu->AddItem(item))
-		delete item;
+	BMessage* showTrackerMsg = new(std::nothrow) BMessage(kShowInTrackerMsg);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Show in Tracker"),
+		showTrackerMsg);
+	if (item != nullptr) {
+		if (!fPopUpMenu->AddItem(item))
+			delete item;
+	} else
+		delete showTrackerMsg;
 
-	BSeparatorItem* separator = new BSeparatorItem();
-	if (!fPopUpMenu->AddItem(separator))
-		delete separator;
+	BSeparatorItem* separator = new(std::nothrow) BSeparatorItem();
+	if (separator != nullptr) {
+		if (!fPopUpMenu->AddItem(separator))
+			delete separator;
+	}
 
-	item = new BMenuItem(B_TRANSLATE("Delete"), new BMessage(kDeleteMsg));
-	if (!fPopUpMenu->AddItem(item))
-		delete item;
+	BMessage* deleteMsg = new(std::nothrow) BMessage(kDeleteMsg);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Delete"), deleteMsg);
+	if (item != nullptr) {
+		if (!fPopUpMenu->AddItem(item))
+			delete item;
+	} else
+		delete deleteMsg;
 }
 
 
@@ -233,10 +251,12 @@ BookmarkBar::MessageReceived(BMessage* message)
 						// to some other folder.
 						it->second->SetLabel(name);
 
-						BMessage* itemMessage = new BMessage(
+						BMessage* itemMessage = new(std::nothrow) BMessage(
 							followedEntry.IsDirectory() ? kFolderMsg : B_REFS_RECEIVED);
-						itemMessage->AddRef("refs", &ref);
-						it->second->SetMessage(itemMessage);
+						if (itemMessage != nullptr) {
+							itemMessage->AddRef("refs", &ref);
+							it->second->SetMessage(itemMessage);
+						}
 
 						break;
 					}
@@ -282,9 +302,11 @@ BookmarkBar::MessageReceived(BMessage* message)
 				BPath path;
 				entry.GetPath(&path);
 
-				BMessage* message = new BMessage(B_REFS_RECEIVED);
-				message->AddRef("refs", &ref);
-				Window()->PostMessage(message);
+				BMessage* message = new(std::nothrow) BMessage(B_REFS_RECEIVED);
+				if (message != nullptr) {
+					message->AddRef("refs", &ref);
+					Window()->PostMessage(message);
+				}
 			}
 			break;
 		}
@@ -307,8 +329,10 @@ BookmarkBar::MessageReceived(BMessage* message)
 					// handle error case if necessary
 					BString errorMessage = B_TRANSLATE("Failed to delete bookmark:\n'%path%'");
 					errorMessage.ReplaceFirst("%path%", path.Path());
-					BAlert* alert = new BAlert("Error", errorMessage.String(), B_TRANSLATE("OK"));
-					alert->Go();
+					BAlert* alert = new(std::nothrow) BAlert("Error",
+						errorMessage.String(), B_TRANSLATE("OK"));
+					if (alert != nullptr)
+						alert->Go();
 					break;
 				}
 
@@ -318,8 +342,10 @@ BookmarkBar::MessageReceived(BMessage* message)
 					BString errorMessage = B_TRANSLATE("Failed to remove bookmark '%leaf%' "
 							"from boookmark bar.");
 					errorMessage.ReplaceFirst("%leaf%", path.Leaf());
-					BAlert* alert = new BAlert("Error", errorMessage.String(), B_TRANSLATE("OK"));
-					alert->Go();
+					BAlert* alert = new(std::nothrow) BAlert("Error",
+						errorMessage.String(), B_TRANSLATE("OK"));
+					if (alert != nullptr)
+						alert->Go();
 				}
 			}
 			break;
@@ -366,15 +392,21 @@ BookmarkBar::MessageReceived(BMessage* message)
 			if (index >= 0 && index < CountItems()) {
 				BMenuItem* selectedItem = ItemAt(index);
 				BString oldName = selectedItem->Label();
-				BMessage* message = new BMessage(kRenameBookmarkMsg);
-				message->AddPointer("item", selectedItem);
-				BString request;
-				request.SetToFormat(B_TRANSLATE("Old name: %s"), oldName.String());
-				// Create a text control to get the new name from the user
-				PromptWindow* prompt = new PromptWindow(B_TRANSLATE("Rename bookmark"),
-					B_TRANSLATE("New name:"), request, this, message);
-				prompt->Show();
-				prompt->CenterOnScreen();
+				BMessage* renameMsg = new(std::nothrow) BMessage(kRenameBookmarkMsg);
+				if (renameMsg != nullptr) {
+					renameMsg->AddPointer("item", selectedItem);
+					BString request;
+					request.SetToFormat(B_TRANSLATE("Old name: %s"), oldName.String());
+					// Create a text control to get the new name from the user
+					PromptWindow* prompt = new(std::nothrow) PromptWindow(
+						B_TRANSLATE("Rename bookmark"), B_TRANSLATE("New name:"),
+						request, this, renameMsg);
+					if (prompt != nullptr) {
+						prompt->Show();
+						prompt->CenterOnScreen();
+					} else
+						delete renameMsg;
+				}
 			}
 			break;
 		}
@@ -540,24 +572,34 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 	IconMenuItem* item = nullptr;
 
 	if (isDirectory) {
-		BNavMenu* menu = new BNavMenu(name, B_REFS_RECEIVED, Window());
-		menu->SetNavDir(ref);
-		BMessage* message = new BMessage(kFolderMsg);
-		message->AddRef("refs", ref);
-		item = new IconMenuItem(menu, message, "application/x-vnd.Be-directory", B_MINI_ICON);
+		BNavMenu* menu = new(std::nothrow) BNavMenu(name, B_REFS_RECEIVED, Window());
+		if (menu != nullptr)
+			menu->SetNavDir(ref);
+		BMessage* folderMsg = new(std::nothrow) BMessage(kFolderMsg);
+		if (folderMsg != nullptr)
+			folderMsg->AddRef("refs", ref);
+		item = new(std::nothrow) IconMenuItem(menu, folderMsg,
+			"application/x-vnd.Be-directory", B_MINI_ICON);
+		if (item == nullptr) {
+			delete menu;
+			delete folderMsg;
+		}
 
 	} else {
-		BMessage* message = new BMessage(B_REFS_RECEIVED);
-		message->AddRef("refs", ref);
+		BMessage* refsMsg = new(std::nothrow) BMessage(B_REFS_RECEIVED);
+		if (refsMsg != nullptr)
+			refsMsg->AddRef("refs", ref);
 
 		if (icon != nullptr) {
-			item = new IconMenuItem(name, message, icon, B_MINI_ICON);
+			item = new(std::nothrow) IconMenuItem(name, refsMsg, icon, B_MINI_ICON);
 		} else {
 			BEntry followedLink(ref, true);
 			BNode node(&followedLink);
 			BNodeInfo info(&node);
-			item = new IconMenuItem(name, message, &info, B_MINI_ICON);
+			item = new(std::nothrow) IconMenuItem(name, refsMsg, &info, B_MINI_ICON);
 		}
+		if (item == nullptr)
+			delete refsMsg;
 	}
 
 	int32 count = CountItems();

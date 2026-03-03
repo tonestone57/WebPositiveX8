@@ -652,11 +652,18 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		kDefaultSearchPageURL);
 
 	// Create the interface elements
-	BMessage* newTabMessage = new BMessage(NEW_TAB);
-	newTabMessage->AddString("url", "");
-	newTabMessage->AddPointer("window", this);
-	newTabMessage->AddBool("select", true);
-	fTabManager.reset(new TabManager(BMessenger(this), newTabMessage));
+	BMessage* newTabMessage = new(std::nothrow) BMessage(NEW_TAB);
+	if (newTabMessage != nullptr) {
+		newTabMessage->AddString("url", "");
+		newTabMessage->AddPointer("window", this);
+		newTabMessage->AddBool("select", true);
+	}
+	fTabManager.reset(new(std::nothrow) TabManager(BMessenger(this),
+		newTabMessage));
+	if (fTabManager == nullptr) {
+		delete newTabMessage;
+		return;
+	}
 
 	// Menu
 #if INTEGRATE_MENU_INTO_TAB_BAR
@@ -674,13 +681,15 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		newWindowMessage->AddString("url", "");
 	BMenuItem* newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New window"),
 		newWindowMessage, 'N');
-	if (newItem != nullptr) {
+	if (newItem != nullptr && menu != nullptr) {
 		if (menu->AddItem(newItem))
 			newItem->SetTarget(be_app);
 		else
 			delete newItem;
-	} else
+	} else {
+		delete newItem;
 		delete newWindowMessage;
+	}
 
 	BMessage* newTabCopy = nullptr;
 	if (newTabMessage != nullptr)
@@ -734,48 +743,92 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		delete closeTabMsg;
 	}
 
-	item = new BMenuItem(B_TRANSLATE("Save page as" B_UTF8_ELLIPSIS),
-		new BMessage(SAVE_PAGE), 'S');
-	if (!menu->AddItem(item))
+	BMessage* savePageMsg = new(std::nothrow) BMessage(SAVE_PAGE);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Save page as" B_UTF8_ELLIPSIS),
+		savePageMsg, 'S');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete savePageMsg;
+	}
 
-	menu->AddSeparatorItem();
+	if (menu != nullptr)
+		menu->AddSeparatorItem();
 
-	item = new BMenuItem(B_TRANSLATE("Downloads"),
-		new BMessage(SHOW_DOWNLOAD_WINDOW), 'D');
-	if (!menu->AddItem(item))
+	BMessage* downloadMsg = new(std::nothrow) BMessage(SHOW_DOWNLOAD_WINDOW);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Downloads"),
+		downloadMsg, 'D');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete downloadMsg;
+	}
 
-	item = new BMenuItem(B_TRANSLATE("Settings"),
-		new BMessage(SHOW_SETTINGS_WINDOW), ',');
-	if (!menu->AddItem(item))
+	BMessage* settingsMsg = new(std::nothrow) BMessage(SHOW_SETTINGS_WINDOW);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Settings"),
+		settingsMsg, ',');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete settingsMsg;
+	}
 
-	item = new BMenuItem(B_TRANSLATE("Cookie manager"),
-		new BMessage(SHOW_COOKIE_WINDOW));
-	if (!menu->AddItem(item))
+	BMessage* cookieMsg = new(std::nothrow) BMessage(SHOW_COOKIE_WINDOW);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Cookie manager"),
+		cookieMsg);
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete cookieMsg;
+	}
 
-	item = new BMenuItem(B_TRANSLATE("Script console"),
-		new BMessage(SHOW_CONSOLE_WINDOW));
-	if (!menu->AddItem(item))
+	BMessage* consoleMsg = new(std::nothrow) BMessage(SHOW_CONSOLE_WINDOW);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Script console"),
+		consoleMsg);
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete consoleMsg;
+	}
 
-	BMenuItem* aboutItem = new BMenuItem(B_TRANSLATE("About"),
-		new BMessage(B_ABOUT_REQUESTED));
-	if (menu->AddItem(aboutItem))
-		aboutItem->SetTarget(be_app);
-	else
+	BMessage* aboutMsg = new(std::nothrow) BMessage(B_ABOUT_REQUESTED);
+	BMenuItem* aboutItem = new(std::nothrow) BMenuItem(B_TRANSLATE("About"),
+		aboutMsg);
+	if (aboutItem != nullptr && menu != nullptr) {
+		if (menu->AddItem(aboutItem))
+			aboutItem->SetTarget(be_app);
+		else
+			delete aboutItem;
+	} else {
 		delete aboutItem;
+		delete aboutMsg;
+	}
 
-	menu->AddSeparatorItem();
+	if (menu != nullptr)
+		menu->AddSeparatorItem();
 
-	BMenuItem* quitItem = new BMenuItem(B_TRANSLATE("Quit"),
-		new BMessage(B_QUIT_REQUESTED), 'Q');
-	if (menu->AddItem(quitItem))
-		quitItem->SetTarget(be_app);
-	else
+	BMessage* quitMsg = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
+	BMenuItem* quitItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Quit"),
+		quitMsg, 'Q');
+	if (quitItem != nullptr && menu != nullptr) {
+		if (menu->AddItem(quitItem))
+			quitItem->SetTarget(be_app);
+		else
+			delete quitItem;
+	} else {
 		delete quitItem;
+		delete quitMsg;
+	}
 
 	if (mainMenu != nullptr && menu != nullptr && !mainMenu->AddItem(menu))
 		delete menu;
@@ -796,36 +849,73 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		delete cutMsg;
 	}
 
-	fCopyMenuItem = new BMenuItem(B_TRANSLATE("Copy"), new BMessage(B_COPY), 'C');
-	if (!menu->AddItem(fCopyMenuItem)) {
+	BMessage* copyMsg = new(std::nothrow) BMessage(B_COPY);
+	fCopyMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Copy"),
+		copyMsg, 'C');
+	if (fCopyMenuItem != nullptr && menu != nullptr) {
+		if (!menu->AddItem(fCopyMenuItem)) {
+			delete fCopyMenuItem;
+			fCopyMenuItem = nullptr;
+		}
+	} else {
 		delete fCopyMenuItem;
 		fCopyMenuItem = nullptr;
+		delete copyMsg;
 	}
 
-	fPasteMenuItem = new BMenuItem(B_TRANSLATE("Paste"), new BMessage(B_PASTE), 'V');
-	if (!menu->AddItem(fPasteMenuItem)) {
+	BMessage* pasteMsg = new(std::nothrow) BMessage(B_PASTE);
+	fPasteMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Paste"),
+		pasteMsg, 'V');
+	if (fPasteMenuItem != nullptr && menu != nullptr) {
+		if (!menu->AddItem(fPasteMenuItem)) {
+			delete fPasteMenuItem;
+			fPasteMenuItem = nullptr;
+		}
+	} else {
 		delete fPasteMenuItem;
 		fPasteMenuItem = nullptr;
+		delete pasteMsg;
 	}
 
-	menu->AddSeparatorItem();
+	if (menu != nullptr)
+		menu->AddSeparatorItem();
 
-	item = new BMenuItem(B_TRANSLATE("Find"), new BMessage(EDIT_SHOW_FIND_GROUP), 'F');
-	if (!menu->AddItem(item))
+	BMessage* findMsg = new(std::nothrow) BMessage(EDIT_SHOW_FIND_GROUP);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Find"), findMsg, 'F');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete findMsg;
+	}
 
-	fFindPreviousMenuItem = new BMenuItem(B_TRANSLATE("Find previous"),
-		new BMessage(EDIT_FIND_PREVIOUS), 'G', B_SHIFT_KEY);
-	if (!menu->AddItem(fFindPreviousMenuItem)) {
+	BMessage* findPrevMsg = new(std::nothrow) BMessage(EDIT_FIND_PREVIOUS);
+	fFindPreviousMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Find previous"),
+		findPrevMsg, 'G', B_SHIFT_KEY);
+	if (fFindPreviousMenuItem != nullptr && menu != nullptr) {
+		if (!menu->AddItem(fFindPreviousMenuItem)) {
+			delete fFindPreviousMenuItem;
+			fFindPreviousMenuItem = nullptr;
+		}
+	} else {
 		delete fFindPreviousMenuItem;
 		fFindPreviousMenuItem = nullptr;
+		delete findPrevMsg;
 	}
 
-	fFindNextMenuItem = new BMenuItem(B_TRANSLATE("Find next"),
-		new BMessage(EDIT_FIND_NEXT), 'G');
-	if (!menu->AddItem(fFindNextMenuItem)) {
+	BMessage* findNextMsg = new(std::nothrow) BMessage(EDIT_FIND_NEXT);
+	fFindNextMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Find next"),
+		findNextMsg, 'G');
+	if (fFindNextMenuItem != nullptr && menu != nullptr) {
+		if (!menu->AddItem(fFindNextMenuItem)) {
+			delete fFindNextMenuItem;
+			fFindNextMenuItem = nullptr;
+		}
+	} else {
 		delete fFindNextMenuItem;
 		fFindNextMenuItem = nullptr;
+		delete findNextMsg;
 	}
 
 	if (mainMenu != nullptr && menu != nullptr && !mainMenu->AddItem(menu))
@@ -836,82 +926,152 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	if (fFindNextMenuItem != nullptr)
 		fFindNextMenuItem->SetEnabled(false);
 
-	menu = new BMenu(B_TRANSLATE("View"));
-	item = new BMenuItem(B_TRANSLATE("Reload"), new BMessage(RELOAD), 'R');
-	if (!menu->AddItem(item))
+	menu = new(std::nothrow) BMenu(B_TRANSLATE("View"));
+
+	BMessage* reloadMsg = new(std::nothrow) BMessage(RELOAD);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Reload"), reloadMsg, 'R');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete reloadMsg;
+	}
 
 	// the label will be replaced with the appropriate text later on
-	fBookmarkBarMenuItem = new BMenuItem(B_TRANSLATE("Show bookmark bar"),
-		new BMessage(SHOW_HIDE_BOOKMARK_BAR));
-	if (!menu->AddItem(fBookmarkBarMenuItem)) {
+	BMessage* showBookmarkBarMsg = new(std::nothrow) BMessage(SHOW_HIDE_BOOKMARK_BAR);
+	fBookmarkBarMenuItem = new(std::nothrow) BMenuItem(
+		B_TRANSLATE("Show bookmark bar"), showBookmarkBarMsg);
+	if (fBookmarkBarMenuItem != nullptr && menu != nullptr) {
+		if (!menu->AddItem(fBookmarkBarMenuItem)) {
+			delete fBookmarkBarMenuItem;
+			fBookmarkBarMenuItem = nullptr;
+		}
+	} else {
 		delete fBookmarkBarMenuItem;
 		fBookmarkBarMenuItem = nullptr;
+		delete showBookmarkBarMsg;
 	}
 
-	menu->AddSeparatorItem();
+	if (menu != nullptr)
+		menu->AddSeparatorItem();
 
-	item = new BMenuItem(B_TRANSLATE("Increase size"),
-		new BMessage(ZOOM_FACTOR_INCREASE), '+');
-	if (!menu->AddItem(item))
+	BMessage* increaseSizeMsg = new(std::nothrow) BMessage(ZOOM_FACTOR_INCREASE);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Increase size"),
+		increaseSizeMsg, '+');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete increaseSizeMsg;
+	}
 
-	item = new BMenuItem(B_TRANSLATE("Decrease size"),
-		new BMessage(ZOOM_FACTOR_DECREASE), '-');
-	if (!menu->AddItem(item))
+	BMessage* decreaseSizeMsg = new(std::nothrow) BMessage(ZOOM_FACTOR_DECREASE);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Decrease size"),
+		decreaseSizeMsg, '-');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete decreaseSizeMsg;
+	}
 
-	item = new BMenuItem(B_TRANSLATE("Reset size"),
-		new BMessage(ZOOM_FACTOR_RESET), '0');
-	if (!menu->AddItem(item))
+	BMessage* resetSizeMsg = new(std::nothrow) BMessage(ZOOM_FACTOR_RESET);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Reset size"),
+		resetSizeMsg, '0');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete resetSizeMsg;
+	}
 
-	fZoomTextOnlyMenuItem = new BMenuItem(B_TRANSLATE("Zoom text only"),
-		new BMessage(ZOOM_TEXT_ONLY));
-	if (fZoomTextOnlyMenuItem != nullptr)
+	BMessage* zoomTextOnlyMsg = new(std::nothrow) BMessage(ZOOM_TEXT_ONLY);
+	fZoomTextOnlyMenuItem = new(std::nothrow) BMenuItem(
+		B_TRANSLATE("Zoom text only"), zoomTextOnlyMsg);
+	if (fZoomTextOnlyMenuItem != nullptr && menu != nullptr) {
 		fZoomTextOnlyMenuItem->SetMarked(fZoomTextOnly);
-	if (!menu->AddItem(fZoomTextOnlyMenuItem)) {
+		if (!menu->AddItem(fZoomTextOnlyMenuItem)) {
+			delete fZoomTextOnlyMenuItem;
+			fZoomTextOnlyMenuItem = nullptr;
+		}
+	} else {
 		delete fZoomTextOnlyMenuItem;
 		fZoomTextOnlyMenuItem = nullptr;
+		delete zoomTextOnlyMsg;
 	}
 
-	menu->AddSeparatorItem();
+	if (menu != nullptr)
+		menu->AddSeparatorItem();
 
-	fFullscreenItem = new BMenuItem(B_TRANSLATE("Full screen"),
-		new BMessage(TOGGLE_FULLSCREEN), B_RETURN);
-	if (!menu->AddItem(fFullscreenItem)) {
+	BMessage* fullscreenMsg = new(std::nothrow) BMessage(TOGGLE_FULLSCREEN);
+	fFullscreenItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Full screen"),
+		fullscreenMsg, B_RETURN);
+	if (fFullscreenItem != nullptr && menu != nullptr) {
+		if (!menu->AddItem(fFullscreenItem)) {
+			delete fFullscreenItem;
+			fFullscreenItem = nullptr;
+		}
+	} else {
 		delete fFullscreenItem;
 		fFullscreenItem = nullptr;
+		delete fullscreenMsg;
 	}
 
-	item = new BMenuItem(B_TRANSLATE("Page source"),
-		new BMessage(SHOW_PAGE_SOURCE), 'U');
-	if (!menu->AddItem(item))
+	BMessage* showSourceMsg = new(std::nothrow) BMessage(SHOW_PAGE_SOURCE);
+	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Page source"),
+		showSourceMsg, 'U');
+	if (item != nullptr && menu != nullptr) {
+		if (!menu->AddItem(item))
+			delete item;
+	} else {
 		delete item;
+		delete showSourceMsg;
+	}
 
-	if (!mainMenu->AddItem(menu))
+	if (mainMenu != nullptr && menu != nullptr && !mainMenu->AddItem(menu))
 		delete menu;
 
-	fHistoryMenu = new BMenu(B_TRANSLATE("History"));
-	fBackMenuItem = new BMenuItem(B_TRANSLATE("Back"),
-		new BMessage(GO_BACK), B_LEFT_ARROW);
-	if (!fHistoryMenu->AddItem(fBackMenuItem)) {
+	fHistoryMenu = new(std::nothrow) BMenu(B_TRANSLATE("History"));
+
+	BMessage* backMsg = new(std::nothrow) BMessage(GO_BACK);
+	fBackMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Back"),
+		backMsg, B_LEFT_ARROW);
+	if (fBackMenuItem != nullptr && fHistoryMenu != nullptr) {
+		if (!fHistoryMenu->AddItem(fBackMenuItem)) {
+			delete fBackMenuItem;
+			fBackMenuItem = nullptr;
+		}
+	} else {
 		delete fBackMenuItem;
 		fBackMenuItem = nullptr;
+		delete backMsg;
 	}
 
-	fForwardMenuItem = new BMenuItem(B_TRANSLATE("Forward"),
-		new BMessage(GO_FORWARD), B_RIGHT_ARROW);
-	if (!fHistoryMenu->AddItem(fForwardMenuItem)) {
+	BMessage* forwardMsg = new(std::nothrow) BMessage(GO_FORWARD);
+	fForwardMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Forward"),
+		forwardMsg, B_RIGHT_ARROW);
+	if (fForwardMenuItem != nullptr && fHistoryMenu != nullptr) {
+		if (!fHistoryMenu->AddItem(fForwardMenuItem)) {
+			delete fForwardMenuItem;
+			fForwardMenuItem = nullptr;
+		}
+	} else {
 		delete fForwardMenuItem;
 		fForwardMenuItem = nullptr;
+		delete forwardMsg;
 	}
 
-	fHistoryMenu->AddSeparatorItem();
-	fHistoryMenuFixedItemCount = fHistoryMenu->CountItems();
-	if (!mainMenu->AddItem(fHistoryMenu)) {
-		delete fHistoryMenu;
-		fHistoryMenu = nullptr;
+	if (fHistoryMenu != nullptr) {
+		fHistoryMenu->AddSeparatorItem();
+		fHistoryMenuFixedItemCount = fHistoryMenu->CountItems();
+		if (mainMenu != nullptr && !mainMenu->AddItem(fHistoryMenu)) {
+			delete fHistoryMenu;
+			fHistoryMenu = nullptr;
+		}
 	}
 
 	BPath bookmarkPath;
@@ -919,8 +1079,12 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	if (_BookmarkPath(bookmarkPath) == B_OK
 		&& get_ref_for_path(bookmarkPath.Path(), &bookmarkRef) == B_OK) {
 		BMenu* bookmarkMenu
-			= new BookmarkMenu(B_TRANSLATE("Bookmarks"), this, &bookmarkRef);
-		if (!mainMenu->AddItem(bookmarkMenu))
+			= new(std::nothrow) BookmarkMenu(B_TRANSLATE("Bookmarks"), this,
+				&bookmarkRef);
+		if (bookmarkMenu != nullptr && mainMenu != nullptr) {
+			if (!mainMenu->AddItem(bookmarkMenu))
+				delete bookmarkMenu;
+		} else
 			delete bookmarkMenu;
 
 		BDirectory barDir(&bookmarkRef);
@@ -930,9 +1094,9 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		if (bookmarkBar.Exists() && bookmarkBar.GetRef(&bookmarkBarRef) == B_OK) {
 			BDirectory barFolder(&bookmarkBarRef);
 			if (barFolder.CountEntries() > 0) {
-				fBookmarkBar = new BookmarkBar(B_TRANSLATE("Bookmarks"), this,
-					&bookmarkBarRef);
-				hasBookmarks = true;
+				fBookmarkBar = new(std::nothrow) BookmarkBar(
+					B_TRANSLATE("Bookmarks"), this, &bookmarkBarRef);
+				hasBookmarks = fBookmarkBar != nullptr;
 			}
 		}
 		if (fBookmarkBarMenuItem != nullptr)
@@ -943,41 +1107,64 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	}
 
 	// Back, Forward, Stop & Home buttons
-	fBackButton = new BIconButton("Back", 0, new BMessage(GO_BACK));
-	fBackButton->SetIcon(201);
-	fBackButton->TrimIcon();
+	BMessage* backBtnMsg = new(std::nothrow) BMessage(GO_BACK);
+	fBackButton = new(std::nothrow) BIconButton("Back", 0, backBtnMsg);
+	if (fBackButton != nullptr) {
+		fBackButton->SetIcon(201);
+		fBackButton->TrimIcon();
+	} else
+		delete backBtnMsg;
 
-	fForwardButton = new BIconButton("Forward", 0, new BMessage(GO_FORWARD));
-	fForwardButton->SetIcon(202);
-	fForwardButton->TrimIcon();
+	BMessage* forwardBtnMsg = new(std::nothrow) BMessage(GO_FORWARD);
+	fForwardButton = new(std::nothrow) BIconButton("Forward", 0, forwardBtnMsg);
+	if (fForwardButton != nullptr) {
+		fForwardButton->SetIcon(202);
+		fForwardButton->TrimIcon();
+	} else
+		delete forwardBtnMsg;
 
-	fStopButton = new BIconButton("Stop", 0, new BMessage(STOP));
-	fStopButton->SetIcon(204);
-	fStopButton->TrimIcon();
+	BMessage* stopBtnMsg = new(std::nothrow) BMessage(STOP);
+	fStopButton = new(std::nothrow) BIconButton("Stop", 0, stopBtnMsg);
+	if (fStopButton != nullptr) {
+		fStopButton->SetIcon(204);
+		fStopButton->TrimIcon();
+	} else
+		delete stopBtnMsg;
 
-	fHomeButton = new BIconButton("Home", 0, new BMessage(HOME));
-	fHomeButton->SetIcon(206);
-	fHomeButton->TrimIcon();
-	if (!fAppSettings->GetValue(kSettingsKeyShowHomeButton, true))
-		fHomeButton->Hide();
+	BMessage* homeBtnMsg = new(std::nothrow) BMessage(HOME);
+	fHomeButton = new(std::nothrow) BIconButton("Home", 0, homeBtnMsg);
+	if (fHomeButton != nullptr) {
+		fHomeButton->SetIcon(206);
+		fHomeButton->TrimIcon();
+		if (!fAppSettings->GetValue(kSettingsKeyShowHomeButton, true))
+			fHomeButton->Hide();
+	} else
+		delete homeBtnMsg;
 
 	// URL input group
-	fURLInputGroup = new URLInputGroup(new BMessage(GOTO_URL));
+	BMessage* gotoUrlMsg = new(std::nothrow) BMessage(GOTO_URL);
+	fURLInputGroup = new(std::nothrow) URLInputGroup(gotoUrlMsg);
+	if (fURLInputGroup == nullptr)
+		delete gotoUrlMsg;
 
 	// Status Bar
-	fStatusText = new BStringView("status", "");
-	fStatusText->SetAlignment(B_ALIGN_LEFT);
-	fStatusText->SetExplicitMaxSize(BSize(B_SIZE_UNLIMITED, B_SIZE_UNSET));
-	fStatusText->SetExplicitMinSize(BSize(150, 12));
-		// Prevent the window from growing to fit a long status message...
-	BFont font(be_plain_font);
-	font.SetSize(ceilf(font.Size() * 0.8));
-	fStatusText->SetFont(&font, B_FONT_SIZE);
+	fStatusText = new(std::nothrow) BStringView("status", "");
+	if (fStatusText != nullptr) {
+		fStatusText->SetAlignment(B_ALIGN_LEFT);
+		fStatusText->SetExplicitMaxSize(BSize(B_SIZE_UNLIMITED, B_SIZE_UNSET));
+		fStatusText->SetExplicitMinSize(BSize(150, 12));
+			// Prevent the window from growing to fit a long status message...
+		BFont font(be_plain_font);
+		font.SetSize(ceilf(font.Size() * 0.8));
+		fStatusText->SetFont(&font, B_FONT_SIZE);
+	}
 
 	// Loading progress bar
-	fLoadingProgressBar = new BStatusBar("progress");
-	fLoadingProgressBar->SetMaxValue(100);
-	fLoadingProgressBar->Hide();
+	fLoadingProgressBar = new(std::nothrow) BStatusBar("progress");
+	if (fLoadingProgressBar != nullptr) {
+		fLoadingProgressBar->SetMaxValue(100);
+		fLoadingProgressBar->Hide();
+	}
 	font_height height;
 	font.GetHeight(&height);
 	fLoadingProgressBar->SetBarHeight(height.ascent + height.descent);
@@ -986,22 +1173,42 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	const float kElementSpacing = 5;
 
 	// Find group
-	fFindCloseButton = new CloseButton(new BMessage(EDIT_HIDE_FIND_GROUP));
-	fFindTextControl = new BTextControl("find", B_TRANSLATE("Find:"), "", 0);
-	fFindTextControl->SetModificationMessage(new BMessage(FIND_TEXT_CHANGED));
-	fFindPreviousButton = new BButton(B_TRANSLATE("Previous"),
-		new BMessage(EDIT_FIND_PREVIOUS));
-	fFindPreviousButton->SetToolTip(
-		B_TRANSLATE_COMMENT("Find previous occurrence of search terms",
-			"find bar previous button tooltip"));
-	fFindNextButton = new BButton(B_TRANSLATE("Next"),
-		new BMessage(EDIT_FIND_NEXT));
-	fFindNextButton->SetToolTip(
-		B_TRANSLATE_COMMENT("Find next occurrence of search terms",
-			"find bar next button tooltip"));
-	fFindCaseSensitiveCheckBox = new BCheckBox(B_TRANSLATE("Match case"));
+	BMessage* findHideMsg = new(std::nothrow) BMessage(EDIT_HIDE_FIND_GROUP);
+	fFindCloseButton = new(std::nothrow) CloseButton(findHideMsg);
+	if (fFindCloseButton == nullptr)
+		delete findHideMsg;
+
+	fFindTextControl = new(std::nothrow) BTextControl("find",
+		B_TRANSLATE("Find:"), "", 0);
+	if (fFindTextControl != nullptr) {
+		fFindTextControl->SetModificationMessage(
+			new(std::nothrow) BMessage(FIND_TEXT_CHANGED));
+	}
+
+	BMessage* findPrevBtnMsg = new(std::nothrow) BMessage(EDIT_FIND_PREVIOUS);
+	fFindPreviousButton = new(std::nothrow) BButton(B_TRANSLATE("Previous"),
+		findPrevBtnMsg);
+	if (fFindPreviousButton != nullptr) {
+		fFindPreviousButton->SetToolTip(
+			B_TRANSLATE_COMMENT("Find previous occurrence of search terms",
+				"find bar previous button tooltip"));
+	} else
+		delete findPrevBtnMsg;
+
+	BMessage* findNextBtnMsg = new(std::nothrow) BMessage(EDIT_FIND_NEXT);
+	fFindNextButton = new(std::nothrow) BButton(B_TRANSLATE("Next"),
+		findNextBtnMsg);
+	if (fFindNextButton != nullptr) {
+		fFindNextButton->SetToolTip(
+			B_TRANSLATE_COMMENT("Find next occurrence of search terms",
+				"find bar next button tooltip"));
+	} else
+		delete findNextBtnMsg;
+
+	fFindCaseSensitiveCheckBox = new(std::nothrow) BCheckBox(
+		B_TRANSLATE("Match case"));
 	BGroupLayout* findGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+		.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 		.Add(BGroupLayoutBuilder(B_HORIZONTAL, B_USE_SMALL_SPACING)
 			.Add(fFindCloseButton)
 			.Add(fFindTextControl)
@@ -1024,12 +1231,12 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 			.SetInsets(kInsetSpacing, kInsetSpacing, kInsetSpacing,
 				kInsetSpacing)
 		)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+		.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 	;
 
 	// Status bar group
 	BGroupLayout* statusGroup = BLayoutBuilder::Group<>(B_VERTICAL, 0.0)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+		.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 		.Add(BLayoutBuilder::Group<>(B_HORIZONTAL, kElementSpacing)
 			.Add(fStatusText)
 			.Add(fLoadingProgressBar, 0.2)
@@ -1038,28 +1245,39 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		)
 	;
 
-	BBitmapButton* toggleFullscreenButton = new BBitmapButton(kWindowIconBits,
-		kWindowIconWidth, kWindowIconHeight, kWindowIconFormat,
-		new BMessage(TOGGLE_FULLSCREEN));
-	toggleFullscreenButton->SetBackgroundMode(BBitmapButton::MENUBAR_BACKGROUND);
+	BMessage* toggleFullscreenMsg = new(std::nothrow) BMessage(TOGGLE_FULLSCREEN);
+	BBitmapButton* toggleFullscreenButton = new(std::nothrow) BBitmapButton(
+		kWindowIconBits, kWindowIconWidth, kWindowIconHeight, kWindowIconFormat,
+		toggleFullscreenMsg);
+	if (toggleFullscreenButton != nullptr)
+		toggleFullscreenButton->SetBackgroundMode(BBitmapButton::MENUBAR_BACKGROUND);
+	else
+		delete toggleFullscreenMsg;
 
 #if !INTEGRATE_MENU_INTO_TAB_BAR
 	BMenu* mainMenuItem = mainMenu;
-	BGroupView* menuGroupView = new BGroupView(B_HORIZONTAL, 0.0);
+	BGroupView* menuGroupView = new(std::nothrow) BGroupView(B_HORIZONTAL, 0.0);
 	fMenuGroup = menuGroupView;
-	BLayoutBuilder::Group<>(menuGroupView)
-		.Add(mainMenuItem)
-		.Add(toggleFullscreenButton, 0.0f)
-	;
+	if (menuGroupView != nullptr) {
+		BLayoutBuilder::Group<>(menuGroupView)
+			.Add(mainMenuItem)
+			.Add(toggleFullscreenButton, 0.0f)
+		;
+	}
 #else
-	BMenu* mainMenuItem = new BMenuBar("Main menu");
-	if (!mainMenuItem->AddItem(mainMenu))
+	BMenu* mainMenuItem = new(std::nothrow) BMenuBar("Main menu");
+	if (mainMenuItem != nullptr) {
+		if (!mainMenuItem->AddItem(mainMenu))
+			delete mainMenu;
+	} else
 		delete mainMenu;
 	fMenuGroup = fTabManager->MenuContainerView();
-	BLayoutBuilder::Group<>(fMenuGroup)
-		.Add(mainMenuItem)
-		.Add(toggleFullscreenButton, 0.0f)
-	;
+	if (fMenuGroup != nullptr) {
+		BLayoutBuilder::Group<>(fMenuGroup)
+			.Add(mainMenuItem)
+			.Add(toggleFullscreenButton, 0.0f)
+		;
+	}
 #endif
 
 	if (fAppSettings->GetValue(kSettingsShowBookmarkBar, true))
@@ -1067,11 +1285,11 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	else
 		_ShowBookmarkBar(false);
 
-	fSavePanel.reset(new BFilePanel(B_SAVE_PANEL, new BMessenger(this), 0,
-		nullptr, false));
+	fSavePanel.reset(new(std::nothrow) BFilePanel(B_SAVE_PANEL,
+		new(std::nothrow) BMessenger(this), 0, nullptr, false));
 
 	// Layout
-	BGroupView* topView = new BGroupView(B_VERTICAL, 0.0);
+	BGroupView* topView = new(std::nothrow) BGroupView(B_VERTICAL, 0.0);
 
 #if !INTEGRATE_MENU_INTO_TAB_BAR
 	topView->AddChild(menuGroupView);
@@ -1104,20 +1322,23 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		fAutoHideInterfaceInFullscreenMode));
 
 	AddShortcut('F', B_COMMAND_KEY | B_SHIFT_KEY,
-		new BMessage(EDIT_HIDE_FIND_GROUP));
-	AddShortcut('H', B_COMMAND_KEY | B_SHIFT_KEY, new BMessage(HOME));
+		new(std::nothrow) BMessage(EDIT_HIDE_FIND_GROUP));
+	AddShortcut('H', B_COMMAND_KEY | B_SHIFT_KEY,
+		new(std::nothrow) BMessage(HOME));
 
 	// Add shortcuts to select a particular tab
 	for (int32 i = 1; i <= 9; i++) {
-		BMessage* selectTab = new BMessage(SELECT_TAB);
-		selectTab->AddInt32("tab index", i - 1);
-		char numStr[2];
-		snprintf(numStr, sizeof(numStr), "%d", (int) i);
-		AddShortcut(numStr[0], B_COMMAND_KEY, selectTab);
+		BMessage* selectTab = new(std::nothrow) BMessage(SELECT_TAB);
+		if (selectTab != nullptr) {
+			selectTab->AddInt32("tab index", i - 1);
+			char numStr[2];
+			snprintf(numStr, sizeof(numStr), "%d", (int) i);
+			AddShortcut(numStr[0], B_COMMAND_KEY, selectTab);
+		}
 	}
 
 	// Add shortcut to cycle through tabs like in every other web browser
-	AddShortcut(B_TAB, B_COMMAND_KEY, new BMessage(CYCLE_TABS));
+	AddShortcut(B_TAB, B_COMMAND_KEY, new(std::nothrow) BMessage(CYCLE_TABS));
 
 	BKeymap keymap;
 	keymap.SetToCurrent();
@@ -1130,7 +1351,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 			if (!HasShortcut(key, 0)) {
 				// Add semantic zoom in shortcut, bug #7428
 				AddShortcut(key, B_COMMAND_KEY,
-					new BMessage(ZOOM_FACTOR_INCREASE));
+					new(std::nothrow) BMessage(ZOOM_FACTOR_INCREASE));
 			}
 		}
 	}
@@ -1345,14 +1566,16 @@ BrowserWindow::MessageReceived(BMessage* message)
 			BrowsingHistory* history = BrowsingHistory::DefaultInstance();
 			if (history->CountItems() == 0)
 				break;
-			BAlert* alert = new BAlert(B_TRANSLATE("Confirmation"),
+			BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Confirmation"),
 				B_TRANSLATE("Do you really want to "
 				"clear the browsing history?"), B_TRANSLATE("Clear"),
 				B_TRANSLATE("Cancel"));
-			alert->SetShortcut(1, B_ESCAPE);
+			if (alert != nullptr) {
+				alert->SetShortcut(1, B_ESCAPE);
 
-			if (alert->Go() == 0)
-				history->Clear();
+				if (alert->Go() == 0)
+					history->Clear();
+			}
 			break;
 		}
 
@@ -1405,13 +1628,15 @@ BrowserWindow::MessageReceived(BMessage* message)
 					"variable %addedCount."));
 				string.ReplaceFirst("%addedCount", BString() << addedCount);
 
-				BAlert* alert = new BAlert(
+				BAlert* alert = new(std::nothrow) BAlert(
 					B_TRANSLATE("Open bookmarks confirmation"),
 					string.String(), B_TRANSLATE("Cancel"),
 					B_TRANSLATE("Open all"));
-				alert->SetShortcut(0, B_ESCAPE);
-				if (alert->Go() == 0)
-					break;
+				if (alert != nullptr) {
+					alert->SetShortcut(0, B_ESCAPE);
+					if (alert->Go() == 0)
+						break;
+				}
 			}
 			message->AddPointer("window", this);
 			be_app->PostMessage(message);
@@ -1815,8 +2040,9 @@ BrowserWindow::SetCurrentWebView(BWebView* webView)
 		PageUserData* userData = static_cast<PageUserData*>(
 			CurrentWebView()->GetUserData());
 		if (userData == nullptr) {
-			userData = new PageUserData(CurrentFocus());
-			CurrentWebView()->SetUserData(userData);
+			userData = new(std::nothrow) PageUserData(CurrentFocus());
+			if (userData != nullptr)
+				CurrentWebView()->SetUserData(userData);
 		}
 		userData->SetFocusedView(CurrentFocus());
 		userData->SetURLInputContents(fURLInputGroup->Text());
@@ -1897,7 +2123,10 @@ BrowserWindow::CreateNewTab(const BString& _url, bool select,
 	bool applyNewPagePolicy = webView == nullptr;
 	// Executed in app thread (new BWebPage needs to be created in app thread).
 	if (webView == nullptr)
-		webView = new BWebView("web view", fContext);
+		webView = new(std::nothrow) BWebView("web view", fContext);
+
+	if (webView == nullptr)
+		return;
 
 	bool isNewWindow = fTabManager->CountTabs() == 0;
 
@@ -1990,10 +2219,10 @@ BrowserWindow::NewPageCreated(BWebView* view, BRect windowFrame,
 	bool modalDialog, bool resizable, bool activate)
 {
 	if (windowFrame.IsValid()) {
-		BrowserWindow* window = new BrowserWindow(windowFrame, fAppSettings,
-			BString(), fContext, INTERFACE_ELEMENT_STATUS,
-			view);
-		window->Show();
+		BrowserWindow* window = new(std::nothrow) BrowserWindow(windowFrame,
+			fAppSettings, BString(), fContext, INTERFACE_ELEMENT_STATUS, view);
+		if (window != nullptr)
+			window->Show();
 	} else
 		CreateNewTab(BString(), activate, view);
 }
@@ -2384,8 +2613,11 @@ BrowserWindow::AuthenticationChallenge(BString message, BString& inOutUser,
 	if (!_ShowPage(view))
 		return false;
 
-	AuthenticationPanel* panel = new AuthenticationPanel(Frame());
-		// Panel auto-destructs.
+	AuthenticationPanel* panel = new(std::nothrow) AuthenticationPanel(Frame());
+	if (panel == nullptr)
+		return false;
+
+	// Panel auto-destructs.
 	bool success = panel->getAuthentication(message, inOutUser, inOutPassword,
 		inOutRememberCredentials, failureCount > 0, inOutUser, inOutPassword,
 		&inOutRememberCredentials);
@@ -2563,11 +2795,13 @@ BrowserWindow::_CreateBookmark(BMessage* message)
 		} else {
 			BString message(B_TRANSLATE("There was an error setting up "
 				"the bookmark."));
-			BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-				message.String(), B_TRANSLATE("OK"), 0, nullptr,
+			BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Bookmark error"),
+				message.String(), B_TRANSLATE("OK"), nullptr, nullptr,
 				B_WIDTH_AS_USUAL, B_STOP_ALERT);
-			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-			alert->Go();
+			if (alert != nullptr) {
+				alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+				alert->Go();
+			}
 		}
 
 		return;
@@ -2589,12 +2823,14 @@ BrowserWindow::_CreateBookmark()
 	PageUserData* userData = static_cast<PageUserData*>(CurrentWebView()->GetUserData());
 	if (userData != nullptr) {
 		if (userData->PageIcon() != nullptr) {
-			miniIcon.reset(new BBitmap(BRect(0, 0, 15, 15), B_CMAP8));
-			miniIcon->ImportBits(userData->PageIcon());
+			miniIcon.reset(new(std::nothrow) BBitmap(BRect(0, 0, 15, 15), B_CMAP8));
+			if (miniIcon != nullptr)
+				miniIcon->ImportBits(userData->PageIcon());
 		}
 		if (userData->PageLargeIcon() != nullptr) {
-			largeIcon.reset(new BBitmap(BRect(0, 0, 31, 31), B_CMAP8));
-			largeIcon->ImportBits(userData->PageLargeIcon());
+			largeIcon.reset(new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), B_CMAP8));
+			if (largeIcon != nullptr)
+				largeIcon->ImportBits(userData->PageLargeIcon());
 		}
 	}
 
@@ -2606,11 +2842,13 @@ BrowserWindow::_CreateBookmark()
 			"the bookmark folder.\n\nError: %error", "Don't translate the "
 			"variable %error"));
 		message.ReplaceFirst("%error", strerror(status));
-		BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-			message.String(), B_TRANSLATE("OK"), 0, nullptr,
+		BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Bookmark error"),
+			message.String(), B_TRANSLATE("OK"), nullptr, nullptr,
 			B_WIDTH_AS_USUAL, B_STOP_ALERT);
-		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-		alert->Go();
+		if (alert != nullptr) {
+			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+			alert->Go();
+		}
 	}
 	return;
 }
@@ -2632,11 +2870,13 @@ BrowserWindow::_ShowBookmarks()
 			"show the Bookmarks folder.\n\nError: %error",
 			"Don't translate variable %error"));
 		message.ReplaceFirst("%error", strerror(status));
-		BAlert* alert = new BAlert(B_TRANSLATE("Bookmark error"),
-			message.String(), B_TRANSLATE("OK"), 0, nullptr,
+		BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Bookmark error"),
+			message.String(), B_TRANSLATE("OK"), nullptr, nullptr,
 			B_WIDTH_AS_USUAL, B_STOP_ALERT);
-		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-		alert->Go();
+		if (alert != nullptr) {
+			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+			alert->Go();
+		}
 		return;
 	}
 }
@@ -2726,6 +2966,11 @@ BrowserWindow::_SetPageIcon(BWebView* view, const BBitmap* icon)
 static void
 addItemToMenuOrSubmenu(BMenu* menu, BMenuItem* newItem)
 {
+	if (menu == nullptr || newItem == nullptr) {
+		delete newItem;
+		return;
+	}
+
 	BString baseURLLabel = baseURL(BString(newItem->Label()));
 	for (int32 i = menu->CountItems() - 1; i >= 0; i--) {
 		BMenuItem* item = menu->ItemAt(i);
@@ -2738,17 +2983,29 @@ addItemToMenuOrSubmenu(BMenu* menu, BMenuItem* newItem)
 				return;
 			} else {
 				menu->RemoveItem(item);
-				BMenu* subMenu = new BMenu(baseURLLabel.String());
+				BMenu* subMenu = new(std::nothrow) BMenu(baseURLLabel.String());
+				if (subMenu == nullptr) {
+					delete item;
+					delete newItem;
+					return;
+				}
 				if (!subMenu->AddItem(item))
 					delete item;
 				if (!subMenu->AddItem(newItem))
 					delete newItem;
 				// Add common submenu for this base URL, clickable.
-				BMessage* message = new BMessage(GOTO_URL);
-				message->AddString("url", baseURLLabel.String());
-				BMenuItem* subMenuItem = new BMenuItem(subMenu, message);
-				if (!menu->AddItem(subMenuItem, i))
-					delete subMenuItem;
+				BMessage* message = new(std::nothrow) BMessage(GOTO_URL);
+				if (message != nullptr)
+					message->AddString("url", baseURLLabel.String());
+				BMenuItem* subMenuItem = new(std::nothrow) BMenuItem(subMenu,
+					message);
+				if (subMenuItem != nullptr) {
+					if (!menu->AddItem(subMenuItem, i))
+						delete subMenuItem;
+				} else {
+					delete subMenu;
+					delete message;
+				}
 				return;
 			}
 		}
@@ -2784,11 +3041,16 @@ BrowserWindow::_UpdateHistoryMenu()
 		return;
 
 	int32 count = history->CountItems();
-	BMenuItem* clearHistoryItem = new BMenuItem(B_TRANSLATE("Clear history"),
-		new BMessage(CLEAR_HISTORY));
-	clearHistoryItem->SetEnabled(count > 0);
-	if (!fHistoryMenu->AddItem(clearHistoryItem))
-		delete clearHistoryItem;
+	BMessage* clearMsg = new(std::nothrow) BMessage(CLEAR_HISTORY);
+	BMenuItem* clearHistoryItem = new(std::nothrow) BMenuItem(
+		B_TRANSLATE("Clear history"), clearMsg);
+	if (clearHistoryItem != nullptr) {
+		clearHistoryItem->SetEnabled(count > 0);
+		if (!fHistoryMenu->AddItem(clearHistoryItem))
+			delete clearHistoryItem;
+	} else
+		delete clearMsg;
+
 	if (count == 0) {
 		history->Unlock();
 		return;
@@ -2813,28 +3075,47 @@ BrowserWindow::_UpdateHistoryMenu()
 	BDateTime fiveDaysAgoStart = fourDaysAgoStart;
 	fiveDaysAgoStart.Date().AddDays(-1);
 
-	BMenu* todayMenu = new BMenu(B_TRANSLATE("Today"));
-	BMenu* yesterdayMenu = new BMenu(B_TRANSLATE("Yesterday"));
-	BMenu* twoDaysAgoMenu = new BMenu(
+	BMenu* todayMenu = new(std::nothrow) BMenu(B_TRANSLATE("Today"));
+	BMenu* yesterdayMenu = new(std::nothrow) BMenu(B_TRANSLATE("Yesterday"));
+	BMenu* twoDaysAgoMenu = new(std::nothrow) BMenu(
 		twoDaysAgoStart.Date().LongDayName().String());
-	BMenu* threeDaysAgoMenu = new BMenu(
+	BMenu* threeDaysAgoMenu = new(std::nothrow) BMenu(
 		threeDaysAgoStart.Date().LongDayName().String());
-	BMenu* fourDaysAgoMenu = new BMenu(
+	BMenu* fourDaysAgoMenu = new(std::nothrow) BMenu(
 		fourDaysAgoStart.Date().LongDayName().String());
-	BMenu* fiveDaysAgoMenu = new BMenu(
+	BMenu* fiveDaysAgoMenu = new(std::nothrow) BMenu(
 		fiveDaysAgoStart.Date().LongDayName().String());
-	BMenu* earlierMenu = new BMenu(B_TRANSLATE("Earlier"));
+	BMenu* earlierMenu = new(std::nothrow) BMenu(B_TRANSLATE("Earlier"));
+
+	if (todayMenu == nullptr || yesterdayMenu == nullptr || twoDaysAgoMenu == nullptr
+		|| threeDaysAgoMenu == nullptr || fourDaysAgoMenu == nullptr
+		|| fiveDaysAgoMenu == nullptr || earlierMenu == nullptr) {
+		delete todayMenu;
+		delete yesterdayMenu;
+		delete twoDaysAgoMenu;
+		delete threeDaysAgoMenu;
+		delete fourDaysAgoMenu;
+		delete fiveDaysAgoMenu;
+		delete earlierMenu;
+		history->Unlock();
+		return;
+	}
 
 	for (int32 i = 0; i < count; i++) {
 		const BrowsingHistoryItem* historyItem = history->ItemAt(i);
 		if (historyItem == nullptr)
 			continue;
-		BMessage* message = new BMessage(GOTO_URL);
-		message->AddString("url", historyItem->URL().String());
+		BMessage* message = new(std::nothrow) BMessage(GOTO_URL);
+		if (message != nullptr)
+			message->AddString("url", historyItem->URL().String());
 
 		BString truncatedUrl(historyItem->URL());
 		be_plain_font->TruncateString(&truncatedUrl, B_TRUNCATE_END, 480);
-		menuItem = new BMenuItem(truncatedUrl, message);
+		menuItem = new(std::nothrow) BMenuItem(truncatedUrl, message);
+		if (menuItem == nullptr) {
+			delete message;
+			continue;
+		}
 
 		if (historyItem->DateTime() < fiveDaysAgoStart)
 			addItemToMenuOrSubmenu(earlierMenu, menuItem);
@@ -3076,15 +3357,7 @@ BrowserWindow::_EncodeURIComponent(const BString& search)
 
 	for (int32 i = 0; i < length; i++) {
 		char c = search[i];
-		bool needEscaping = false;
-		for (const char* p = escCharList; *p; p++) {
-			if (*p == c) {
-				needEscaping = true;
-				break;
-			}
-		}
-
-		if (needEscaping) {
+		if (strchr(escCharList, c) != nullptr) {
 			snprintf(hexcode, sizeof(hexcode), "%02X",
 				(unsigned int)(unsigned char)c);
 			result << '%' << hexcode;
@@ -3352,10 +3625,12 @@ BrowserWindow::_HandlePageSourceThread(void* data)
 		char buffer[1024];
 		snprintf(buffer, sizeof(buffer), "Failed to show the "
 			"page source: %s\n", strerror(ret));
-		BAlert* alert = new BAlert(B_TRANSLATE("Page source error"), buffer,
-			B_TRANSLATE("OK"));
-		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-		alert->Go(0);
+		BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Page source error"),
+			buffer, B_TRANSLATE("OK"));
+		if (alert != nullptr) {
+			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+			alert->Go(0);
+		}
 	}
 
 	delete message;
@@ -3417,10 +3692,12 @@ BrowserWindow::_HandleSavePageThread(void* data)
 		char errorBuffer[1024];
 		snprintf(errorBuffer, sizeof(errorBuffer), B_TRANSLATE("Failed to save the "
 			"page source: %s\n"), strerror(ret));
-		BAlert* alert = new BAlert(B_TRANSLATE("Save error"), errorBuffer,
-			B_TRANSLATE("OK"));
-		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-		alert->Go(0);
+		BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Save error"),
+			errorBuffer, B_TRANSLATE("OK"));
+		if (alert != nullptr) {
+			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+			alert->Go(0);
+		}
 	}
 
 	delete buffer;

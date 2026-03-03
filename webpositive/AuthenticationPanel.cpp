@@ -36,23 +36,36 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 		B_MODAL_APP_WINDOW_FEEL, B_ASYNCHRONOUS_CONTROLS | B_NOT_RESIZABLE
 			| B_NOT_ZOOMABLE | B_CLOSE_ON_ESCAPE | B_AUTO_UPDATE_SIZE_LIMITS),
 	m_parentWindowFrame(parentFrame),
-	m_usernameTextControl(new BTextControl("user", B_TRANSLATE("Username:"),
-		"", 0)),
-	m_passwordTextControl(new BTextControl("pass", B_TRANSLATE("Password:"),
-		"", 0)),
-	m_hidePasswordCheckBox(new BCheckBox("hide", B_TRANSLATE("Hide password "
-		"text"), new BMessage(kHidePassword))),
-	m_rememberCredentialsCheckBox(new BCheckBox("remember",
-		B_TRANSLATE("Remember username and password for this site"), 0)),
-	m_okButton(new BButton("ok", B_TRANSLATE("OK"),
-		new BMessage(kMsgPanelOK))),
-	m_cancelButton(new BButton("cancel", B_TRANSLATE("Cancel"),
-		new BMessage(B_QUIT_REQUESTED))),
+	m_usernameTextControl(new(std::nothrow) BTextControl("user",
+		B_TRANSLATE("Username:"), "", 0)),
+	m_passwordTextControl(new(std::nothrow) BTextControl("pass",
+		B_TRANSLATE("Password:"), "", 0)),
+	m_hidePasswordCheckBox(nullptr),
+	m_rememberCredentialsCheckBox(new(std::nothrow) BCheckBox("remember",
+		B_TRANSLATE("Remember username and password for this site"), nullptr)),
+	m_okButton(nullptr),
+	m_cancelButton(nullptr),
 	m_cancelled(false),
 	m_exitSemaphore(create_sem(0, "Authentication Panel")),
 	m_jitterRunner(nullptr),
 	m_jitterCount(0)
 {
+	BMessage* hideMsg = new(std::nothrow) BMessage(kHidePassword);
+	m_hidePasswordCheckBox = new(std::nothrow) BCheckBox("hide",
+		B_TRANSLATE("Hide password text"), hideMsg);
+	if (m_hidePasswordCheckBox == nullptr)
+		delete hideMsg;
+
+	BMessage* okMsg = new(std::nothrow) BMessage(kMsgPanelOK);
+	m_okButton = new(std::nothrow) BButton("ok", B_TRANSLATE("OK"), okMsg);
+	if (m_okButton == nullptr)
+		delete okMsg;
+
+	BMessage* cancelMsg = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
+	m_cancelButton = new(std::nothrow) BButton("cancel", B_TRANSLATE("Cancel"),
+		cancelMsg);
+	if (m_cancelButton == nullptr)
+		delete cancelMsg;
 }
 
 
@@ -88,8 +101,8 @@ AuthenticationPanel::MessageReceived(BMessage* message)
 			UpdateIfNeeded();
 			m_originalPos = Frame().LeftTop();
 			BMessage message(kMsgJitter);
-			m_jitterRunner = new BMessageRunner(BMessenger(this), &message,
-				15000, 20);
+			m_jitterRunner = new(std::nothrow) BMessageRunner(BMessenger(this),
+				&message, 15000, 20);
 		}
 
 		const float jitterOffsets[] = { -10, 0, 10, 0 };
@@ -147,9 +160,11 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	// Configure panel and layout controls.
 	rgb_color infoColor = ui_color(B_PANEL_TEXT_COLOR);
 	BRect textBounds(0, 0, 250, 200);
-	BTextView* textView = new BTextView(textBounds, "text", textBounds,
-		be_plain_font, &infoColor, B_FOLLOW_NONE, B_WILL_DRAW
+	BTextView* textView = new(std::nothrow) BTextView(textBounds, "text",
+		textBounds, be_plain_font, &infoColor, B_FOLLOW_NONE, B_WILL_DRAW
 			| B_SUPPORTS_LAYOUT);
+	if (textView == nullptr)
+		return false;
 	textView->SetViewUIColor(B_PANEL_BACKGROUND_COLOR);
 	textView->SetText(text.String());
 	textView->MakeEditable(false);
@@ -167,21 +182,21 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	m_rememberCredentialsCheckBox->SetValue(previousRememberCredentials);
 
 	// create layout
-	SetLayout(new BGroupLayout(B_VERTICAL, 0.0));
+	SetLayout(new(std::nothrow) BGroupLayout(B_VERTICAL, 0.0));
 	float spacing = be_control_look->DefaultItemSpacing();
 	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
 		.Add(BGridLayoutBuilder(0, spacing)
 			.Add(textView, 0, nullptr, 2)
-			.Add(m_usernameTextControl->CreateLabelLayoutItem(), 0, 1)
-			.Add(m_usernameTextControl->CreateTextViewLayoutItem(), 1, 1)
-			.Add(m_passwordTextControl->CreateLabelLayoutItem(), 0, 2)
-			.Add(m_passwordTextControl->CreateTextViewLayoutItem(), 1, 2)
+			.Add(m_usernameTextControl != nullptr ? m_usernameTextControl->CreateLabelLayoutItem() : nullptr, 0, 1)
+			.Add(m_usernameTextControl != nullptr ? m_usernameTextControl->CreateTextViewLayoutItem() : nullptr, 1, 1)
+			.Add(m_passwordTextControl != nullptr ? m_passwordTextControl->CreateLabelLayoutItem() : nullptr, 0, 2)
+			.Add(m_passwordTextControl != nullptr ? m_passwordTextControl->CreateTextViewLayoutItem() : nullptr, 1, 2)
 			.Add(BSpaceLayoutItem::CreateGlue(), 0, 3)
 			.Add(m_hidePasswordCheckBox, 1, 3)
 			.Add(m_rememberCredentialsCheckBox, 0, 4, 2)
 			.SetInsets(spacing, spacing, spacing, spacing)
 		)
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+		.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 		.Add(BGroupLayoutBuilder(B_HORIZONTAL, spacing)
 			.AddGlue()
 			.Add(m_cancelButton)

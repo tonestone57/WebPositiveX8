@@ -84,10 +84,14 @@ URLInputGroup::URLTextView::URLTextView(URLInputGroup* parent)
 	:
 	BTextView("url"),
 	fURLInputGroup(parent),
-	fURLAutoCompleter(new TextViewCompleter(this,
-		new BrowsingHistoryChoiceModel())),
+	fURLAutoCompleter(nullptr),
 	fUpdateAutoCompleterChoices(true)
 {
+	BrowsingHistoryChoiceModel* model = new(std::nothrow) BrowsingHistoryChoiceModel();
+	fURLAutoCompleter = new(std::nothrow) TextViewCompleter(this, model);
+	if (fURLAutoCompleter == nullptr)
+		delete model;
+
 	MakeResizable(true);
 	SetStylable(true);
 	SetInsets(be_control_look->DefaultLabelSpacing(), 2, 0, 2);
@@ -141,20 +145,40 @@ URLInputGroup::URLTextView::MouseDown(BPoint where)
 			be_clipboard->Unlock();
 		}
 
-		BMenuItem* cutItem = new BMenuItem(B_TRANSLATE("Cut"),
-			new BMessage(B_CUT));
-		BMenuItem* copyItem = new BMenuItem(B_TRANSLATE("Copy"),
-			new BMessage(B_COPY));
-		BMenuItem* pasteItem = new BMenuItem(B_TRANSLATE("Paste"),
-			new BMessage(B_PASTE));
-		BMenuItem* clearItem = new BMenuItem(B_TRANSLATE("Clear"),
-			new BMessage(MSG_CLEAR));
-		cutItem->SetEnabled(canCutOrCopy);
-		copyItem->SetEnabled(canCutOrCopy);
-		pasteItem->SetEnabled(canPaste);
-		clearItem->SetEnabled(strlen(Text()) > 0);
+		BMessage* cutMsg = new(std::nothrow) BMessage(B_CUT);
+		BMenuItem* cutItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Cut"),
+			cutMsg);
+		if (cutItem == nullptr)
+			delete cutMsg;
 
-		BPopUpMenu* menu = new BPopUpMenu("url context");
+		BMessage* copyMsg = new(std::nothrow) BMessage(B_COPY);
+		BMenuItem* copyItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Copy"),
+			copyMsg);
+		if (copyItem == nullptr)
+			delete copyMsg;
+
+		BMessage* pasteMsg = new(std::nothrow) BMessage(B_PASTE);
+		BMenuItem* pasteItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Paste"),
+			pasteMsg);
+		if (pasteItem == nullptr)
+			delete pasteMsg;
+
+		BMessage* clearMsg = new(std::nothrow) BMessage(MSG_CLEAR);
+		BMenuItem* clearItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Clear"),
+			clearMsg);
+		if (clearItem == nullptr)
+			delete clearMsg;
+
+		if (cutItem != nullptr)
+			cutItem->SetEnabled(canCutOrCopy);
+		if (copyItem != nullptr)
+			copyItem->SetEnabled(canCutOrCopy);
+		if (pasteItem != nullptr)
+			pasteItem->SetEnabled(canPaste);
+		if (clearItem != nullptr)
+			clearItem->SetEnabled(strlen(Text()) > 0);
+
+		BPopUpMenu* menu = new(std::nothrow) BPopUpMenu("url context");
 		menu->AddItem(cutItem);
 		menu->AddItem(copyItem);
 		menu->AddItem(pasteItem);
@@ -527,10 +551,13 @@ public:
 			}
 			drag.AddMessage("be:originator-data", &data);
 
-			BBitmap* iconClone = new BBitmap(fIcon);
+			BBitmap* iconClone = new(std::nothrow) BBitmap(fIcon);
 				// Needed because DragMessage will delete the bitmap when it's done.
 
-			DragMessage(&drag, iconClone, B_OP_ALPHA, offset);
+			if (iconClone != nullptr)
+				DragMessage(&drag, iconClone, B_OP_ALPHA, offset);
+			else
+				DragMessage(&drag, offset);
 		}
 		return;
 	}
@@ -539,17 +566,19 @@ public:
 	{
 		delete fIcon;
 		delete fLargeIcon;
-		fLargeIcon = 0;
+		fLargeIcon = nullptr;
 
 		if (icon) {
-			fIcon = new BBitmap(icon);
-			fPageIconSet = true;
+			fIcon = new(std::nothrow) BBitmap(icon);
+			fPageIconSet = fIcon != nullptr;
 			if (largeIcon != nullptr)
-				fLargeIcon = new BBitmap(largeIcon);
+				fLargeIcon = new(std::nothrow) BBitmap(largeIcon);
 		} else {
-			fIcon = new BBitmap(BRect(0, 0, 15, 15), B_RGB32);
-			BIconUtils::GetVectorIcon(kPlaceholderIcon,
-				sizeof(kPlaceholderIcon), fIcon);
+			fIcon = new(std::nothrow) BBitmap(BRect(0, 0, 15, 15), B_RGB32);
+			if (fIcon != nullptr) {
+				BIconUtils::GetVectorIcon(kPlaceholderIcon,
+					sizeof(kPlaceholderIcon), fIcon);
+			}
 			fPageIconSet = false;
 		}
 		Invalidate();
@@ -574,18 +603,23 @@ URLInputGroup::URLInputGroup(BMessage* goMessage)
 {
 	GroupLayout()->SetInsets(2, 2, 2, 2);
 
-	fIconView = new PageIconView();
-	GroupLayout()->AddView(fIconView, 0.0f);
+	fIconView = new(std::nothrow) PageIconView();
+	if (fIconView != nullptr)
+		GroupLayout()->AddView(fIconView, 0.0f);
 
-	fTextView = new URLTextView(this);
-	AddChild(fTextView);
+	fTextView = new(std::nothrow) URLTextView(this);
+	if (fTextView != nullptr)
+		AddChild(fTextView);
 
-	AddChild(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER));
+	BSeparatorView* separator = new(std::nothrow) BSeparatorView(B_VERTICAL,
+		B_PLAIN_BORDER);
+	if (separator != nullptr)
+		AddChild(separator);
 
 // TODO: Fix in Haiku, no in-built support for archived BBitmaps from
 // resources?
-//	fGoButton = new BitmapButton("kActionGo", 0);
-	fGoButton = new BBitmapButton(kGoBitmapBits, kGoBitmapWidth,
+//	fGoButton = new(std::nothrow) BitmapButton("kActionGo", 0);
+	fGoButton = new(std::nothrow) BBitmapButton(kGoBitmapBits, kGoBitmapWidth,
 		kGoBitmapHeight, kGoBitmapFormat, goMessage);
 	GroupLayout()->AddView(fGoButton, 0.0f);
 

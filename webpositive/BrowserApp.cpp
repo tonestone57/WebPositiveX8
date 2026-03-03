@@ -104,7 +104,7 @@ BrowserApp::BrowserApp()
 	}
 #endif
 
-	fContext = new BPrivate::Network::BUrlContext();
+	fContext = new(std::nothrow) BPrivate::Network::BUrlContext();
 
 	fCookieLoaderThread = spawn_thread(_CookieLoaderThread, "cookie loader",
 		B_LOW_PRIORITY, this);
@@ -117,7 +117,7 @@ BrowserApp::BrowserApp()
 
 	BString sessionStoreSubPath(kApplicationName);
 	sessionStoreSubPath << "/" << kSettingsFileNameSession;
-	fSession.reset(new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+	fSession.reset(new(std::nothrow) SettingsMessage(B_USER_SETTINGS_DIRECTORY,
 		sessionStoreSubPath.String()));
 }
 
@@ -134,8 +134,10 @@ BrowserApp::~BrowserApp()
 void
 BrowserApp::AboutRequested()
 {
-	BAboutWindow* window = new BAboutWindow(kApplicationName,
+	BAboutWindow* window = new(std::nothrow) BAboutWindow(kApplicationName,
 		kApplicationSignature);
+	if (window == nullptr)
+		return;
 
 	// create the about window
 
@@ -205,7 +207,7 @@ BrowserApp::ReadyToRun()
 
 	BString mainSettingsSubPath(kApplicationName);
 	mainSettingsSubPath << "/" << kSettingsFileNameApplication;
-	fSettings.reset(new SettingsMessage(B_USER_SETTINGS_DIRECTORY,
+	fSettings.reset(new(std::nothrow) SettingsMessage(B_USER_SETTINGS_DIRECTORY,
 		mainSettingsSubPath.String()));
 
 	fLastWindowFrame = fSettings->GetValue("window frame", fLastWindowFrame);
@@ -220,9 +222,9 @@ BrowserApp::ReadyToRun()
 		BRect(50, 50, 400, 300));
 	bool showDownloads = fSettings->GetValue("show downloads", false);
 
-	fDownloadWindow = new DownloadWindow(downloadWindowFrame, showDownloads,
-		fSettings.get());
-	if (downloadWindowFrame == defaultDownloadWindowFrame) {
+	fDownloadWindow = new(std::nothrow) DownloadWindow(downloadWindowFrame,
+		showDownloads, fSettings.get());
+	if (fDownloadWindow != nullptr && downloadWindowFrame == defaultDownloadWindowFrame) {
 		// Initially put download window in lower right of screen.
 		BRect screenFrame = BScreen().Frame();
 		BMessage decoratorSettings;
@@ -235,12 +237,14 @@ BrowserApp::ReadyToRun()
 			screenFrame.Height() - fDownloadWindow->Frame().Height()
 			- borderWidth);
 	}
-	fSettingsWindow = new SettingsWindow(settingsWindowFrame, fSettings.get());
+	fSettingsWindow = new(std::nothrow) SettingsWindow(settingsWindowFrame,
+		fSettings.get());
 
 	BWebPage::SetDownloadListener(BMessenger(fDownloadWindow));
 
-	fConsoleWindow = new ConsoleWindow(consoleWindowFrame);
-	fCookieWindow = new CookieWindow(cookieWindowFrame, fContext->GetCookieJar());
+	fConsoleWindow = new(std::nothrow) ConsoleWindow(consoleWindowFrame);
+	fCookieWindow = new(std::nothrow) CookieWindow(cookieWindowFrame,
+		fContext->GetCookieJar());
 
 	fInitialized = true;
 
@@ -360,9 +364,11 @@ BrowserApp::MessageReceived(BMessage* message)
 		fWindowCount--;
 		message->FindRect("window frame", &fLastWindowFrame);
 		if (fWindowCount <= 0) {
-			BMessage* message = new BMessage(B_QUIT_REQUESTED);
-			message->AddMessage("window", DetachCurrentMessage());
-			PostMessage(message);
+			BMessage* quitMessage = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
+			if (quitMessage != nullptr) {
+				quitMessage->AddMessage("window", DetachCurrentMessage());
+				PostMessage(quitMessage);
+			}
 		}
 		break;
 
@@ -405,7 +411,7 @@ void
 BrowserApp::RefsReceived(BMessage* message)
 {
 	if (!fInitialized) {
-		fLaunchRefsMessage.reset(new BMessage(*message));
+		fLaunchRefsMessage.reset(new(std::nothrow) BMessage(*message));
 		return;
 	}
 
@@ -416,12 +422,14 @@ BrowserApp::RefsReceived(BMessage* message)
 bool
 BrowserApp::QuitRequested()
 {
-	if (fDownloadWindow->DownloadsInProgress()) {
+	if (fDownloadWindow != nullptr && fDownloadWindow->DownloadsInProgress()) {
 		BString text(B_TRANSLATE("There are still downloads in progress, do you really "
 			"want to quit %appname% now?"));
 		text.ReplaceFirst("%appname%", B_TRANSLATE_SYSTEM_NAME("WebPositive"));
-		BAlert* alert = new BAlert(B_TRANSLATE("Downloads in progress"), text,
-			B_TRANSLATE("Quit"), B_TRANSLATE("Continue downloads"));
+		BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Downloads in progress"),
+			text, B_TRANSLATE("Quit"), B_TRANSLATE("Continue downloads"));
+		if (alert == nullptr)
+			return true;
 		int32 choice = alert->Go();
 		if (choice == 1) {
 			if (fWindowCount == 0) {
@@ -642,13 +650,15 @@ BrowserApp::_CreateNewWindow(const BString& url, bool fullscreen,
 	if (!BScreen().Frame().Contains(fLastWindowFrame))
 		fLastWindowFrame.OffsetTo(50, 50);
 
-	BrowserWindow* window = new BrowserWindow(fLastWindowFrame, fSettings.get(),
-		url, fContext, INTERFACE_ELEMENT_ALL, 0, B_CURRENT_WORKSPACE,
-		forDownload);
-	if (fullscreen)
-		window->ToggleFullscreen();
-	if (!forDownload)
-		window->Show();
+	BrowserWindow* window = new(std::nothrow) BrowserWindow(fLastWindowFrame,
+		fSettings.get(), url, fContext, INTERFACE_ELEMENT_ALL, 0,
+		B_CURRENT_WORKSPACE, forDownload);
+	if (window != nullptr) {
+		if (fullscreen)
+			window->ToggleFullscreen();
+		if (!forDownload)
+			window->Show();
+	}
 	return window;
 }
 
@@ -721,7 +731,9 @@ int
 main(int, char**)
 {
 	try {
-		new BrowserApp();
+		BrowserApp* app = new(std::nothrow) BrowserApp();
+		if (app == nullptr)
+			return B_NO_MEMORY;
 		be_app->Run();
 		delete be_app;
 	} catch (...) {

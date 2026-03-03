@@ -255,7 +255,12 @@ public:
 
 			case MSG_OPEN_TAB_MENU:
 			{
-				BPopUpMenu* tabMenu = new BPopUpMenu("tab menu", true, false);
+				BPopUpMenu* tabMenu = new(std::nothrow) BPopUpMenu("tab menu",
+					true, false);
+				if (tabMenu == nullptr) {
+					fTabMenuButton->MenuClosed();
+					break;
+				}
 				int tabCount = fTabContainerView->GetLayout()->CountItems();
 				for (int i = 0; i < tabCount; i++) {
 					TabView* tab = fTabContainerView->TabAt(i);
@@ -594,7 +599,7 @@ WebTabView::SetIcon(const BBitmap* icon)
 {
 	delete fIcon;
 	if (icon)
-		fIcon = new BBitmap(icon);
+		fIcon = new(std::nothrow) BBitmap(icon);
 	else
 		fIcon = nullptr;
 	LayoutItem()->InvalidateLayout();
@@ -718,7 +723,7 @@ void
 TabManagerController::SetDoubleClickOutsideTabsMessage(const BMessage& message,
 	const BMessenger& target)
 {
-	fDoubleClickOutsideTabsMessage.reset(new BMessage(message));
+	fDoubleClickOutsideTabsMessage.reset(new(std::nothrow) BMessage(message));
 	fTarget = target;
 }
 
@@ -756,15 +761,36 @@ TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
 #endif
 
 	fTabContainerGroup->GroupLayout()->AddView(fTabContainerView);
-	fTabContainerGroup->AddScrollLeftButton(new ScrollLeftTabButton(
-		new BMessage(MSG_SCROLL_TABS_LEFT)));
-	fTabContainerGroup->AddScrollRightButton(new ScrollRightTabButton(
-		new BMessage(MSG_SCROLL_TABS_RIGHT)));
-	NewTabButton* newTabButton = new NewTabButton(newTabMessage);
-	newTabButton->SetTarget(be_app);
-	fTabContainerGroup->GroupLayout()->AddView(newTabButton, 0.0f);
-	fTabContainerGroup->AddTabMenuButton(new TabMenuTabButton(
-		new BMessage(MSG_OPEN_TAB_MENU)));
+
+	BMessage* scrollLeftMsg = new(std::nothrow) BMessage(MSG_SCROLL_TABS_LEFT);
+	ScrollLeftTabButton* scrollLeftBtn = new(std::nothrow) ScrollLeftTabButton(
+		scrollLeftMsg);
+	if (scrollLeftBtn != nullptr)
+		fTabContainerGroup->AddScrollLeftButton(scrollLeftBtn);
+	else
+		delete scrollLeftMsg;
+
+	BMessage* scrollRightMsg = new(std::nothrow) BMessage(MSG_SCROLL_TABS_RIGHT);
+	ScrollRightTabButton* scrollRightBtn = new(std::nothrow) ScrollRightTabButton(
+		scrollRightMsg);
+	if (scrollRightBtn != nullptr)
+		fTabContainerGroup->AddScrollRightButton(scrollRightBtn);
+	else
+		delete scrollRightMsg;
+
+	NewTabButton* newTabButton = new(std::nothrow) NewTabButton(newTabMessage);
+	if (newTabButton != nullptr) {
+		newTabButton->SetTarget(be_app);
+		fTabContainerGroup->GroupLayout()->AddView(newTabButton, 0.0f);
+	}
+
+	BMessage* openMenuMsg = new(std::nothrow) BMessage(MSG_OPEN_TAB_MENU);
+	TabMenuTabButton* tabMenuBtn = new(std::nothrow) TabMenuTabButton(
+		openMenuMsg);
+	if (tabMenuBtn != nullptr)
+		fTabContainerGroup->AddTabMenuButton(tabMenuBtn);
+	else
+		delete openMenuMsg;
 }
 
 

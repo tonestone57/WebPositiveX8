@@ -55,8 +55,12 @@ BrowsingHistoryChoiceModel::FetchChoicesFor(const BString& pattern)
 		} else
 			priority = INT_MAX;
 		lastBaseURL = baseURL(choiceText);
-		fChoices.AddItem(new URLChoice(choiceText,
-			choiceText, matchPos, pattern.Length(), priority));
+		URLChoice* choice = new(std::nothrow) URLChoice(choiceText,
+			choiceText, matchPos, pattern.Length(), priority);
+		if (choice != nullptr) {
+			if (!fChoices.AddItem(choice))
+				delete choice;
+		}
 	}
 
 	history->Unlock();

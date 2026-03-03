@@ -91,23 +91,35 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 			| B_ASYNCHRONOUS_CONTROLS | B_NOT_ZOOMABLE),
 	fSettings(settings)
 {
-	fApplyButton = new BButton(B_TRANSLATE("Apply"), new BMessage(MSG_APPLY));
-	fCancelButton = new BButton(B_TRANSLATE("Cancel"),
-		new BMessage(MSG_CANCEL));
-	fRevertButton = new BButton(B_TRANSLATE("Revert"),
-		new BMessage(MSG_REVERT));
+	BMessage* applyMsg = new(std::nothrow) BMessage(MSG_APPLY);
+	fApplyButton = new(std::nothrow) BButton(B_TRANSLATE("Apply"), applyMsg);
+	if (fApplyButton == nullptr)
+		delete applyMsg;
+
+	BMessage* cancelMsg = new(std::nothrow) BMessage(MSG_CANCEL);
+	fCancelButton = new(std::nothrow) BButton(B_TRANSLATE("Cancel"),
+		cancelMsg);
+	if (fCancelButton == nullptr)
+		delete cancelMsg;
+
+	BMessage* revertMsg = new(std::nothrow) BMessage(MSG_REVERT);
+	fRevertButton = new(std::nothrow) BButton(B_TRANSLATE("Revert"),
+		revertMsg);
+	if (fRevertButton == nullptr)
+		delete revertMsg;
 
 	fOpenFilePanel = nullptr;
 
 	float spacing = be_control_look->DefaultItemSpacing();
 
-	BTabView* tabView = new BTabView("settings pages", B_WIDTH_FROM_LABEL);
-	tabView->SetBorder(B_NO_BORDER);
+	BTabView* tabView = new(std::nothrow) BTabView("settings pages", B_WIDTH_FROM_LABEL);
+	if (tabView != nullptr)
+		tabView->SetBorder(B_NO_BORDER);
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL, 0)
 		.SetInsets(0, B_USE_DEFAULT_SPACING, 0, B_USE_WINDOW_SPACING)
 		.Add(tabView)
-		.Add(new BSeparatorView(B_HORIZONTAL))
+		.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL))
 		.AddGroup(B_HORIZONTAL)
 			.SetInsets(B_USE_WINDOW_SPACING, B_USE_DEFAULT_SPACING,
 				B_USE_WINDOW_SPACING, 0)
@@ -116,20 +128,31 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 			.Add(fCancelButton)
 			.Add(fApplyButton);
 
-	tabView->AddTab(_CreateGeneralPage(spacing));
-	tabView->AddTab(_CreateFontsPage(spacing));
-	tabView->AddTab(_CreateProxyPage(spacing));
+	if (tabView != nullptr) {
+		tabView->AddTab(_CreateGeneralPage(spacing));
+		tabView->AddTab(_CreateFontsPage(spacing));
+		tabView->AddTab(_CreateProxyPage(spacing));
+	}
 
-	_SetupFontSelectionView(fStandardFontView,
-		new BMessage(MSG_STANDARD_FONT_CHANGED));
-	_SetupFontSelectionView(fSerifFontView,
-		new BMessage(MSG_SERIF_FONT_CHANGED));
-	_SetupFontSelectionView(fSansSerifFontView,
-		new BMessage(MSG_SANS_SERIF_FONT_CHANGED));
-	_SetupFontSelectionView(fFixedFontView,
-		new BMessage(MSG_FIXED_FONT_CHANGED));
+	if (fStandardFontView != nullptr) {
+		_SetupFontSelectionView(fStandardFontView,
+			new(std::nothrow) BMessage(MSG_STANDARD_FONT_CHANGED));
+	}
+	if (fSerifFontView != nullptr) {
+		_SetupFontSelectionView(fSerifFontView,
+			new(std::nothrow) BMessage(MSG_SERIF_FONT_CHANGED));
+	}
+	if (fSansSerifFontView != nullptr) {
+		_SetupFontSelectionView(fSansSerifFontView,
+			new(std::nothrow) BMessage(MSG_SANS_SERIF_FONT_CHANGED));
+	}
+	if (fFixedFontView != nullptr) {
+		_SetupFontSelectionView(fFixedFontView,
+			new(std::nothrow) BMessage(MSG_FIXED_FONT_CHANGED));
+	}
 
-	fApplyButton->MakeDefault(true);
+	if (fApplyButton != nullptr)
+		fApplyButton->MakeDefault(true);
 
 	if (!frame.IsValid())
 		CenterOnScreen();
@@ -281,132 +304,191 @@ SettingsWindow::Show()
 BView*
 SettingsWindow::_CreateGeneralPage(float spacing)
 {
-	fStartPageControl = new BTextControl("start page",
-		B_TRANSLATE("Start page:"), "", new BMessage(MSG_START_PAGE_CHANGED));
-	fStartPageControl->SetModificationMessage(
-		new BMessage(MSG_SETTINGS_MODIFIED));
-	fStartPageControl->SetText(
-		fSettings->GetValue(kSettingsKeyStartPageURL, kDefaultStartPageURL));
+	if (fSettings == nullptr)
+		return nullptr;
 
-	fSearchPageControl = new BTextControl("search page", "", "",
-		new BMessage(MSG_SEARCH_PAGE_CHANGED));
-	fSearchPageControl->SetModificationMessage(
-		new BMessage(MSG_SETTINGS_MODIFIED));
-	BString searchURL = fSettings->GetValue(kSettingsKeySearchPageURL,
-		kDefaultSearchPageURL);
-	fSearchPageControl->SetText(searchURL);
+	BMessage* startPageMsg = new(std::nothrow) BMessage(MSG_START_PAGE_CHANGED);
+	fStartPageControl = new(std::nothrow) BTextControl("start page",
+		B_TRANSLATE("Start page:"), "", startPageMsg);
+	if (fStartPageControl != nullptr) {
+		fStartPageControl->SetModificationMessage(
+			new(std::nothrow) BMessage(MSG_SETTINGS_MODIFIED));
+		fStartPageControl->SetText(
+			fSettings->GetValue(kSettingsKeyStartPageURL, kDefaultStartPageURL));
+	} else
+		delete startPageMsg;
 
-	fDownloadFolderControl = new BTextControl("download folder",
-		B_TRANSLATE("Download folder:"), "",
-		new BMessage(MSG_DOWNLOAD_FOLDER_CHANGED));
-	fDownloadFolderControl->SetModificationMessage(
-		new BMessage(MSG_SETTINGS_MODIFIED));
-	fDownloadFolderControl->SetText(
-		fSettings->GetValue(kSettingsKeyDownloadPath, kDefaultDownloadPath));
+	BMessage* searchPageMsg = new(std::nothrow) BMessage(MSG_SEARCH_PAGE_CHANGED);
+	fSearchPageControl = new(std::nothrow) BTextControl("search page", "", "",
+		searchPageMsg);
+	if (fSearchPageControl != nullptr) {
+		fSearchPageControl->SetModificationMessage(
+			new(std::nothrow) BMessage(MSG_SETTINGS_MODIFIED));
+		BString searchURL = fSettings->GetValue(kSettingsKeySearchPageURL,
+			kDefaultSearchPageURL);
+		fSearchPageControl->SetText(searchURL);
+	} else
+		delete searchPageMsg;
 
-	fStartUpBehaviorResumePriorSession = new BMenuItem(
+	BMessage* dlFolderMsg = new(std::nothrow) BMessage(MSG_DOWNLOAD_FOLDER_CHANGED);
+	fDownloadFolderControl = new(std::nothrow) BTextControl("download folder",
+		B_TRANSLATE("Download folder:"), "", dlFolderMsg);
+	if (fDownloadFolderControl != nullptr) {
+		fDownloadFolderControl->SetModificationMessage(
+			new(std::nothrow) BMessage(MSG_SETTINGS_MODIFIED));
+		fDownloadFolderControl->SetText(
+			fSettings->GetValue(kSettingsKeyDownloadPath, kDefaultDownloadPath));
+	} else
+		delete dlFolderMsg;
+
+	fStartUpBehaviorResumePriorSession = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Resume prior session"),
-		new BMessage(MSG_START_UP_BEHAVIOR_CHANGED));
-	fStartUpBehaviorStartNewSession = new BMenuItem(
+		new(std::nothrow) BMessage(MSG_START_UP_BEHAVIOR_CHANGED));
+	fStartUpBehaviorStartNewSession = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Start new session"),
-		new BMessage(MSG_START_UP_BEHAVIOR_CHANGED));
+		new(std::nothrow) BMessage(MSG_START_UP_BEHAVIOR_CHANGED));
 
-	fNewWindowBehaviorOpenHomeItem = new BMenuItem(
+	fNewWindowBehaviorOpenHomeItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Open start page"),
-		new BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
-	fNewWindowBehaviorOpenSearchItem = new BMenuItem(
+		new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
+	fNewWindowBehaviorOpenSearchItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Open search page"),
-		new BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
-	fNewWindowBehaviorOpenBlankItem = new BMenuItem(
+		new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
+	fNewWindowBehaviorOpenBlankItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Open blank page"),
-		new BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
+		new(std::nothrow) BMessage(MSG_NEW_WINDOWS_BEHAVIOR_CHANGED));
 
-	fNewTabBehaviorCloneCurrentItem = new BMenuItem(
+	fNewTabBehaviorCloneCurrentItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Clone current page"),
-		new BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
-	fNewTabBehaviorOpenHomeItem = new BMenuItem(
+		new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
+	fNewTabBehaviorOpenHomeItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Open start page"),
-		new BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
-	fNewTabBehaviorOpenSearchItem = new BMenuItem(
+		new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
+	fNewTabBehaviorOpenSearchItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Open search page"),
-		new BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
-	fNewTabBehaviorOpenBlankItem = new BMenuItem(
+		new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
+	fNewTabBehaviorOpenBlankItem = new(std::nothrow) BMenuItem(
 		B_TRANSLATE("Open blank page"),
-		new BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
-	fChooseButton = new BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
-		new BMessage(MSG_CHOOSE_DOWNLOAD_FOLDER));
+		new(std::nothrow) BMessage(MSG_NEW_TABS_BEHAVIOR_CHANGED));
+
+	BMessage* chooseDlMsg = new(std::nothrow) BMessage(MSG_CHOOSE_DOWNLOAD_FOLDER);
+	fChooseButton = new(std::nothrow) BButton(B_TRANSLATE("Browse" B_UTF8_ELLIPSIS),
+		chooseDlMsg);
+	if (fChooseButton == nullptr)
+		delete chooseDlMsg;
 
 	fNewWindowBehaviorOpenHomeItem->SetMarked(true);
 	fNewTabBehaviorOpenBlankItem->SetMarked(true);
 	fStartUpBehaviorResumePriorSession->SetMarked(true);
 
-	BMenuItem* searchPageCustom = new BMenuItem(B_TRANSLATE("Custom"),
-		new BMessage(MSG_SEARCH_PAGE_CHANGED_MENU));
-	searchPageCustom->SetMarked(true);
+	BMenuItem* searchPageCustom = new(std::nothrow) BMenuItem(B_TRANSLATE("Custom"),
+		new(std::nothrow) BMessage(MSG_SEARCH_PAGE_CHANGED_MENU));
+	if (searchPageCustom != nullptr)
+		searchPageCustom->SetMarked(true);
 
-	BPopUpMenu* searchPageMenu = new BPopUpMenu("Search page:");
-	searchPageMenu->SetRadioMode(true);
+	BPopUpMenu* searchPageMenu = new(std::nothrow) BPopUpMenu("Search page:");
+	if (searchPageMenu != nullptr) {
+		searchPageMenu->SetRadioMode(true);
 
-	for (int i = 0; kSearchEngines[i].url != 0; i++) {
-		BMessage* message = new BMessage(MSG_SEARCH_PAGE_CHANGED_MENU);
-		message->AddString("searchstring", kSearchEngines[i].url);
-		searchPageMenu->AddItem(new BMenuItem(kSearchEngines[i].name, message));
+		for (int i = 0; kSearchEngines[i].url != 0; i++) {
+			BMessage* message = new(std::nothrow) BMessage(MSG_SEARCH_PAGE_CHANGED_MENU);
+			if (message != nullptr) {
+				message->AddString("searchstring", kSearchEngines[i].url);
+				BMenuItem* item = new(std::nothrow) BMenuItem(kSearchEngines[i].name,
+					message);
+				if (item != nullptr) {
+					if (!searchPageMenu->AddItem(item))
+						delete item;
+				} else
+					delete message;
+			}
 
+		}
+		searchPageMenu->AddItem(new(std::nothrow) BSeparatorItem());
+		if (searchPageCustom != nullptr) {
+			if (!searchPageMenu->AddItem(searchPageCustom))
+				delete searchPageCustom;
+		}
 	}
-	searchPageMenu->AddItem(new BSeparatorItem());
-	searchPageMenu->AddItem(searchPageCustom);
-	fSearchPageMenu = new BMenuField("search page",
+	fSearchPageMenu = new(std::nothrow) BMenuField("search page",
 		B_TRANSLATE("Search page:"), searchPageMenu);
-	fSearchPageMenu->SetToolTip(B_TRANSLATE("%s - Search term"));
+	if (fSearchPageMenu != nullptr)
+		fSearchPageMenu->SetToolTip(B_TRANSLATE("%s - Search term"));
 
-	BPopUpMenu* startUpBehaviorMenu = new BPopUpMenu("Start up");
-	startUpBehaviorMenu->AddItem(fStartUpBehaviorResumePriorSession);
-	startUpBehaviorMenu->AddItem(fStartUpBehaviorStartNewSession);
-	fStartUpBehaviorMenu = new BMenuField("start up behavior",
+	BPopUpMenu* startUpBehaviorMenu = new(std::nothrow) BPopUpMenu("Start up");
+	if (startUpBehaviorMenu != nullptr) {
+		startUpBehaviorMenu->AddItem(fStartUpBehaviorResumePriorSession);
+		startUpBehaviorMenu->AddItem(fStartUpBehaviorStartNewSession);
+	}
+	fStartUpBehaviorMenu = new(std::nothrow) BMenuField("start up behavior",
 		B_TRANSLATE("Start up:"), startUpBehaviorMenu);
 
 
-	BPopUpMenu* newWindowBehaviorMenu = new BPopUpMenu("New windows");
-	newWindowBehaviorMenu->AddItem(fNewWindowBehaviorOpenHomeItem);
-	newWindowBehaviorMenu->AddItem(fNewWindowBehaviorOpenSearchItem);
-	newWindowBehaviorMenu->AddItem(fNewWindowBehaviorOpenBlankItem);
-	fNewWindowBehaviorMenu = new BMenuField("new window behavior",
+	BPopUpMenu* newWindowBehaviorMenu = new(std::nothrow) BPopUpMenu("New windows");
+	if (newWindowBehaviorMenu != nullptr) {
+		newWindowBehaviorMenu->AddItem(fNewWindowBehaviorOpenHomeItem);
+		newWindowBehaviorMenu->AddItem(fNewWindowBehaviorOpenSearchItem);
+		newWindowBehaviorMenu->AddItem(fNewWindowBehaviorOpenBlankItem);
+	}
+	fNewWindowBehaviorMenu = new(std::nothrow) BMenuField("new window behavior",
 		B_TRANSLATE("New windows:"), newWindowBehaviorMenu);
 
-	BPopUpMenu* newTabBehaviorMenu = new BPopUpMenu("New tabs");
-	newTabBehaviorMenu->AddItem(fNewTabBehaviorOpenBlankItem);
-	newTabBehaviorMenu->AddItem(fNewTabBehaviorOpenHomeItem);
-	newTabBehaviorMenu->AddItem(fNewTabBehaviorOpenSearchItem);
-	newTabBehaviorMenu->AddItem(fNewTabBehaviorCloneCurrentItem);
-	fNewTabBehaviorMenu = new BMenuField("new tab behavior",
+	BPopUpMenu* newTabBehaviorMenu = new(std::nothrow) BPopUpMenu("New tabs");
+	if (newTabBehaviorMenu != nullptr) {
+		newTabBehaviorMenu->AddItem(fNewTabBehaviorOpenBlankItem);
+		newTabBehaviorMenu->AddItem(fNewTabBehaviorOpenHomeItem);
+		newTabBehaviorMenu->AddItem(fNewTabBehaviorOpenSearchItem);
+		newTabBehaviorMenu->AddItem(fNewTabBehaviorCloneCurrentItem);
+	}
+	fNewTabBehaviorMenu = new(std::nothrow) BMenuField("new tab behavior",
 		B_TRANSLATE("New tabs:"), newTabBehaviorMenu);
 
-	fDaysInHistory = new BSpinner("days in history",
+	BMessage* historyDaysMsg = new(std::nothrow) BMessage(MSG_HISTORY_MENU_DAYS_CHANGED);
+	fDaysInHistory = new(std::nothrow) BSpinner("days in history",
 		B_TRANSLATE("Number of days to keep links in History menu:"),
-		new BMessage(MSG_HISTORY_MENU_DAYS_CHANGED));
-	fDaysInHistory->SetRange(1, 35);
-	fDaysInHistory->SetValue(
-		BrowsingHistory::DefaultInstance()->MaxHistoryItemAge());
+		historyDaysMsg);
+	if (fDaysInHistory != nullptr) {
+		fDaysInHistory->SetRange(1, 35);
+		fDaysInHistory->SetValue(
+			BrowsingHistory::DefaultInstance()->MaxHistoryItemAge());
+	} else
+		delete historyDaysMsg;
 
-	fShowTabsIfOnlyOnePage = new BCheckBox("show tabs if only one page",
+	BMessage* showTabsMsg = new(std::nothrow) BMessage(MSG_TAB_DISPLAY_BEHAVIOR_CHANGED);
+	fShowTabsIfOnlyOnePage = new(std::nothrow) BCheckBox("show tabs if only one page",
 		B_TRANSLATE("Show tabs if only one page is open"),
-		new BMessage(MSG_TAB_DISPLAY_BEHAVIOR_CHANGED));
-	fShowTabsIfOnlyOnePage->SetValue(B_CONTROL_ON);
+		showTabsMsg);
+	if (fShowTabsIfOnlyOnePage != nullptr)
+		fShowTabsIfOnlyOnePage->SetValue(B_CONTROL_ON);
+	else
+		delete showTabsMsg;
 
-	fAutoHideInterfaceInFullscreenMode = new BCheckBox("auto-hide interface",
+	BMessage* autoHideIfMsg = new(std::nothrow) BMessage(MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED);
+	fAutoHideInterfaceInFullscreenMode = new(std::nothrow) BCheckBox("auto-hide interface",
 		B_TRANSLATE("Auto-hide interface in full screen mode"),
-		new BMessage(MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED));
-	fAutoHideInterfaceInFullscreenMode->SetValue(B_CONTROL_OFF);
+		autoHideIfMsg);
+	if (fAutoHideInterfaceInFullscreenMode != nullptr)
+		fAutoHideInterfaceInFullscreenMode->SetValue(B_CONTROL_OFF);
+	else
+		delete autoHideIfMsg;
 
-	fAutoHidePointer = new BCheckBox("auto-hide pointer",
+	BMessage* autoHidePtrMsg = new(std::nothrow) BMessage(MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED);
+	fAutoHidePointer = new(std::nothrow) BCheckBox("auto-hide pointer",
 		B_TRANSLATE("Auto-hide mouse pointer"),
-		new BMessage(MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED));
-	fAutoHidePointer->SetValue(B_CONTROL_OFF);
+		autoHidePtrMsg);
+	if (fAutoHidePointer != nullptr)
+		fAutoHidePointer->SetValue(B_CONTROL_OFF);
+	else
+		delete autoHidePtrMsg;
 
-	fShowHomeButton = new BCheckBox("show home button",
+	BMessage* showHomeMsg = new(std::nothrow) BMessage(MSG_SHOW_HOME_BUTTON_CHANGED);
+	fShowHomeButton = new(std::nothrow) BCheckBox("show home button",
 		B_TRANSLATE("Show home button"),
-		new BMessage(MSG_SHOW_HOME_BUTTON_CHANGED));
-	fShowHomeButton->SetValue(B_CONTROL_ON);
+		showHomeMsg);
+	if (fShowHomeButton != nullptr)
+		fShowHomeButton->SetValue(B_CONTROL_ON);
+	else
+		delete showHomeMsg;
 
 	BView* view = BGroupLayoutBuilder(B_VERTICAL, 0)
 		.Add(BGridLayoutBuilder(spacing / 2, spacing / 2)
@@ -433,7 +515,7 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 			.Add(fChooseButton, 4, 5)
 		)
 		.Add(BSpaceLayoutItem::CreateVerticalStrut(spacing))
-		.Add(new BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+		.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
 		.Add(BSpaceLayoutItem::CreateVerticalStrut(spacing))
 		.Add(fShowTabsIfOnlyOnePage)
 		.Add(fAutoHideInterfaceInFullscreenMode)
@@ -458,25 +540,33 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 BView*
 SettingsWindow::_CreateFontsPage(float spacing)
 {
-	fStandardFontView = new FontSelectionView("standard",
+	fStandardFontView = new(std::nothrow) FontSelectionView("standard",
 		B_TRANSLATE("Standard font:"), true, be_plain_font);
 	BFont defaultSerifFont = _FindDefaultSerifFont();
-	fSerifFontView = new FontSelectionView("serif",
+	fSerifFontView = new(std::nothrow) FontSelectionView("serif",
 		B_TRANSLATE("Serif font:"), true, &defaultSerifFont);
-	fSansSerifFontView = new FontSelectionView("sans serif",
+	fSansSerifFontView = new(std::nothrow) FontSelectionView("sans serif",
 		B_TRANSLATE("Sans serif font:"), true, be_plain_font);
-	fFixedFontView = new FontSelectionView("fixed",
+	fFixedFontView = new(std::nothrow) FontSelectionView("fixed",
 		B_TRANSLATE("Fixed font:"), true, be_fixed_font);
 
-	fStandardSizesSpinner = new BSpinner("standard font size",
+	BMessage* stdFontSizeMsg = new(std::nothrow) BMessage(MSG_STANDARD_FONT_SIZE_SELECTED);
+	fStandardSizesSpinner = new(std::nothrow) BSpinner("standard font size",
 		B_TRANSLATE("Default standard font size:"),
-		new BMessage(MSG_STANDARD_FONT_SIZE_SELECTED));
-	fStandardSizesSpinner->SetAlignment(B_ALIGN_RIGHT);
+		stdFontSizeMsg);
+	if (fStandardSizesSpinner != nullptr)
+		fStandardSizesSpinner->SetAlignment(B_ALIGN_RIGHT);
+	else
+		delete stdFontSizeMsg;
 
-	fFixedSizesSpinner = new BSpinner("fixed font size",
+	BMessage* fixedFontSizeMsg = new(std::nothrow) BMessage(MSG_FIXED_FONT_SIZE_SELECTED);
+	fFixedSizesSpinner = new(std::nothrow) BSpinner("fixed font size",
 		B_TRANSLATE("Default fixed font size:"),
-		new BMessage(MSG_FIXED_FONT_SIZE_SELECTED));
-	fFixedSizesSpinner->SetAlignment(B_ALIGN_RIGHT);
+		fixedFontSizeMsg);
+	if (fFixedSizesSpinner != nullptr)
+		fFixedSizesSpinner->SetAlignment(B_ALIGN_RIGHT);
+	else
+		delete fixedFontSizeMsg;
 
 	BView* view = BGridLayoutBuilder(spacing / 2, spacing / 2)
 		.Add(fStandardFontView->CreateFontsLabelLayoutItem(), 0, 0)
@@ -508,46 +598,72 @@ SettingsWindow::_CreateFontsPage(float spacing)
 BView*
 SettingsWindow::_CreateProxyPage(float spacing)
 {
-	fUseProxyCheckBox = new BCheckBox("use proxy",
+	BMessage* useProxyMsg = new(std::nothrow) BMessage(MSG_USE_PROXY_CHANGED);
+	fUseProxyCheckBox = new(std::nothrow) BCheckBox("use proxy",
 		B_TRANSLATE("Use proxy server to connect to the internet"),
-		new BMessage(MSG_USE_PROXY_CHANGED));
-	fUseProxyCheckBox->SetValue(B_CONTROL_ON);
+		useProxyMsg);
+	if (fUseProxyCheckBox != nullptr)
+		fUseProxyCheckBox->SetValue(B_CONTROL_ON);
+	else
+		delete useProxyMsg;
 
-	fProxyAddressControl = new BTextControl("proxy address",
+	BMessage* proxyAddrMsg = new(std::nothrow) BMessage(MSG_PROXY_ADDRESS_CHANGED);
+	fProxyAddressControl = new(std::nothrow) BTextControl("proxy address",
 		B_TRANSLATE("Proxy server address:"), "",
-		new BMessage(MSG_PROXY_ADDRESS_CHANGED));
-	fProxyAddressControl->SetModificationMessage(
-		new BMessage(MSG_SETTINGS_MODIFIED));
-	fProxyAddressControl->SetText(
-		fSettings->GetValue(kSettingsKeyProxyAddress, ""));
+		proxyAddrMsg);
+	if (fProxyAddressControl != nullptr) {
+		fProxyAddressControl->SetModificationMessage(
+			new(std::nothrow) BMessage(MSG_SETTINGS_MODIFIED));
+		fProxyAddressControl->SetText(
+			fSettings->GetValue(kSettingsKeyProxyAddress, ""));
+	} else
+		delete proxyAddrMsg;
 
-	fProxyPortControl = new BTextControl("proxy port",
+	BMessage* proxyPortMsg = new(std::nothrow) BMessage(MSG_PROXY_PORT_CHANGED);
+	fProxyPortControl = new(std::nothrow) BTextControl("proxy port",
 		B_TRANSLATE("Proxy server port:"), "",
-		new BMessage(MSG_PROXY_PORT_CHANGED));
-	fProxyPortControl->SetModificationMessage(
-		new BMessage(MSG_SETTINGS_MODIFIED));
-	fProxyPortControl->SetText(
-		fSettings->GetValue(kSettingsKeyProxyPort, ""));
+		proxyPortMsg);
+	if (fProxyPortControl != nullptr) {
+		fProxyPortControl->SetModificationMessage(
+			new(std::nothrow) BMessage(MSG_SETTINGS_MODIFIED));
+		fProxyPortControl->SetText(
+			fSettings->GetValue(kSettingsKeyProxyPort, ""));
+	} else
+		delete proxyPortMsg;
 
-	fUseProxyAuthCheckBox = new BCheckBox("use authentication",
+	BMessage* useProxyAuthMsg = new(std::nothrow) BMessage(MSG_USE_PROXY_AUTH_CHANGED);
+	fUseProxyAuthCheckBox = new(std::nothrow) BCheckBox("use authentication",
 		B_TRANSLATE("Proxy server requires authentication"),
-		new BMessage(MSG_USE_PROXY_AUTH_CHANGED));
-	fUseProxyAuthCheckBox->SetValue(B_CONTROL_ON);
+		useProxyAuthMsg);
+	if (fUseProxyAuthCheckBox != nullptr)
+		fUseProxyAuthCheckBox->SetValue(B_CONTROL_ON);
+	else
+		delete useProxyAuthMsg;
 
-	fProxyUsernameControl = new BTextControl("proxy username",
+	BMessage* proxyUserMsg = new(std::nothrow) BMessage(MSG_PROXY_USERNAME_CHANGED);
+	fProxyUsernameControl = new(std::nothrow) BTextControl("proxy username",
 		B_TRANSLATE("Proxy username:"), "",
-		new BMessage(MSG_PROXY_USERNAME_CHANGED));
-	fProxyUsernameControl->SetModificationMessage(
-		new BMessage(MSG_SETTINGS_MODIFIED));
-	fProxyUsernameControl->SetText(
-		fSettings->GetValue(kSettingsKeyProxyUsername, ""));
+		proxyUserMsg);
+	if (fProxyUsernameControl != nullptr) {
+		fProxyUsernameControl->SetModificationMessage(
+			new(std::nothrow) BMessage(MSG_SETTINGS_MODIFIED));
+		fProxyUsernameControl->SetText(
+			fSettings->GetValue(kSettingsKeyProxyUsername, ""));
+	} else
+		delete proxyUserMsg;
 
-	fProxyPasswordControl = new BTextControl("proxy password",
+	BMessage* proxyPassMsg = new(std::nothrow) BMessage(MSG_PROXY_PASSWORD_CHANGED);
+	fProxyPasswordControl = new(std::nothrow) BTextControl("proxy password",
 		B_TRANSLATE("Proxy password:"), "",
-		new BMessage(MSG_PROXY_PASSWORD_CHANGED));
-	fProxyPasswordControl->SetModificationMessage(
-		new BMessage(MSG_SETTINGS_MODIFIED));
-	fProxyPasswordControl->TextView()->HideTyping(true);
+		proxyPassMsg);
+	if (fProxyPasswordControl != nullptr) {
+		fProxyPasswordControl->SetModificationMessage(
+			new(std::nothrow) BMessage(MSG_SETTINGS_MODIFIED));
+		fProxyPasswordControl->TextView()->HideTyping(true);
+		fProxyPasswordControl->SetText(
+			fSettings->GetValue(kSettingsKeyProxyPassword, ""));
+	} else
+		delete proxyPassMsg;
 	fProxyPasswordControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyPassword, ""));
 
@@ -894,19 +1010,28 @@ SettingsWindow::_UpdateLiveSettings()
 void
 SettingsWindow::_UpdateLiveSetting(uint32 what)
 {
+	if (fSettings == nullptr)
+		return;
+
 	switch (what) {
 		case MSG_START_PAGE_CHANGED:
-			fSettings->SetValue(kSettingsKeyStartPageURL,
-				fStartPageControl->Text());
+			if (fStartPageControl != nullptr) {
+				fSettings->SetValue(kSettingsKeyStartPageURL,
+					fStartPageControl->Text());
+			}
 			break;
 		case MSG_SEARCH_PAGE_CHANGED:
 		case MSG_SEARCH_PAGE_CHANGED_MENU:
-			fSettings->SetValue(kSettingsKeySearchPageURL,
-				fSearchPageControl->Text());
+			if (fSearchPageControl != nullptr) {
+				fSettings->SetValue(kSettingsKeySearchPageURL,
+					fSearchPageControl->Text());
+			}
 			break;
 		case MSG_DOWNLOAD_FOLDER_CHANGED:
-			fSettings->SetValue(kSettingsKeyDownloadPath,
-				fDownloadFolderControl->Text());
+			if (fDownloadFolderControl != nullptr) {
+				fSettings->SetValue(kSettingsKeyDownloadPath,
+					fDownloadFolderControl->Text());
+			}
 			break;
 		case MSG_START_UP_BEHAVIOR_CHANGED:
 			fSettings->SetValue(kSettingsKeyStartUpPolicy, _StartUpPolicy());
@@ -919,20 +1044,28 @@ SettingsWindow::_UpdateLiveSetting(uint32 what)
 			fSettings->SetValue(kSettingsKeyNewTabPolicy, _NewTabPolicy());
 			break;
 		case MSG_TAB_DISPLAY_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen,
-				fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON);
+			if (fShowTabsIfOnlyOnePage != nullptr) {
+				fSettings->SetValue(kSettingsKeyShowTabsIfSinglePageOpen,
+					fShowTabsIfOnlyOnePage->Value() == B_CONTROL_ON);
+			}
 			break;
 		case MSG_AUTO_HIDE_INTERFACE_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
-				fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON);
+			if (fAutoHideInterfaceInFullscreenMode != nullptr) {
+				fSettings->SetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
+					fAutoHideInterfaceInFullscreenMode->Value() == B_CONTROL_ON);
+			}
 			break;
 		case MSG_AUTO_HIDE_POINTER_BEHAVIOR_CHANGED:
-			fSettings->SetValue(kSettingsKeyAutoHidePointer,
-				fAutoHidePointer->Value() == B_CONTROL_ON);
+			if (fAutoHidePointer != nullptr) {
+				fSettings->SetValue(kSettingsKeyAutoHidePointer,
+					fAutoHidePointer->Value() == B_CONTROL_ON);
+			}
 			break;
 		case MSG_SHOW_HOME_BUTTON_CHANGED:
-			fSettings->SetValue(kSettingsKeyShowHomeButton,
-				fShowHomeButton->Value() == B_CONTROL_ON);
+			if (fShowHomeButton != nullptr) {
+				fSettings->SetValue(kSettingsKeyShowHomeButton,
+					fShowHomeButton->Value() == B_CONTROL_ON);
+			}
 			break;
 	}
 }
@@ -943,45 +1076,68 @@ SettingsWindow::_RevertSettings()
 {
 	_RestoreLiveSettings();
 
-	fStartPageControl->SetText(
-		fSettings->GetValue(kSettingsKeyStartPageURL, kDefaultStartPageURL));
+	if (fStartPageControl != nullptr) {
+		fStartPageControl->SetText(
+			fSettings->GetValue(kSettingsKeyStartPageURL, kDefaultStartPageURL));
+	}
 
 	BString searchPage = fSettings->GetValue(kSettingsKeySearchPageURL,
 		kDefaultSearchPageURL);
-	fSearchPageControl->SetText(searchPage);
+	if (fSearchPageControl != nullptr)
+		fSearchPageControl->SetText(searchPage);
 
 	bool found = false;
-	BMenu* searchMenu = fSearchPageMenu->Menu();
-	int32 itemCount = searchMenu->CountItems() - 2;
-		// Ignore the two last items: separator and "custom"
-	for (int i = 0; i < itemCount; i++) {
-		BMenuItem* item = searchMenu->ItemAt(i);
-		BMessage* message = item->Message();
-		if (message->FindString("searchstring") == searchPage) {
-			item->SetMarked(true);
-			fSearchPageControl->SetEnabled(false);
-			found = true;
-			break;
+	if (fSearchPageMenu != nullptr) {
+		BMenu* searchMenu = fSearchPageMenu->Menu();
+		if (searchMenu != nullptr) {
+			int32 itemCount = searchMenu->CountItems() - 2;
+				// Ignore the two last items: separator and "custom"
+			for (int i = 0; i < itemCount; i++) {
+				BMenuItem* item = searchMenu->ItemAt(i);
+				BMessage* message = item != nullptr ? item->Message() : nullptr;
+				if (message != nullptr && message->FindString("searchstring") == searchPage) {
+					item->SetMarked(true);
+					if (fSearchPageControl != nullptr)
+						fSearchPageControl->SetEnabled(false);
+					found = true;
+					break;
+				}
+			}
+
+			if (!found) {
+				BMenuItem* lastItem = searchMenu->ItemAt(searchMenu->CountItems() - 1);
+				if (lastItem != nullptr)
+					lastItem->SetMarked(true);
+			}
 		}
 	}
 
-	if (!found)
-		searchMenu->ItemAt(searchMenu->CountItems() - 1)->SetMarked(true);
+	if (fDownloadFolderControl != nullptr) {
+		fDownloadFolderControl->SetText(
+			fSettings->GetValue(kSettingsKeyDownloadPath, kDefaultDownloadPath));
+	}
+	if (fShowTabsIfOnlyOnePage != nullptr) {
+		fShowTabsIfOnlyOnePage->SetValue(
+			fSettings->GetValue(kSettingsKeyShowTabsIfSinglePageOpen, true));
+	}
+	if (fAutoHideInterfaceInFullscreenMode != nullptr) {
+		fAutoHideInterfaceInFullscreenMode->SetValue(
+			fSettings->GetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
+				false));
+	}
+	if (fAutoHidePointer != nullptr) {
+		fAutoHidePointer->SetValue(
+			fSettings->GetValue(kSettingsKeyAutoHidePointer, false));
+	}
+	if (fShowHomeButton != nullptr) {
+		fShowHomeButton->SetValue(
+			fSettings->GetValue(kSettingsKeyShowHomeButton, true));
+	}
 
-	fDownloadFolderControl->SetText(
-		fSettings->GetValue(kSettingsKeyDownloadPath, kDefaultDownloadPath));
-	fShowTabsIfOnlyOnePage->SetValue(
-		fSettings->GetValue(kSettingsKeyShowTabsIfSinglePageOpen, true));
-	fAutoHideInterfaceInFullscreenMode->SetValue(
-		fSettings->GetValue(kSettingsKeyAutoHideInterfaceInFullscreenMode,
-			false));
-	fAutoHidePointer->SetValue(
-		fSettings->GetValue(kSettingsKeyAutoHidePointer, false));
-	fShowHomeButton->SetValue(
-		fSettings->GetValue(kSettingsKeyShowHomeButton, true));
-
-	fDaysInHistory->SetValue(
-		BrowsingHistory::DefaultInstance()->MaxHistoryItemAge());
+	if (fDaysInHistory != nullptr) {
+		fDaysInHistory->SetValue(
+			BrowsingHistory::DefaultInstance()->MaxHistoryItemAge());
+	}
 
 	// Start Up policy
 	uint32 startUpPolicy = fSettings->GetValue(kSettingsKeyStartUpPolicy,
@@ -989,10 +1145,12 @@ SettingsWindow::_RevertSettings()
 	switch (startUpPolicy) {
 		default:
 		case ResumePriorSession:
-			fStartUpBehaviorResumePriorSession->SetMarked(true);
+			if (fStartUpBehaviorResumePriorSession != nullptr)
+				fStartUpBehaviorResumePriorSession->SetMarked(true);
 			break;
 		case StartNewSession:
-			fStartUpBehaviorStartNewSession->SetMarked(true);
+			if (fStartUpBehaviorStartNewSession != nullptr)
+				fStartUpBehaviorStartNewSession->SetMarked(true);
 			break;
 	}
 
@@ -1002,13 +1160,16 @@ SettingsWindow::_RevertSettings()
 	switch (newWindowPolicy) {
 		default:
 		case OpenStartPage:
-			fNewWindowBehaviorOpenHomeItem->SetMarked(true);
+			if (fNewWindowBehaviorOpenHomeItem != nullptr)
+				fNewWindowBehaviorOpenHomeItem->SetMarked(true);
 			break;
 		case OpenSearchPage:
-			fNewWindowBehaviorOpenSearchItem->SetMarked(true);
+			if (fNewWindowBehaviorOpenSearchItem != nullptr)
+				fNewWindowBehaviorOpenSearchItem->SetMarked(true);
 			break;
 		case OpenBlankPage:
-			fNewWindowBehaviorOpenBlankItem->SetMarked(true);
+			if (fNewWindowBehaviorOpenBlankItem != nullptr)
+				fNewWindowBehaviorOpenBlankItem->SetMarked(true);
 			break;
 	}
 
@@ -1018,16 +1179,20 @@ SettingsWindow::_RevertSettings()
 	switch (newTabPolicy) {
 		default:
 		case OpenBlankPage:
-			fNewTabBehaviorOpenBlankItem->SetMarked(true);
+			if (fNewTabBehaviorOpenBlankItem != nullptr)
+				fNewTabBehaviorOpenBlankItem->SetMarked(true);
 			break;
 		case OpenStartPage:
-			fNewTabBehaviorOpenHomeItem->SetMarked(true);
+			if (fNewTabBehaviorOpenHomeItem != nullptr)
+				fNewTabBehaviorOpenHomeItem->SetMarked(true);
 			break;
 		case OpenSearchPage:
-			fNewTabBehaviorOpenSearchItem->SetMarked(true);
+			if (fNewTabBehaviorOpenSearchItem != nullptr)
+				fNewTabBehaviorOpenSearchItem->SetMarked(true);
 			break;
 		case CloneCurrentPage:
-			fNewTabBehaviorCloneCurrentItem->SetMarked(true);
+			if (fNewTabBehaviorCloneCurrentItem != nullptr)
+				fNewTabBehaviorCloneCurrentItem->SetMarked(true);
 			break;
 	}
 
@@ -1037,32 +1202,53 @@ SettingsWindow::_RevertSettings()
 	int32 defaultFixedFontSize = fSettings->GetValue("fixed font size",
 		kDefaultFontSize);
 
-	fStandardSizesSpinner->SetValue(defaultFontSize);
-	fFixedSizesSpinner->SetValue(defaultFixedFontSize);
+	if (fStandardSizesSpinner != nullptr)
+		fStandardSizesSpinner->SetValue(defaultFontSize);
+	if (fFixedSizesSpinner != nullptr)
+		fFixedSizesSpinner->SetValue(defaultFixedFontSize);
 
-	fStandardFontView->SetFont(fSettings->GetValue("standard font",
-		*be_plain_font), defaultFontSize);
-	fSerifFontView->SetFont(fSettings->GetValue("serif font",
-		_FindDefaultSerifFont()), defaultFontSize);
-	fSansSerifFontView->SetFont(fSettings->GetValue("sans serif font",
-		*be_plain_font), defaultFontSize);
-	fFixedFontView->SetFont(fSettings->GetValue("fixed font",
-		*be_fixed_font), defaultFixedFontSize);
+	if (fStandardFontView != nullptr) {
+		fStandardFontView->SetFont(fSettings->GetValue("standard font",
+			*be_plain_font), defaultFontSize);
+	}
+	if (fSerifFontView != nullptr) {
+		fSerifFontView->SetFont(fSettings->GetValue("serif font",
+			_FindDefaultSerifFont()), defaultFontSize);
+	}
+	if (fSansSerifFontView != nullptr) {
+		fSansSerifFontView->SetFont(fSettings->GetValue("sans serif font",
+			*be_plain_font), defaultFontSize);
+	}
+	if (fFixedFontView != nullptr) {
+		fFixedFontView->SetFont(fSettings->GetValue("fixed font",
+			*be_fixed_font), defaultFixedFontSize);
+	}
 
 	// Proxy settings
-	fUseProxyCheckBox->SetValue(fSettings->GetValue(kSettingsKeyUseProxy,
-		false));
-	fProxyAddressControl->SetText(fSettings->GetValue(kSettingsKeyProxyAddress,
-		""));
+	if (fUseProxyCheckBox != nullptr) {
+		fUseProxyCheckBox->SetValue(fSettings->GetValue(kSettingsKeyUseProxy,
+			false));
+	}
+	if (fProxyAddressControl != nullptr) {
+		fProxyAddressControl->SetText(fSettings->GetValue(kSettingsKeyProxyAddress,
+			""));
+	}
 	BString keyProxyPort;
 	keyProxyPort << fSettings->GetValue(kSettingsKeyProxyPort, (uint32)0);
-	fProxyPortControl->SetText(keyProxyPort.String());
-	fUseProxyAuthCheckBox->SetValue(fSettings->GetValue(kSettingsKeyUseProxyAuth,
-		false));
-	fProxyUsernameControl->SetText(fSettings->GetValue(kSettingsKeyProxyUsername,
-		""));
-	fProxyPasswordControl->SetText(fSettings->GetValue(kSettingsKeyProxyPassword,
-		""));
+	if (fProxyPortControl != nullptr)
+		fProxyPortControl->SetText(keyProxyPort.String());
+	if (fUseProxyAuthCheckBox != nullptr) {
+		fUseProxyAuthCheckBox->SetValue(fSettings->GetValue(kSettingsKeyUseProxyAuth,
+			false));
+	}
+	if (fProxyUsernameControl != nullptr) {
+		fProxyUsernameControl->SetText(fSettings->GetValue(kSettingsKeyProxyUsername,
+			""));
+	}
+	if (fProxyPasswordControl != nullptr) {
+		fProxyPasswordControl->SetText(fSettings->GetValue(kSettingsKeyProxyPassword,
+			""));
+	}
 
 	_ValidateControlsEnabledStatus();
 }
