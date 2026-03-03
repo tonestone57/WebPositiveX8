@@ -628,6 +628,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	fShowTabsIfSinglePageOpen(true),
 	fAutoHideInterfaceInFullscreenMode(false),
 	fAutoHidePointer(false),
+	fLastHistoryGeneration(0xffffffff),
 	fBookmarkBar(nullptr),
 	fIsDownloadOnly(forDownload),
 	fInitialURL(url)
@@ -663,18 +664,27 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 #else
 	BMenu* mainMenu = new(std::nothrow) BMenuBar("Main menu");
 #endif
+	if (mainMenu == nullptr)
+		return;
+
 	BMenu* menu = new(std::nothrow) BMenu(B_TRANSLATE("Window"));
+	if (menu == nullptr) {
+		delete mainMenu;
+		return;
+	}
+
 	BMessage* newWindowMessage = new(std::nothrow) BMessage(NEW_WINDOW);
 	if (newWindowMessage != nullptr)
 		newWindowMessage->AddString("url", "");
 	BMenuItem* newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New window"),
 		newWindowMessage, 'N');
 	if (newItem != nullptr) {
-		if (menu != nullptr && menu->AddItem(newItem))
+		if (menu->AddItem(newItem))
 			newItem->SetTarget(be_app);
 		else
 			delete newItem;
-	}
+	} else
+		delete newWindowMessage;
 
 	BMessage* newTabCopy = nullptr;
 	if (newTabMessage != nullptr)
@@ -683,29 +693,29 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	newItem = new(std::nothrow) BMenuItem(B_TRANSLATE("New tab"),
 		newTabCopy, 'T');
 	if (newItem != nullptr) {
-		if (menu != nullptr && menu->AddItem(newItem))
+		if (menu->AddItem(newItem))
 			newItem->SetTarget(be_app);
 		else
 			delete newItem;
-	}
+	} else
+		delete newTabCopy;
 
 	BMessage* openLocationMsg = new(std::nothrow) BMessage(OPEN_LOCATION);
 	BMenuItem* item = new(std::nothrow) BMenuItem(B_TRANSLATE("Open location"),
 		openLocationMsg, 'L');
 	if (item != nullptr) {
-		if (menu == nullptr || !menu->AddItem(item))
+		if (!menu->AddItem(item))
 			delete item;
 	} else
 		delete openLocationMsg;
 
-	if (menu != nullptr)
-		menu->AddSeparatorItem();
+	menu->AddSeparatorItem();
 
 	BMessage* closeWindowMsg = new(std::nothrow) BMessage(B_QUIT_REQUESTED);
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close window"),
 		closeWindowMsg, 'W', B_SHIFT_KEY);
 	if (item != nullptr) {
-		if (menu == nullptr || !menu->AddItem(item))
+		if (!menu->AddItem(item))
 			delete item;
 	} else
 		delete closeWindowMsg;
@@ -714,7 +724,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	item = new(std::nothrow) BMenuItem(B_TRANSLATE("Close tab"),
 		closeTabMsg, 'W');
 	if (item != nullptr) {
-		if (menu == nullptr || !menu->AddItem(item))
+		if (!menu->AddItem(item))
 			delete item;
 	} else
 		delete closeTabMsg;
@@ -765,8 +775,14 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 	if (!mainMenu->AddItem(menu))
 		delete menu;
 
-	menu = new BMenu(B_TRANSLATE("Edit"));
-	fCutMenuItem = new BMenuItem(B_TRANSLATE("Cut"), new BMessage(B_CUT), 'X');
+	menu = new(std::nothrow) BMenu(B_TRANSLATE("Edit"));
+	if (menu == nullptr) {
+		delete mainMenu;
+		return;
+	}
+
+	fCutMenuItem = new(std::nothrow) BMenuItem(B_TRANSLATE("Cut"),
+		new(std::nothrow) BMessage(B_CUT), 'X');
 	if (!menu->AddItem(fCutMenuItem)) {
 		delete fCutMenuItem;
 		fCutMenuItem = nullptr;
@@ -1251,7 +1267,7 @@ BrowserWindow::MessageReceived(BMessage* message)
 			if (message->FindString("url", &url) != B_OK)
 				url = fURLInputGroup->Text();
 
-			_SetPageIcon(CurrentWebView(), 0);
+			_SetPageIcon(CurrentWebView(), nullptr);
 			_SmartURLHandler(url);
 
 			break;
@@ -1333,7 +1349,8 @@ BrowserWindow::MessageReceived(BMessage* message)
 		}
 
 		case CREATE_BOOKMARK:
-			_CreateBookmark();
+			if (CurrentWebView() != nullptr)
+				_CreateBookmark();
 			break;
 
 		case SHOW_BOOKMARKS:
@@ -1728,7 +1745,11 @@ BrowserWindow::QuitRequested()
 void
 BrowserWindow::MenusBeginning()
 {
-	_UpdateHistoryMenu();
+	uint32 historyGeneration = BrowsingHistory::DefaultInstance()->HistoryGeneration();
+	if (fLastHistoryGeneration != historyGeneration) {
+		_UpdateHistoryMenu();
+		fLastHistoryGeneration = historyGeneration;
+	}
 	_UpdateClipboardItems();
 	fMenusRunning = true;
 }
@@ -2424,7 +2445,7 @@ BrowserWindow::_ShutdownTab(int32 index)
 	BView* view = fTabManager->RemoveTab(index);
 	BWebView* webView = dynamic_cast<BWebView*>(view);
 	if (webView == CurrentWebView())
-		SetCurrentWebView(0);
+		SetCurrentWebView(nullptr);
 	if (webView != nullptr) {
 		webView->Shutdown();
 		delete webView->GetUserData();
@@ -2458,7 +2479,10 @@ void
 BrowserWindow::_CreateBookmark(const BPath& path, BString fileName, const BString& title,
 	const BString& url, const BBitmap* miniIcon, const BBitmap* largeIcon)
 {
-	BMessage* message = new BMessage(MSG_CREATE_BOOKMARK);
+	BMessage* message = new(std::nothrow) BMessage(MSG_CREATE_BOOKMARK);
+	if (message == nullptr)
+		return;
+
 	message->AddString("path", path.Path());
 	message->AddString("fileName", fileName);
 	message->AddString("title", title);
@@ -2473,7 +2497,9 @@ BrowserWindow::_CreateBookmark(const BPath& path, BString fileName, const BStrin
 		if (largeIcon->Archive(&archive) == B_OK)
 			message->AddMessage("largeIcon", &archive);
 	}
-	if (GetBookmarkWorker()->PostMessage(message) != B_OK)
+
+	BookmarkWorker* worker = GetBookmarkWorker();
+	if (worker == nullptr || worker->PostMessage(message) != B_OK)
 		delete message;
 }
 
@@ -2662,6 +2688,9 @@ BrowserWindow::_AddBookmarkURLsRecursively(BDirectory& directory,
 void
 BrowserWindow::_SetPageIcon(BWebView* view, const BBitmap* icon)
 {
+	if (view == nullptr)
+		return;
+
 	PageUserData* userData = static_cast<PageUserData*>(view->GetUserData());
 	if (userData == nullptr) {
 		userData = new(std::nothrow) PageUserData(nullptr);
@@ -3031,15 +3060,22 @@ BrowserWindow::_EncodeURIComponent(const BString& search)
 	// We have to take care of some of the escaping before we hand over the
 	// search string to WebKit, if we want queries like "4+3" to not be
 	// searched as "4 3".
-	const BString escCharList = " $&`:<>[]{}\"+#%@/;=?\\^|~',";
+	const char* escCharList = " $&`:<>[]{}\"+#%@/;=?\\^|~',";
 	BString result;
 	int32 length = search.Length();
-	result.Preallocate(length * 3);
 	char hexcode[4];
 
 	for (int32 i = 0; i < length; i++) {
 		char c = search[i];
-		if (escCharList.FindFirst(c) != B_ERROR) {
+		bool needEscaping = false;
+		for (const char* p = escCharList; *p; p++) {
+			if (*p == c) {
+				needEscaping = true;
+				break;
+			}
+		}
+
+		if (needEscaping) {
 			snprintf(hexcode, sizeof(hexcode), "%02X",
 				(unsigned int)(unsigned char)c);
 			result << '%' << hexcode;

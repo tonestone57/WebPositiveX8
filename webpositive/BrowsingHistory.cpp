@@ -190,6 +190,7 @@ BrowsingHistory::BrowsingHistory(bool startThreads)
 	BLocker("browsing history"),
 	fHistoryItems(64, true),
 	fMaxHistoryItemAge(7),
+	fGeneration(0),
 	fSettingsLoaded(false),
 	fQuitting(false),
 	fPendingSaveItems(nullptr),
@@ -268,6 +269,7 @@ BrowsingHistory::RemoveItem(const BString& url)
 	fHistoryMap.Remove(url);
 	fHistoryItems.RemoveItem(fHistoryItems.IndexOf(item));
 
+	fGeneration++;
 	_SaveSettings();
 
 	return true;
@@ -330,6 +332,13 @@ BrowsingHistory::MaxHistoryItemAge() const
 }
 
 
+uint32
+BrowsingHistory::HistoryGeneration() const
+{
+	return fGeneration;
+}
+
+
 // #pragma mark - private
 
 
@@ -338,6 +347,7 @@ BrowsingHistory::_Clear()
 {
 	fHistoryItems.MakeEmpty();
 	fHistoryMap.RemoveAll();
+	fGeneration++;
 }
 
 
@@ -355,6 +365,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 			int32 insertionIndex = _InsertionIndex(existingItem);
 			fHistoryItems.AddItem(existingItem, insertionIndex);
 
+			fGeneration++;
 			_SaveSettings();
 		}
 		return true;
@@ -371,6 +382,7 @@ BrowsingHistory::_AddItem(const BrowsingHistoryItem& item, bool internal)
 	fHistoryItems.AddItem(newItem, insertionIndex);
 	fHistoryMap.Put(newItem->URL(), newItem);
 
+	fGeneration++;
 	if (!internal)
 		_SaveSettings();
 
@@ -429,6 +441,8 @@ BrowsingHistory::_SaveSettings(bool force)
 	fLastSaveTime = system_time();
 
 	// Take a copy of the current history list.
+	// We make a deep copy of the items to ensure thread safety when saving
+	// in the background, as history items are mutable.
 	std::unique_ptr<HistoryList> pendingItems(new(std::nothrow) HistoryList(64, true));
 	if (pendingItems == nullptr)
 		return;
@@ -490,7 +504,6 @@ BrowsingHistory::_SaveThread(void* data)
 				settingsArchive.Flatten(&settingsFile);
 			}
 			self->fFileLock.Unlock();
-
 		}
 
 		if (self->fQuitting)

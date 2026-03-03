@@ -236,6 +236,7 @@ private:
 private:
 			BMenu*				fHistoryMenu;
 			int32				fHistoryMenuFixedItemCount;
+			uint32				fLastHistoryGeneration;
 
 			BMenuItem*			fCutMenuItem;
 			BMenuItem*			fCopyMenuItem;

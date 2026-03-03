@@ -247,6 +247,7 @@ CookieWindow::_BuildDomainList()
 		delete it.Next().second;
 	}
 	fCookieMap.RemoveAll();
+	fDomainMap.RemoveAll();
 
 	// Populate the domain list and cookie cache
 	auto it = fCookieJar->GetIterator();
@@ -319,6 +320,13 @@ CookieWindow::_BuildDomainList()
 BStringItem*
 CookieWindow::_AddDomain(BString domain, bool fake)
 {
+	DomainItem* existingItem = fDomainMap.Get(domain);
+	if (existingItem != nullptr) {
+		if (!fake)
+			existingItem->fEmpty = false;
+		return existingItem;
+	}
+
 	BStringItem* parent = nullptr;
 	int firstDot = domain.FindFirst('.');
 	if (firstDot >= 0) {
@@ -332,7 +340,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 	int high = siblingCount - 1;
 	int insertIndex = siblingCount;
 
-	// check that we aren't already there
+	// find insertion point, keeping the list alphabetically sorted
 	while (low <= high) {
 		int mid = (low + high) / 2;
 		BStringItem* midItem = static_cast<BStringItem*>(
@@ -340,12 +348,7 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		if (midItem == nullptr)
 			break;
 		int cmp = strcmp(midItem->Text(), domain.String());
-		if (cmp == 0) {
-			DomainItem* stringItem = static_cast<DomainItem*>(midItem);
-			if (fake == false)
-				stringItem->fEmpty = false;
-			return stringItem;
-		} else if (cmp < 0) {
+		if (cmp < 0) {
 			low = mid + 1;
 		} else {
 			insertIndex = mid;
@@ -353,8 +356,8 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 		}
 	}
 
-	// Insert the new item, keeping the list alphabetically sorted
-	BStringItem* domainItem = new DomainItem(domain, fake);
+	// Insert the new item
+	DomainItem* domainItem = new DomainItem(domain, fake);
 	domainItem->SetOutlineLevel(parent != nullptr ? parent->OutlineLevel() + 1 : 0);
 
 	if (insertIndex < siblingCount) {
@@ -377,6 +380,8 @@ CookieWindow::_AddDomain(BString domain, bool fake)
 			fDomains->AddItem(domainItem, index);
 		}
 	}
+
+	fDomainMap.Put(domain, domainItem);
 
 	return domainItem;
 }

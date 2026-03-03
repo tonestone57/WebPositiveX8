@@ -27,6 +27,8 @@ class BStringView;
 class BString;
 
 
+class DomainItem;
+
 class CookieWindow : public BWindow {
 	friend class CookieWindowTest;
 public:
@@ -56,8 +58,11 @@ private:
 	BPrivate::Network::BNetworkCookieJar*	fCookieJar;
 
 	typedef BObjectList<BPrivate::Network::BNetworkCookie> CookieList;
-typedef HashMap<HashString, CookieList*> CookieMap;
-CookieMap fCookieMap;
+	typedef HashMap<HashString, CookieList*> CookieMap;
+	CookieMap fCookieMap;
+
+	typedef HashMap<HashString, DomainItem*> DomainMap;
+	DomainMap fDomainMap;
 };
 
 
