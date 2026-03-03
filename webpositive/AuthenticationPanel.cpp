@@ -71,6 +71,19 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 
 AuthenticationPanel::~AuthenticationPanel()
 {
+	if (m_usernameTextControl != nullptr && m_usernameTextControl->Parent() == nullptr)
+		delete m_usernameTextControl;
+	if (m_passwordTextControl != nullptr && m_passwordTextControl->Parent() == nullptr)
+		delete m_passwordTextControl;
+	if (m_hidePasswordCheckBox != nullptr && m_hidePasswordCheckBox->Parent() == nullptr)
+		delete m_hidePasswordCheckBox;
+	if (m_rememberCredentialsCheckBox != nullptr && m_rememberCredentialsCheckBox->Parent() == nullptr)
+		delete m_rememberCredentialsCheckBox;
+	if (m_okButton != nullptr && m_okButton->Parent() == nullptr)
+		delete m_okButton;
+	if (m_cancelButton != nullptr && m_cancelButton->Parent() == nullptr)
+		delete m_cancelButton;
+
 	delete_sem(m_exitSemaphore);
 	delete m_jitterRunner;
 }
