@@ -71,7 +71,7 @@ ConsoleWindow::ConsoleWindow(BRect frame)
 		return;
 
 	BScrollView* scrollView = new(std::nothrow) BScrollView(
-		"Console messages scroll", fMessagesListView, nullptr, true, true);
+		"Console messages scroll", fMessagesListView, 0, true, true);
 
 	if (layout != nullptr && scrollView != nullptr) {
 		BGroupLayoutBuilder(layout)

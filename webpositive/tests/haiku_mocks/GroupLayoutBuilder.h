@@ -7,6 +7,7 @@
 class BGroupLayoutBuilder {
 public:
     BGroupLayoutBuilder(orientation orientation, float spacing = 0.0) {}
+    BGroupLayoutBuilder(BLayout* layout) {}
     BGroupLayoutBuilder& Add(BView* view) { return *this; }
     BGroupLayoutBuilder& Add(BView* view, float weight) { return *this; }
     BGroupLayoutBuilder& AddGroup(orientation orientation, float spacing = 0.0) { return *this; }
