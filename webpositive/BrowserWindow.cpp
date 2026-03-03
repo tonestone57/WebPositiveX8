@@ -3337,10 +3337,10 @@ BrowserWindow::_HandleSavePageThread(void* data)
 	}
 
 	if (ret != B_OK) {
-		char buffer[1024];
-		snprintf(buffer, sizeof(buffer), B_TRANSLATE("Failed to save the "
+		char errorBuffer[1024];
+		snprintf(errorBuffer, sizeof(errorBuffer), B_TRANSLATE("Failed to save the "
 			"page source: %s\n"), strerror(ret));
-		BAlert* alert = new BAlert(B_TRANSLATE("Save error"), buffer,
+		BAlert* alert = new BAlert(B_TRANSLATE("Save error"), errorBuffer,
 			B_TRANSLATE("OK"));
 		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
 		alert->Go(0);
