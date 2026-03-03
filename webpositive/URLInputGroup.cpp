@@ -637,10 +637,14 @@ URLInputGroup::URLInputGroup(BMessage* goMessage)
 
 // TODO: Fix in Haiku, no in-built support for archived BBitmaps from
 // resources?
-//	fGoButton = new(std::nothrow) BitmapButton("kActionGo", 0);
+//	fGoButton = new(std::nothrow) BitmapButton("kActionGo", nullptr);
 	fGoButton = new(std::nothrow) BBitmapButton(kGoBitmapBits, kGoBitmapWidth,
 		kGoBitmapHeight, kGoBitmapFormat, goMessage);
-	GroupLayout()->AddView(fGoButton, 0.0f);
+	if (fGoButton != nullptr) {
+		GroupLayout()->AddView(fGoButton, 0.0f);
+	} else {
+		delete goMessage;
+	}
 
 	SetFlags(Flags() | B_WILL_DRAW | B_FULL_UPDATE_ON_RESIZE);
 	SetLowColor(ViewColor());

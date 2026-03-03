@@ -86,7 +86,7 @@ public:
 						if (entry.GetNodeRef(&nref) != B_OK)
 							exists = false;
 						else {
-							icon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32);
+								icon = new(std::nothrow) BBitmap(BRect(0, 0, 31, 31), nullptr, B_RGBA32);
 							if (icon != nullptr) {
 								BNode node(&entry);
 								BNodeInfo info(&node);
@@ -161,7 +161,7 @@ public:
 	IconView()
 		:
 		BView("Download icon", B_WILL_DRAW),
-		fIconBitmap(BRect(0, 0, 31, 31), 0, B_RGBA32),
+		fIconBitmap(BRect(0, 0, 31, 31), nullptr, B_RGBA32),
 		fDimmedIcon(false)
 	{
 		SetDrawingMode(B_OP_OVER);
@@ -320,7 +320,10 @@ DownloadProgressView::Init(BMessage* archive)
 	else
 		fIconView = new(std::nothrow) IconView();
 
-	if (!fDownload && fStatusBar != nullptr && fStatusBar->CurrentValue() < 100) {
+	if (fStatusBar == nullptr || fIconView == nullptr)
+		return false;
+
+	if (!fDownload && fStatusBar->CurrentValue() < 100) {
 		BMessage* restartMsg = new(std::nothrow) BMessage(RESTART_DOWNLOAD);
 		fTopButton = new(std::nothrow) SmallButton(B_TRANSLATE("Restart"),
 			restartMsg);
@@ -353,6 +356,9 @@ DownloadProgressView::Init(BMessage* archive)
 	}
 
 	fInfoView = new(std::nothrow) BStringView("info view", "");
+	if (fInfoView == nullptr || fTopButton == nullptr || fBottomButton == nullptr)
+		return false;
+
 	fInfoView->SetViewColor(ViewColor());
 
 	BSize topButtonSize = fTopButton->PreferredSize();

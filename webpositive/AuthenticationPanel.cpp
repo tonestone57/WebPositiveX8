@@ -37,9 +37,9 @@ AuthenticationPanel::AuthenticationPanel(BRect parentFrame)
 			| B_NOT_ZOOMABLE | B_CLOSE_ON_ESCAPE | B_AUTO_UPDATE_SIZE_LIMITS),
 	m_parentWindowFrame(parentFrame),
 	m_usernameTextControl(new(std::nothrow) BTextControl("user",
-		B_TRANSLATE("Username:"), "", 0)),
+		B_TRANSLATE("Username:"), "", nullptr)),
 	m_passwordTextControl(new(std::nothrow) BTextControl("pass",
-		B_TRANSLATE("Password:"), "", 0)),
+		B_TRANSLATE("Password:"), "", nullptr)),
 	m_hidePasswordCheckBox(nullptr),
 	m_rememberCredentialsCheckBox(new(std::nothrow) BCheckBox("remember",
 		B_TRANSLATE("Remember username and password for this site"), nullptr)),
@@ -182,7 +182,9 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	m_rememberCredentialsCheckBox->SetValue(previousRememberCredentials);
 
 	// create layout
-	SetLayout(new(std::nothrow) BGroupLayout(B_VERTICAL, 0.0));
+	BGroupLayout* layout = new(std::nothrow) BGroupLayout(B_VERTICAL, 0.0);
+	if (layout != nullptr)
+		SetLayout(layout);
 	float spacing = be_control_look->DefaultItemSpacing();
 	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
 		.Add(BGridLayoutBuilder(0, spacing)

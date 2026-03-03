@@ -44,7 +44,9 @@ ConsoleWindow::ConsoleWindow(BRect frame)
 	fPreviousText(""),
 	fRepeatCounter(0)
 {
-	SetLayout(new(std::nothrow) BGroupLayout(B_VERTICAL, 0.0));
+	BGroupLayout* layout = new(std::nothrow) BGroupLayout(B_VERTICAL, 0.0);
+	if (layout != nullptr)
+		SetLayout(layout);
 
 	fMessagesListView = new(std::nothrow) BListView("Console messages",
 		B_MULTIPLE_SELECTION_LIST);
@@ -52,29 +54,38 @@ ConsoleWindow::ConsoleWindow(BRect frame)
 	BMessage* clearMsg = new(std::nothrow) BMessage(CLEAR_CONSOLE_MESSAGES);
 	fClearMessagesButton = new(std::nothrow) BButton(B_TRANSLATE("Clear"),
 		clearMsg);
-	if (fClearMessagesButton == nullptr)
+	if (fClearMessagesButton != nullptr)
+		fClearMessagesButton->SetEnabled(false);
+	else
 		delete clearMsg;
 
 	BMessage* copyMsg = new(std::nothrow) BMessage(B_COPY);
 	fCopyMessagesButton = new(std::nothrow) BButton(B_TRANSLATE("Copy"),
 		copyMsg);
-	if (fCopyMessagesButton == nullptr)
+	if (fCopyMessagesButton != nullptr)
+		fCopyMessagesButton->SetEnabled(false);
+	else
 		delete copyMsg;
 
-	BScrollView* scrollView = new(std::nothrow) BScrollView(
-		"Console messages scroll", fMessagesListView, 0, true, true);
+	if (fMessagesListView == nullptr || fClearMessagesButton == nullptr || fCopyMessagesButton == nullptr)
+		return;
 
-	AddChild(BGroupLayoutBuilder(B_VERTICAL, 0.0)
-		.Add(scrollView)
-		.Add(BGroupLayoutBuilder(B_HORIZONTAL, B_USE_SMALL_SPACING)
-			.AddGlue()
-			.Add(fClearMessagesButton)
-			.Add(fCopyMessagesButton)
-			.AddGlue()
-			.SetInsets(0, B_USE_SMALL_SPACING, 0, 0))
-		.SetInsets(B_USE_SMALL_SPACING, B_USE_SMALL_SPACING,
-			B_USE_SMALL_SPACING, B_USE_SMALL_SPACING)
-	);
+	BScrollView* scrollView = new(std::nothrow) BScrollView(
+		"Console messages scroll", fMessagesListView, nullptr, true, true);
+
+	if (layout != nullptr && scrollView != nullptr) {
+		BGroupLayoutBuilder(layout)
+			.Add(scrollView)
+			.Add(BGroupLayoutBuilder(B_HORIZONTAL, B_USE_SMALL_SPACING)
+				.AddGlue()
+				.Add(fClearMessagesButton)
+				.Add(fCopyMessagesButton)
+				.AddGlue()
+				.SetInsets(0, B_USE_SMALL_SPACING, 0, 0))
+			.SetInsets(B_USE_SMALL_SPACING, B_USE_SMALL_SPACING,
+				B_USE_SMALL_SPACING, B_USE_SMALL_SPACING)
+		;
+	}
 	if (!frame.IsValid())
 		CenterOnScreen();
 }

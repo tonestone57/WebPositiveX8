@@ -218,6 +218,9 @@ TabContainerView::AddTab(TabView* tab, int32 index)
 TabView*
 TabContainerView::RemoveTab(int32 index)
 {
+	if (index < 0 || index >= GroupLayout()->CountItems() - 1)
+		return nullptr;
+
 	TabLayoutItem* item
 		= dynamic_cast<TabLayoutItem*>(GroupLayout()->RemoveItem(index));
 	if (item == nullptr)
@@ -523,5 +526,5 @@ TabContainerView::_SendFakeMouseMoved()
 	uint32 buttons;
 	GetMouse(&where, &buttons, false);
 	if (Bounds().Contains(where))
-		_MouseMoved(where, B_INSIDE_VIEW, 0);
+		_MouseMoved(where, B_INSIDE_VIEW, nullptr);
 }

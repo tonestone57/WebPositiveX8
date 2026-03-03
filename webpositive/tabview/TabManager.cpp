@@ -266,7 +266,7 @@ public:
 					TabView* tab = fTabContainerView->TabAt(i);
 					if (tab != nullptr) {
 						BMenuItem* item = new(std::nothrow)
-							BMenuItem(tab->Label(), 0);
+							BMenuItem(tab->Label(), nullptr);
 						if (item != nullptr) {
 							tabMenu->AddItem(item);
 							if (i == fTabContainerView->SelectedTabIndex())
@@ -749,18 +749,22 @@ TabManager::TabManager(const BMessenger& target, BMessage* newTabMessage)
 
 	fTabContainerView = new(std::nothrow) TabContainerView(fController.get());
 	fTabContainerGroup = new(std::nothrow) TabContainerGroup(fTabContainerView);
-	if (fTabContainerGroup != nullptr)
+	if (fTabContainerGroup != nullptr) {
 		fTabContainerGroup->GroupLayout()->SetInsets(0, 3, 0, 0);
+		if (fTabContainerView != nullptr)
+			fTabContainerGroup->GroupLayout()->AddView(fTabContainerView);
+	}
 
 	fController->SetTabContainerGroup(fTabContainerGroup);
 
 #if INTEGRATE_MENU_INTO_TAB_BAR
 	fMenuContainer = new(std::nothrow) BGroupView(B_HORIZONTAL, 0);
-	fMenuContainer->GroupLayout()->SetInsets(0, -3, 0, -3);
-	fTabContainerGroup->GroupLayout()->AddView(fMenuContainer, 0.0f);
+	if (fMenuContainer != nullptr) {
+		fMenuContainer->GroupLayout()->SetInsets(0, -3, 0, -3);
+		if (fTabContainerGroup != nullptr)
+			fTabContainerGroup->GroupLayout()->AddView(fMenuContainer, 0.0f);
+	}
 #endif
-
-	fTabContainerGroup->GroupLayout()->AddView(fTabContainerView);
 
 	BMessage* scrollLeftMsg = new(std::nothrow) BMessage(MSG_SCROLL_TABS_LEFT);
 	ScrollLeftTabButton* scrollLeftBtn = new(std::nothrow) ScrollLeftTabButton(

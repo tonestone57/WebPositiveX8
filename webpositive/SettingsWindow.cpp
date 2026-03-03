@@ -108,6 +108,9 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 	if (fRevertButton == nullptr)
 		delete revertMsg;
 
+	if (fApplyButton == nullptr || fCancelButton == nullptr || fRevertButton == nullptr)
+		return;
+
 	fOpenFilePanel = nullptr;
 
 	float spacing = be_control_look->DefaultItemSpacing();
@@ -129,9 +132,15 @@ SettingsWindow::SettingsWindow(BRect frame, SettingsMessage* settings)
 			.Add(fApplyButton);
 
 	if (tabView != nullptr) {
-		tabView->AddTab(_CreateGeneralPage(spacing));
-		tabView->AddTab(_CreateFontsPage(spacing));
-		tabView->AddTab(_CreateProxyPage(spacing));
+		BView* page = _CreateGeneralPage(spacing);
+		if (page != nullptr)
+			tabView->AddTab(page);
+		page = _CreateFontsPage(spacing);
+		if (page != nullptr)
+			tabView->AddTab(page);
+		page = _CreateProxyPage(spacing);
+		if (page != nullptr)
+			tabView->AddTab(page);
 	}
 
 	if (fStandardFontView != nullptr) {
@@ -417,7 +426,7 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	if (searchPageMenu != nullptr) {
 		searchPageMenu->SetRadioMode(true);
 
-		for (int i = 0; kSearchEngines[i].url != 0; i++) {
+		for (int i = 0; kSearchEngines[i].url != nullptr; i++) {
 			BMessage* message = new(std::nothrow) BMessage(MSG_SEARCH_PAGE_CHANGED_MENU);
 			if (message != nullptr) {
 				message->AddString("searchstring", kSearchEngines[i].url);
@@ -516,6 +525,14 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	else
 		delete showHomeMsg;
 
+	if (fStartPageControl == nullptr || fSearchPageControl == nullptr || fDownloadFolderControl == nullptr
+		|| fSearchPageMenu == nullptr || fStartUpBehaviorMenu == nullptr || fNewWindowBehaviorMenu == nullptr
+		|| fNewTabBehaviorMenu == nullptr || fChooseButton == nullptr || fDaysInHistory == nullptr
+		|| fShowTabsIfOnlyOnePage == nullptr || fAutoHideInterfaceInFullscreenMode == nullptr
+		|| fAutoHidePointer == nullptr || fShowHomeButton == nullptr) {
+		return nullptr;
+	}
+
 	BView* view = BGroupLayoutBuilder(B_VERTICAL, 0)
 		.Add(BGridLayoutBuilder(spacing / 2, spacing / 2)
 			.Add(fStartPageControl->CreateLabelLayoutItem(), 0, 0)
@@ -593,6 +610,11 @@ SettingsWindow::_CreateFontsPage(float spacing)
 		fFixedSizesSpinner->SetAlignment(B_ALIGN_RIGHT);
 	else
 		delete fixedFontSizeMsg;
+
+	if (fStandardFontView == nullptr || fSerifFontView == nullptr || fSansSerifFontView == nullptr
+		|| fFixedFontView == nullptr || fStandardSizesSpinner == nullptr || fFixedSizesSpinner == nullptr) {
+		return nullptr;
+	}
 
 	BView* view = BGridLayoutBuilder(spacing / 2, spacing / 2)
 		.Add(fStandardFontView->CreateFontsLabelLayoutItem(), 0, 0)
@@ -692,6 +714,12 @@ SettingsWindow::_CreateProxyPage(float spacing)
 		delete proxyPassMsg;
 	fProxyPasswordControl->SetText(
 		fSettings->GetValue(kSettingsKeyProxyPassword, ""));
+
+	if (fUseProxyCheckBox == nullptr || fProxyAddressControl == nullptr || fProxyPortControl == nullptr
+		|| fUseProxyAuthCheckBox == nullptr || fProxyUsernameControl == nullptr
+		|| fProxyPasswordControl == nullptr) {
+		return nullptr;
+	}
 
 	BView* view = BGridLayoutBuilder(spacing / 2, spacing / 2)
 		.Add(fUseProxyCheckBox, 0, 0, 2)
