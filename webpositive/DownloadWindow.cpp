@@ -202,9 +202,19 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 
 	fDownloadsScrollView = new(std::nothrow) DownloadContainerScrollView(downloadsGroupView);
 
-	const float spacing = be_control_look->DefaultItemSpacing();
-
-	BMessage* rmFinishedMsg = new(std::nothrow) BMessage(REMOVE_FINISHED_DOWNLOADS);
+	if (layout != nullptr && menuBar != nullptr && fDownloadsScrollView != nullptr) {
+		BGroupLayoutBuilder(layout)
+			.Add(menuBar)
+			.Add(fDownloadsScrollView)
+			.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
+			.Add(BGroupLayoutBuilder(B_HORIZONTAL, spacing)
+				.AddGlue()
+				.Add(fRemoveMissingButton)
+				.Add(fRemoveFinishedButton)
+				.SetInsets(12, 5, 12, 5)
+			)
+		;
+	}
 	fRemoveFinishedButton = new(std::nothrow) BButton(B_TRANSLATE("Remove finished"),
 		rmFinishedMsg);
 	if (fRemoveFinishedButton != nullptr)
@@ -223,19 +233,7 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 	if (fRemoveFinishedButton == nullptr || fRemoveMissingButton == nullptr)
 		return;
 
-	if (layout != nullptr && menuBar != nullptr && fDownloadsScrollView != nullptr) {
-		BGroupLayoutBuilder(layout)
-			.Add(menuBar)
-			.Add(fDownloadsScrollView)
-			.Add(new(std::nothrow) BSeparatorView(B_HORIZONTAL, B_PLAIN_BORDER))
-			.Add(BGroupLayoutBuilder(B_HORIZONTAL, spacing)
-				.AddGlue()
-				.Add(fRemoveMissingButton)
-				.Add(fRemoveFinishedButton)
-				.SetInsets(12, 5, 12, 5)
-			)
-		;
-	}
+	const float spacing = be_control_look->DefaultItemSpacing();
 
 
 	PostMessage(INIT);

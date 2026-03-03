@@ -105,7 +105,8 @@ BookmarkBar::~BookmarkBar()
 	stop_watching(BMessenger(this));
 	if (!fOverflowMenuAdded)
 		delete fOverflowMenu;
-	delete fPopUpMenu;
+	if (fPopUpMenu != nullptr && fPopUpMenu->Parent() == nullptr)
+		delete fPopUpMenu;
 }
 
 

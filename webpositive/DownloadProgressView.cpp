@@ -288,6 +288,21 @@ DownloadProgressView::DownloadProgressView(const BMessage* archive)
 }
 
 
+DownloadProgressView::~DownloadProgressView()
+{
+	if (fIconView != nullptr && fIconView->Parent() == nullptr)
+		delete fIconView;
+	if (fStatusBar != nullptr && fStatusBar->Parent() == nullptr)
+		delete fStatusBar;
+	if (fInfoView != nullptr && fInfoView->Parent() == nullptr)
+		delete fInfoView;
+	if (fTopButton != nullptr && fTopButton->Parent() == nullptr)
+		delete fTopButton;
+	if (fBottomButton != nullptr && fBottomButton->Parent() == nullptr)
+		delete fBottomButton;
+}
+
+
 bool
 DownloadProgressView::Init(BMessage* archive)
 {
@@ -320,8 +335,13 @@ DownloadProgressView::Init(BMessage* archive)
 	else
 		fIconView = new(std::nothrow) IconView();
 
-	if (fStatusBar == nullptr || fIconView == nullptr)
+	if (fStatusBar == nullptr || fIconView == nullptr) {
+		if (fStatusBar != nullptr)
+			delete fStatusBar;
+		if (fIconView != nullptr)
+			delete fIconView;
 		return false;
+	}
 
 	if (!fDownload && fStatusBar->CurrentValue() < 100) {
 		BMessage* restartMsg = new(std::nothrow) BMessage(RESTART_DOWNLOAD);
@@ -356,8 +376,19 @@ DownloadProgressView::Init(BMessage* archive)
 	}
 
 	fInfoView = new(std::nothrow) BStringView("info view", "");
-	if (fInfoView == nullptr || fTopButton == nullptr || fBottomButton == nullptr)
+	if (fInfoView == nullptr || fTopButton == nullptr || fBottomButton == nullptr) {
+		if (fStatusBar != nullptr)
+			delete fStatusBar;
+		if (fIconView != nullptr)
+			delete fIconView;
+		if (fTopButton != nullptr)
+			delete fTopButton;
+		if (fBottomButton != nullptr)
+			delete fBottomButton;
+		if (fInfoView != nullptr)
+			delete fInfoView;
 		return false;
+	}
 
 	fInfoView->SetViewColor(ViewColor());
 

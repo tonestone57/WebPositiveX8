@@ -1302,6 +1302,57 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 BrowserWindow::~BrowserWindow()
 {
 	fAppSettings->RemoveListener(BMessenger(this));
+
+	if (fHistoryMenu != nullptr && fHistoryMenu->Parent() == nullptr)
+		delete fHistoryMenu;
+	if (fCutMenuItem != nullptr && fCutMenuItem->Menu() == nullptr)
+		delete fCutMenuItem;
+	if (fCopyMenuItem != nullptr && fCopyMenuItem->Menu() == nullptr)
+		delete fCopyMenuItem;
+	if (fPasteMenuItem != nullptr && fPasteMenuItem->Menu() == nullptr)
+		delete fPasteMenuItem;
+	if (fFindPreviousMenuItem != nullptr && fFindPreviousMenuItem->Menu() == nullptr)
+		delete fFindPreviousMenuItem;
+	if (fFindNextMenuItem != nullptr && fFindNextMenuItem->Menu() == nullptr)
+		delete fFindNextMenuItem;
+	if (fZoomTextOnlyMenuItem != nullptr && fZoomTextOnlyMenuItem->Menu() == nullptr)
+		delete fZoomTextOnlyMenuItem;
+	if (fFullscreenItem != nullptr && fFullscreenItem->Menu() == nullptr)
+		delete fFullscreenItem;
+	if (fBackMenuItem != nullptr && fBackMenuItem->Menu() == nullptr)
+		delete fBackMenuItem;
+	if (fForwardMenuItem != nullptr && fForwardMenuItem->Menu() == nullptr)
+		delete fForwardMenuItem;
+	if (fBackButton != nullptr && fBackButton->Parent() == nullptr)
+		delete fBackButton;
+	if (fForwardButton != nullptr && fForwardButton->Parent() == nullptr)
+		delete fForwardButton;
+	if (fStopButton != nullptr && fStopButton->Parent() == nullptr)
+		delete fStopButton;
+	if (fHomeButton != nullptr && fHomeButton->Parent() == nullptr)
+		delete fHomeButton;
+	if (fURLInputGroup != nullptr && fURLInputGroup->Parent() == nullptr)
+		delete fURLInputGroup;
+	if (fStatusText != nullptr && fStatusText->Parent() == nullptr)
+		delete fStatusText;
+	if (fLoadingProgressBar != nullptr && fLoadingProgressBar->Parent() == nullptr)
+		delete fLoadingProgressBar;
+	if (fMenuGroup != nullptr && fMenuGroup->Parent() == nullptr)
+		delete fMenuGroup;
+	if (fFindTextControl != nullptr && fFindTextControl->Parent() == nullptr)
+		delete fFindTextControl;
+	if (fFindPreviousButton != nullptr && fFindPreviousButton->Parent() == nullptr)
+		delete fFindPreviousButton;
+	if (fFindNextButton != nullptr && fFindNextButton->Parent() == nullptr)
+		delete fFindNextButton;
+	if (fFindCloseButton != nullptr && fFindCloseButton->Parent() == nullptr)
+		delete fFindCloseButton;
+	if (fFindCaseSensitiveCheckBox != nullptr && fFindCaseSensitiveCheckBox->Parent() == nullptr)
+		delete fFindCaseSensitiveCheckBox;
+	if (fBookmarkBarMenuItem != nullptr && fBookmarkBarMenuItem->Menu() == nullptr)
+		delete fBookmarkBarMenuItem;
+	if (fBookmarkBar != nullptr && fBookmarkBar->Parent() == nullptr)
+		delete fBookmarkBar;
 }
 
 
