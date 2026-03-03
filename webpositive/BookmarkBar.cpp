@@ -27,6 +27,7 @@
 #include "BrowserWindow.h"
 #include "NavMenu.h"
 
+#include <memory>
 #include <new>
 #include <stdio.h>
 
@@ -577,7 +578,7 @@ BookmarkBar::_AddItem(ino_t inode, const entry_ref* ref, const char* name,
 status_t
 BookmarkBar::_LoaderThread(void* data)
 {
-	LoaderArgs* args = static_cast<LoaderArgs*>(data);
+	std::unique_ptr<LoaderArgs> args(static_cast<LoaderArgs*>(data));
 	BDirectory dir(&args->nodeRef);
 	BEntry bookmark;
 	while (dir.GetNextEntry(&bookmark, false) == B_OK) {
@@ -601,17 +602,14 @@ BookmarkBar::_LoaderThread(void* data)
 					BNode node(&followedLink);
 					BNodeInfo info(&node);
 					float iconSize = be_control_look->ComposeIconSize(B_MINI_ICON);
-					BBitmap* icon = new(std::nothrow) BBitmap(
-						BRect(0, 0, iconSize - 1, iconSize - 1), B_RGBA32);
+					std::unique_ptr<BBitmap> icon(new(std::nothrow) BBitmap(
+						BRect(0, 0, iconSize - 1, iconSize - 1), B_RGBA32));
 					if (icon != nullptr) {
-						if (info.GetTrackerIcon(icon, B_MINI_ICON) == B_OK) {
-							if (message.AddPointer("icon", icon) != B_OK) {
-								delete icon;
-								icon = nullptr;
+						if (info.GetTrackerIcon(icon.get(), B_MINI_ICON) == B_OK) {
+							if (message.AddPointer("icon", icon.get()) == B_OK) {
+								// Message took ownership
+								icon.release();
 							}
-						} else {
-							delete icon;
-							icon = nullptr;
 						}
 					}
 				}
@@ -624,6 +622,5 @@ BookmarkBar::_LoaderThread(void* data)
 			}
 		}
 	}
-	delete args;
 	return B_OK;
 }

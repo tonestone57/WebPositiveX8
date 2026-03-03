@@ -88,6 +88,7 @@ public:
         if (index >= 0 && index < (int32)fRows.size()) return fRows[index];
         return nullptr;
     }
+    int32 CountRows() const { return (int32)fRows.size(); }
     BRow* CurrentSelection(BRow* after = nullptr) const {
         if (fRows.empty()) return nullptr;
         if (after == nullptr) return fRows[0]; // Simple mock: always select first

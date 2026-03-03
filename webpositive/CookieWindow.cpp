@@ -18,6 +18,7 @@
 #include <OutlineListView.h>
 #include <StringItem.h>
 #include <ScrollView.h>
+#include <ObjectList.h>
 #include <StringView.h>
 
 #include <new>
@@ -266,8 +267,12 @@ CookieWindow::_BuildDomainList()
 			if (list != nullptr)
 				fCookieMap.Put(domain, list);
 		}
-		if (list != nullptr)
-			list->AddItem(new(std::nothrow) BPrivate::Network::BNetworkCookie(*cookie));
+		if (list != nullptr) {
+			BPrivate::Network::BNetworkCookie* copy = new(std::nothrow)
+				BPrivate::Network::BNetworkCookie(*cookie);
+			if (copy != nullptr)
+				list->AddItem(copy);
+		}
 	}
 
 	int i = 0;
@@ -422,40 +427,37 @@ CookieWindow::_DeleteCookies()
 	if (fCookieJar == nullptr)
 		return;
 
-	CookieRow* row;
-	CookieRow* prevRow;
+	BObjectList<CookieRow> selectedRows(10, false);
+	CookieRow* row = nullptr;
 
-	for (prevRow  = 0; ; prevRow = row) {
-		row = static_cast<CookieRow*>(fCookies->CurrentSelection(prevRow));
-
-		if (prevRow != nullptr) {
-			_RemoveCookieFromMap(prevRow->Cookie());
-			fCookies->RemoveRow(prevRow);
-			delete prevRow;
-		}
-
-		if (row == nullptr)
-			break;
-
-		// delete this cookie
-		BPrivate::Network::BNetworkCookie& cookie = row->Cookie();
-		cookie.SetExpirationDate(0);
-		fCookieJar->AddCookie(cookie);
+	while ((row = static_cast<CookieRow*>(fCookies->CurrentSelection(row)))
+			!= nullptr) {
+		selectedRows.AddItem(row);
 	}
 
-	// A domain was selected in the domain list
-	if (prevRow == nullptr) {
-		while (true) {
-			// Clear the first cookie continuously
-			row = static_cast<CookieRow*>(fCookies->RowAt(0));
+	if (selectedRows.CountItems() > 0) {
+		for (int32 i = 0; i < selectedRows.CountItems(); i++) {
+			row = selectedRows.ItemAt(i);
+			BPrivate::Network::BNetworkCookie& cookie = row->Cookie();
+			cookie.SetExpirationDate(0);
+			fCookieJar->AddCookie(cookie);
 
+			_RemoveCookieFromMap(cookie);
+			fCookies->RemoveRow(row);
+			delete row;
+		}
+	} else {
+		// No cookies selected, delete all cookies for the selected domain
+		while (fCookies->CountRows() > 0) {
+			row = static_cast<CookieRow*>(fCookies->RowAt(0));
 			if (row == nullptr)
 				break;
 
 			BPrivate::Network::BNetworkCookie& cookie = row->Cookie();
-			_RemoveCookieFromMap(cookie);
 			cookie.SetExpirationDate(0);
 			fCookieJar->AddCookie(cookie);
+
+			_RemoveCookieFromMap(cookie);
 			fCookies->RemoveRow(row);
 			delete row;
 		}
