@@ -88,9 +88,11 @@ URLInputGroup::URLTextView::URLTextView(URLInputGroup* parent)
 	fUpdateAutoCompleterChoices(true)
 {
 	BrowsingHistoryChoiceModel* model = new(std::nothrow) BrowsingHistoryChoiceModel();
-	fURLAutoCompleter = new(std::nothrow) TextViewCompleter(this, model);
-	if (fURLAutoCompleter == nullptr)
-		delete model;
+	if (model != nullptr) {
+		fURLAutoCompleter = new(std::nothrow) TextViewCompleter(this, model);
+		if (fURLAutoCompleter == nullptr)
+			delete model;
+	}
 
 	MakeResizable(true);
 	SetStylable(true);

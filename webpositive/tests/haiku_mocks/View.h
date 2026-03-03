@@ -70,6 +70,7 @@ public:
     BView* Parent() const { return fParent; }
     void SetParent(BView* parent) { fParent = parent; }
     BWindow* Window() const { return fWindow; }
+    void _SetWindow(BWindow* window);
 
     BRect Bounds() const { return BRect(0, 0, fFrame.Width(), fFrame.Height()); }
     BRect Frame() const { return fFrame; }

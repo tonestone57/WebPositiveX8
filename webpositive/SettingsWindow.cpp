@@ -188,6 +188,13 @@ SettingsWindow::~SettingsWindow()
 	RemoveHandler(fFixedFontView);
 	delete fFixedFontView;
 	delete fOpenFilePanel;
+
+	if (fApplyButton != nullptr && fApplyButton->Parent() == nullptr)
+		delete fApplyButton;
+	if (fCancelButton != nullptr && fCancelButton->Parent() == nullptr)
+		delete fCancelButton;
+	if (fRevertButton != nullptr && fRevertButton->Parent() == nullptr)
+		delete fRevertButton;
 }
 
 
