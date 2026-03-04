@@ -40,6 +40,7 @@ void BWindow::AddChild(BView* view) {
     if (view) {
         if (view->Parent()) view->Parent()->RemoveChild(view);
         view->SetParent((BView*)this); // Type punning for mock
+        view->SetWindow(this);
         view->_SetWindow(this);
         fTopViews.push_back(view);
     }
@@ -50,6 +51,7 @@ void BWindow::RemoveChild(BView* view) {
         if (*it == view) {
             fTopViews.erase(it);
             view->SetParent(nullptr);
+            view->SetWindow(nullptr);
             view->_SetWindow(nullptr);
             return;
         }
