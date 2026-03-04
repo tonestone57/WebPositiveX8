@@ -809,6 +809,11 @@ TabManager::~TabManager()
 		delete fContainerView;
 	if (fTabContainerGroup != nullptr && fTabContainerGroup->Parent() == nullptr)
 		delete fTabContainerGroup;
+
+#if INTEGRATE_MENU_INTO_TAB_BAR
+	if (fMenuContainer != nullptr && fMenuContainer->Parent() == nullptr)
+		delete fMenuContainer;
+#endif
 }
 
 

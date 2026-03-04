@@ -235,6 +235,9 @@ DownloadWindow::DownloadWindow(BRect frame, bool visible,
 				.SetInsets(12, 5, 12, 5)
 			)
 		;
+	} else {
+		if (menuBar != nullptr && menuBar->Parent() == nullptr)
+			delete menuBar;
 	}
 
 

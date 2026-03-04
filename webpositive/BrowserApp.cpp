@@ -499,22 +499,26 @@ BrowserApp::QuitRequested()
 	}
 
 	fSettings->SetValue("window frame", fLastWindowFrame);
-	if (fDownloadWindow->Lock()) {
+	if (fDownloadWindow != nullptr && fDownloadWindow->Lock()) {
 		fSettings->SetValue("downloads window frame", fDownloadWindow->Frame());
 		fSettings->SetValue("show downloads", !fDownloadWindow->IsHidden());
-		fDownloadWindow->Unlock();
+		fDownloadWindow->Quit();
+		fDownloadWindow = nullptr;
 	}
-	if (fSettingsWindow->Lock()) {
+	if (fSettingsWindow != nullptr && fSettingsWindow->Lock()) {
 		fSettings->SetValue("settings window frame", fSettingsWindow->Frame());
-		fSettingsWindow->Unlock();
+		fSettingsWindow->Quit();
+		fSettingsWindow = nullptr;
 	}
-	if (fConsoleWindow->Lock()) {
+	if (fConsoleWindow != nullptr && fConsoleWindow->Lock()) {
 		fSettings->SetValue("console window frame", fConsoleWindow->Frame());
-		fConsoleWindow->Unlock();
+		fConsoleWindow->Quit();
+		fConsoleWindow = nullptr;
 	}
-	if (fCookieWindow->Lock()) {
+	if (fCookieWindow != nullptr && fCookieWindow->Lock()) {
 		fSettings->SetValue("cookie window frame", fCookieWindow->Frame());
-		fCookieWindow->Unlock();
+		fCookieWindow->Quit();
+		fCookieWindow = nullptr;
 	}
 
 	if (fCookieLoaderThread >= 0) {

@@ -1302,6 +1302,43 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 BrowserWindow::~BrowserWindow()
 {
 	fAppSettings->RemoveListener(BMessenger(this));
+
+	if (fHistoryMenu != nullptr && fHistoryMenu->Parent() == nullptr)
+		delete fHistoryMenu;
+
+	if (fBackButton != nullptr && fBackButton->Parent() == nullptr)
+		delete fBackButton;
+	if (fForwardButton != nullptr && fForwardButton->Parent() == nullptr)
+		delete fForwardButton;
+	if (fStopButton != nullptr && fStopButton->Parent() == nullptr)
+		delete fStopButton;
+	if (fHomeButton != nullptr && fHomeButton->Parent() == nullptr)
+		delete fHomeButton;
+	if (fURLInputGroup != nullptr && fURLInputGroup->Parent() == nullptr)
+		delete fURLInputGroup;
+	if (fStatusText != nullptr && fStatusText->Parent() == nullptr)
+		delete fStatusText;
+	if (fLoadingProgressBar != nullptr && fLoadingProgressBar->Parent() == nullptr)
+		delete fLoadingProgressBar;
+
+	if (fMenuGroup != nullptr && fMenuGroup->Parent() == nullptr)
+		delete fMenuGroup;
+
+	if (fFindTextControl != nullptr && fFindTextControl->Parent() == nullptr)
+		delete fFindTextControl;
+	if (fFindPreviousButton != nullptr && fFindPreviousButton->Parent() == nullptr)
+		delete fFindPreviousButton;
+	if (fFindNextButton != nullptr && fFindNextButton->Parent() == nullptr)
+		delete fFindNextButton;
+	if (fFindCloseButton != nullptr && fFindCloseButton->Parent() == nullptr)
+		delete fFindCloseButton;
+	if (fFindCaseSensitiveCheckBox != nullptr
+		&& fFindCaseSensitiveCheckBox->Parent() == nullptr) {
+		delete fFindCaseSensitiveCheckBox;
+	}
+
+	if (fBookmarkBar != nullptr && fBookmarkBar->Parent() == nullptr)
+		delete fBookmarkBar;
 }
 
 
@@ -3230,7 +3267,7 @@ BrowserWindow::_ShowProgressBar(bool show)
 {
 	if (show) {
 		if (!fStatusGroup->IsVisible() && (fVisibleInterfaceElements
-			& INTERFACE_ELEMENT_STATUS) != nullptr)
+			& INTERFACE_ELEMENT_STATUS) != 0)
 				fStatusGroup->SetVisible(true);
 		fLoadingProgressBar->Show();
 	} else {

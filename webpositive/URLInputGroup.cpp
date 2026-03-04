@@ -660,6 +660,12 @@ URLInputGroup::URLInputGroup(BMessage* goMessage)
 
 URLInputGroup::~URLInputGroup()
 {
+	if (fIconView != nullptr && fIconView->Parent() == nullptr)
+		delete fIconView;
+	if (fTextView != nullptr && fTextView->Parent() == nullptr)
+		delete fTextView;
+	if (fGoButton != nullptr && fGoButton->Parent() == nullptr)
+		delete fGoButton;
 }
 
 

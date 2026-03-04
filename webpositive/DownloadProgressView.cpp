@@ -288,6 +288,21 @@ DownloadProgressView::DownloadProgressView(const BMessage* archive)
 }
 
 
+DownloadProgressView::~DownloadProgressView()
+{
+	if (fIconView != nullptr && fIconView->Parent() == nullptr)
+		delete fIconView;
+	if (fStatusBar != nullptr && fStatusBar->Parent() == nullptr)
+		delete fStatusBar;
+	if (fInfoView != nullptr && fInfoView->Parent() == nullptr)
+		delete fInfoView;
+	if (fTopButton != nullptr && fTopButton->Parent() == nullptr)
+		delete fTopButton;
+	if (fBottomButton != nullptr && fBottomButton->Parent() == nullptr)
+		delete fBottomButton;
+}
+
+
 bool
 DownloadProgressView::Init(BMessage* archive)
 {

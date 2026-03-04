@@ -43,6 +43,7 @@ void BWindow::AddChild(BView* view) {
         view->SetWindow(this);
         view->_SetWindow(this);
         fTopViews.push_back(view);
+        view->AttachedToWindow();
     }
 }
 
@@ -50,6 +51,7 @@ void BWindow::RemoveChild(BView* view) {
     for (auto it = fTopViews.begin(); it != fTopViews.end(); ++it) {
         if (*it == view) {
             fTopViews.erase(it);
+            view->DetachedFromWindow();
             view->SetParent(nullptr);
             view->SetWindow(nullptr);
             view->_SetWindow(nullptr);
@@ -95,13 +97,16 @@ void BView::AddChild(BView* child) {
     fChildren.push_back(child);
     child->fParent = this;
     child->_SetWindow(fWindow);
+    if (fWindow) child->AttachedToWindow();
 }
 
 bool BView::RemoveChild(BView* child) {
     for (std::vector<BView*>::iterator it = fChildren.begin(); it != fChildren.end(); ++it) {
         if (*it == child) {
             fChildren.erase(it);
+            if (fWindow) child->DetachedFromWindow();
             child->fParent = nullptr;
+            child->_SetWindow(nullptr);
             return true;
         }
     }

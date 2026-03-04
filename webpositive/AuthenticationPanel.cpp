@@ -73,6 +73,21 @@ AuthenticationPanel::~AuthenticationPanel()
 {
 	delete_sem(m_exitSemaphore);
 	delete m_jitterRunner;
+
+	if (m_usernameTextControl != nullptr && m_usernameTextControl->Parent() == nullptr)
+		delete m_usernameTextControl;
+	if (m_passwordTextControl != nullptr && m_passwordTextControl->Parent() == nullptr)
+		delete m_passwordTextControl;
+	if (m_hidePasswordCheckBox != nullptr && m_hidePasswordCheckBox->Parent() == nullptr)
+		delete m_hidePasswordCheckBox;
+	if (m_rememberCredentialsCheckBox != nullptr
+		&& m_rememberCredentialsCheckBox->Parent() == nullptr) {
+		delete m_rememberCredentialsCheckBox;
+	}
+	if (m_okButton != nullptr && m_okButton->Parent() == nullptr)
+		delete m_okButton;
+	if (m_cancelButton != nullptr && m_cancelButton->Parent() == nullptr)
+		delete m_cancelButton;
 }
 
 
@@ -163,8 +178,10 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 	BTextView* textView = new(std::nothrow) BTextView(textBounds, "text",
 		textBounds, be_plain_font, &infoColor, B_FOLLOW_NONE, B_WILL_DRAW
 			| B_SUPPORTS_LAYOUT);
-	if (textView == nullptr)
+	if (textView == nullptr) {
+		delete this;
 		return false;
+	}
 	textView->SetViewUIColor(B_PANEL_BACKGROUND_COLOR);
 	textView->SetText(text.String());
 	textView->MakeEditable(false);
@@ -263,6 +280,10 @@ bool AuthenticationPanel::getAuthentication(const BString& text,
 			== B_CONTROL_ON;
 
 	bool canceled = m_cancelled;
+
+	if (textView != nullptr && textView->Parent() == nullptr)
+		delete textView;
+
 	Quit();
 	// AuthenticationPanel object is TOAST here.
 	return !canceled;
