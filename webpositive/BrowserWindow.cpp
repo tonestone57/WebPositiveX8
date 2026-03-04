@@ -1116,7 +1116,7 @@ BrowserWindow::BrowserWindow(BRect frame, SettingsMessage* appSettings, const BS
 		delete findHideMsg;
 
 	fFindTextControl = new(std::nothrow) BTextControl("find",
-		B_TRANSLATE("Find:"), "", 0);
+		B_TRANSLATE("Find:"), "", nullptr);
 	if (fFindTextControl != nullptr) {
 		fFindTextControl->SetModificationMessage(
 			new(std::nothrow) BMessage(FIND_TEXT_CHANGED));
