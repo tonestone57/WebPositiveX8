@@ -288,6 +288,21 @@ DownloadProgressView::DownloadProgressView(const BMessage* archive)
 }
 
 
+DownloadProgressView::~DownloadProgressView()
+{
+	if (fIconView != nullptr && fIconView->Parent() == nullptr)
+		delete fIconView;
+	if (fStatusBar != nullptr && fStatusBar->Parent() == nullptr)
+		delete fStatusBar;
+	if (fInfoView != nullptr && fInfoView->Parent() == nullptr)
+		delete fInfoView;
+	if (fTopButton != nullptr && fTopButton->Parent() == nullptr)
+		delete fTopButton;
+	if (fBottomButton != nullptr && fBottomButton->Parent() == nullptr)
+		delete fBottomButton;
+}
+
+
 bool
 DownloadProgressView::Init(BMessage* archive)
 {
@@ -524,27 +539,27 @@ DownloadProgressView::MessageReceived(BMessage* message)
 					BString text(B_TRANSLATE("The file \"%name%\" is an executable program. "
 						"Are you sure you want to run it?"));
 					text.ReplaceFirst("%name%", fPath.Leaf());
-		BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Open executable"),
-			text, B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), nullptr,
+					BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Open executable"),
+						text, B_TRANSLATE("Cancel"), B_TRANSLATE("Run"), nullptr,
 						B_WIDTH_AS_USUAL, B_WARNING_ALERT);
-		if (alert != nullptr) {
-			alert->SetShortcut(0, B_ESCAPE);
-			if (alert->Go() != 1)
-				break;
-		}
+					if (alert != nullptr) {
+						alert->SetShortcut(0, B_ESCAPE);
+						if (alert->Go() != 1)
+							break;
+					}
 				}
 
 				status = be_roster->Launch(&ref);
 			}
 			if (status != B_OK && status != B_ALREADY_RUNNING) {
-	BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Open download error"),
-					B_TRANSLATE("The download could not be opened."),
-					B_TRANSLATE("OK"));
-	if (alert != nullptr) {
-		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
-		alert->Go(0);
+		BAlert* alert = new(std::nothrow) BAlert(B_TRANSLATE("Open download error"),
+			B_TRANSLATE("The download could not be opened."),
+			B_TRANSLATE("OK"));
+		if (alert != nullptr) {
+			alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+			alert->Go(0);
+		}
 	}
-			}
 			break;
 		}
 		case RESTART_DOWNLOAD:
@@ -745,7 +760,7 @@ DownloadProgressView::ShowContextMenu(BPoint screenWhere)
 		copyURL->SetEnabled(fURL.Length() > 0);
 		if (!contextMenu->AddItem(copyURL))
 			delete copyURL;
-	} else
+	} else if (copyUrlMsg != nullptr)
 		delete copyUrlMsg;
 
 	BMessage* openFolderMsg = new(std::nothrow) BMessage(OPEN_CONTAINING_FOLDER);
@@ -754,7 +769,7 @@ DownloadProgressView::ShowContextMenu(BPoint screenWhere)
 	if (openFolder != nullptr) {
 		if (!contextMenu->AddItem(openFolder))
 			delete openFolder;
-	} else
+	} else if (openFolderMsg != nullptr)
 		delete openFolderMsg;
 
 	contextMenu->SetTargetForItems(this);

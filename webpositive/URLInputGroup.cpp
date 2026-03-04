@@ -88,9 +88,11 @@ URLInputGroup::URLTextView::URLTextView(URLInputGroup* parent)
 	fUpdateAutoCompleterChoices(true)
 {
 	BrowsingHistoryChoiceModel* model = new(std::nothrow) BrowsingHistoryChoiceModel();
-	fURLAutoCompleter = new(std::nothrow) TextViewCompleter(this, model);
-	if (fURLAutoCompleter == nullptr)
-		delete model;
+	if (model != nullptr) {
+		fURLAutoCompleter = new(std::nothrow) TextViewCompleter(this, model);
+		if (fURLAutoCompleter == nullptr)
+			delete model;
+	}
 
 	MakeResizable(true);
 	SetStylable(true);
@@ -658,6 +660,12 @@ URLInputGroup::URLInputGroup(BMessage* goMessage)
 
 URLInputGroup::~URLInputGroup()
 {
+	if (fIconView != nullptr && fIconView->Parent() == nullptr)
+		delete fIconView;
+	if (fTextView != nullptr && fTextView->Parent() == nullptr)
+		delete fTextView;
+	if (fGoButton != nullptr && fGoButton->Parent() == nullptr)
+		delete fGoButton;
 }
 
 

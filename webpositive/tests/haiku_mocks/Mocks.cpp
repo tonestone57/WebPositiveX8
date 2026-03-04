@@ -26,7 +26,39 @@ BApplication::BApplication(const char* signature) : BLooper(signature) {
 }
 BApplication* be_app = nullptr;
 
-void BWindow::AddChild(BView* view) {}
+BWindow::~BWindow() {
+    auto topViews = fTopViews;
+    fTopViews.clear();
+    for (auto view : topViews) {
+        view->SetParent(nullptr);
+        view->_SetWindow(nullptr);
+        delete view;
+    }
+}
+
+void BWindow::AddChild(BView* view) {
+    if (view) {
+        if (view->Parent()) view->Parent()->RemoveChild(view);
+        view->SetParent((BView*)this); // Type punning for mock
+        view->SetWindow(this);
+        view->_SetWindow(this);
+        fTopViews.push_back(view);
+        view->AttachedToWindow();
+    }
+}
+
+void BWindow::RemoveChild(BView* view) {
+    for (auto it = fTopViews.begin(); it != fTopViews.end(); ++it) {
+        if (*it == view) {
+            fTopViews.erase(it);
+            view->DetachedFromWindow();
+            view->SetParent(nullptr);
+            view->SetWindow(nullptr);
+            view->_SetWindow(nullptr);
+            return;
+        }
+    }
+}
 
 BMessenger be_app_messenger;
 
@@ -54,18 +86,27 @@ BView::~BView() {
     }
 }
 
+void BView::_SetWindow(BWindow* window) {
+    fWindow = window;
+    for (auto child : fChildren) child->_SetWindow(window);
+}
+
 void BView::AddChild(BView* child) {
     if (!child) return;
     if (child->fParent) child->fParent->RemoveChild(child);
     fChildren.push_back(child);
     child->fParent = this;
+    child->_SetWindow(fWindow);
+    if (fWindow) child->AttachedToWindow();
 }
 
 bool BView::RemoveChild(BView* child) {
     for (std::vector<BView*>::iterator it = fChildren.begin(); it != fChildren.end(); ++it) {
         if (*it == child) {
             fChildren.erase(it);
+            if (fWindow) child->DetachedFromWindow();
             child->fParent = nullptr;
+            child->_SetWindow(nullptr);
             return true;
         }
     }
