@@ -71,7 +71,7 @@ ConsoleWindow::ConsoleWindow(BRect frame)
 		return;
 
 	BScrollView* scrollView = new(std::nothrow) BScrollView(
-		"Console messages scroll", fMessagesListView, nullptr, true, true);
+		"Console messages scroll", fMessagesListView, 0, true, true);
 
 	if (layout != nullptr && scrollView != nullptr) {
 		BGroupLayoutBuilder(layout)
@@ -97,7 +97,13 @@ ConsoleWindow::~ConsoleWindow()
 		for (int32 i = fMessagesListView->CountItems() - 1; i >= 0; i--) {
 			delete fMessagesListView->RemoveItem(i);
 		}
+		if (fMessagesListView->Parent() == nullptr)
+			delete fMessagesListView;
 	}
+	if (fClearMessagesButton != nullptr && fClearMessagesButton->Parent() == nullptr)
+		delete fClearMessagesButton;
+	if (fCopyMessagesButton != nullptr && fCopyMessagesButton->Parent() == nullptr)
+		delete fCopyMessagesButton;
 }
 
 

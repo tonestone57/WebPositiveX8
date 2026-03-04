@@ -36,11 +36,12 @@ public:
     BWindow(BRect frame, const char* title, window_look look, int feel, uint32 flags, uint32 workspaces = B_CURRENT_WORKSPACE) : fFrame(frame) {}
     BWindow(BRect frame, const char* title, int look, int flags) : fFrame(frame) {}
 
-    virtual ~BWindow() {}
+    virtual ~BWindow();
     void Show() {}
     void Hide() {}
     bool IsHidden() const { return false; }
     void AddChild(BView* view);
+    void RemoveChild(BView* view);
     void CenterOnScreen() {}
     BMessage* CurrentMessage() const { return nullptr; }
     BRect Frame() const { return fFrame; }
@@ -55,5 +56,6 @@ public:
     virtual bool QuitRequested() { return true; }
 private:
     BRect fFrame;
+    std::vector<BView*> fTopViews;
 };
 #endif

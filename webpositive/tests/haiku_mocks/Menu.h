@@ -16,8 +16,13 @@ public:
     virtual ~BMenu() {
         for (auto item : fItems) delete item;
     }
-    bool AddItem(BMenuItem* item) { fItems.push_back(item); return true; }
+    bool AddItem(BMenuItem* item) {
+        if (item) item->SetMenu(this);
+        fItems.push_back(item);
+        return true;
+    }
     bool AddItem(BMenuItem* item, int32 index) {
+        if (item) item->SetMenu(this);
         if (index >= 0 && index <= (int32)fItems.size())
             fItems.insert(fItems.begin() + index, item);
         else
@@ -29,7 +34,11 @@ public:
 
     bool RemoveItem(BMenuItem* item) {
         for (auto it = fItems.begin(); it != fItems.end(); ++it) {
-            if (*it == item) { fItems.erase(it); return true; }
+            if (*it == item) {
+                if (item) item->SetMenu(nullptr);
+                fItems.erase(it);
+                return true;
+            }
         }
         return false;
     }
@@ -47,6 +56,7 @@ public:
     BMenuItem* RemoveItem(int32 index) {
         if (index >= 0 && index < (int32)fItems.size()) {
             BMenuItem* item = fItems[index];
+            if (item) item->SetMenu(nullptr);
             fItems.erase(fItems.begin() + index);
             return item;
         }

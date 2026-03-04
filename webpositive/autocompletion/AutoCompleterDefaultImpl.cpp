@@ -385,16 +385,31 @@ BDefaultChoiceView::ShowChoices(BAutoCompleter::CompletionStyle* completer)
 
 	BScrollView *scrollView = nullptr;
 	if (count > fMaxVisibleChoices) {
-		scrollView = new(std::nothrow) BScrollView("", fListView, B_FOLLOW_NONE, 0, false, true, B_NO_BORDER);
+		scrollView = new(std::nothrow) BScrollView("", fListView, B_FOLLOW_NONE,
+			0, false, true, B_NO_BORDER);
+		if (scrollView == nullptr) {
+			delete fListView;
+			fListView = nullptr;
+			return;
+		}
 	}
 
-	fWindow = new(std::nothrow) BWindow(BRect(0, 0, 100, 100), "", B_BORDERED_WINDOW_LOOK,
-		B_NORMAL_WINDOW_FEEL, B_NOT_MOVABLE | B_WILL_ACCEPT_FIRST_CLICK 
-			| B_AVOID_FOCUS | B_ASYNCHRONOUS_CONTROLS);
-	if (scrollView != nullptr)
-		fWindow->AddChild(scrollView);
-	else
-		fWindow->AddChild(fListView);
+	fWindow = new(std::nothrow) BWindow(BRect(0, 0, 100, 100), "",
+		B_BORDERED_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL,
+		B_NOT_MOVABLE | B_WILL_ACCEPT_FIRST_CLICK | B_AVOID_FOCUS
+			| B_ASYNCHRONOUS_CONTROLS);
+	if (fWindow != nullptr) {
+		if (scrollView != nullptr)
+			fWindow->AddChild(scrollView);
+		else
+			fWindow->AddChild(fListView);
+	} else {
+		delete scrollView;
+		if (scrollView == nullptr)
+			delete fListView;
+		fListView = nullptr;
+		return;
+	}
 
 	int32 visibleCount = min_c(count, fMaxVisibleChoices);
 	float listHeight = fListView->ItemFrame(visibleCount - 1).bottom + 1;

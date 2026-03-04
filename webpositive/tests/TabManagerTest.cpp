@@ -115,9 +115,6 @@ test_add_remove_tabs()
 
 	delete removedView;
 
-	delete manager.TabGroup();
-	delete manager.ContainerView();
-
 	looper->Lock();
 	looper->Quit();
 	delete handler;
@@ -157,9 +154,6 @@ test_select_tab()
 	assert_int32(1, handler->fLastTabIndex, "Correct tab index in message");
 	looper->Unlock();
 
-	delete manager.TabGroup();
-	delete manager.ContainerView();
-
 	looper->Lock();
 	looper->Quit();
 	delete handler;
@@ -192,9 +186,6 @@ test_close_tab()
 	assert_int32(0, handler->fLastTabIndex, "Correct tab index in message");
 	looper->Unlock();
 
-	delete manager.TabGroup();
-	delete manager.ContainerView();
-
 	looper->Lock();
 	looper->Quit();
 	delete handler;
@@ -217,9 +208,6 @@ test_tab_labels()
 	manager.SetTabLabel(0, "New Label");
 	assert_true(manager.TabLabel(0) == "New Label",
 		"Updated label is correct");
-
-	delete manager.TabGroup();
-	delete manager.ContainerView();
 }
 
 

@@ -120,8 +120,14 @@ CookieWindow::CookieWindow(BRect frame,
 
 	fDomains = new(std::nothrow) BOutlineListView("domain list");
 	if (root != nullptr) {
-		root->AddView(new(std::nothrow) BScrollView("scroll", fDomains, 0,
-			false, true), 1);
+		BScrollView* scroll = new(std::nothrow) BScrollView("scroll", fDomains,
+			0, false, true);
+		if (scroll != nullptr)
+			root->AddView(scroll, 1);
+		else if (fDomains != nullptr) {
+			delete fDomains;
+			fDomains = nullptr;
+		}
 	}
 
 	fHeaderView = new(std::nothrow) BStringView("label",
@@ -224,7 +230,14 @@ CookieWindow::~CookieWindow()
 		for (int32 i = fDomains->FullListCountItems() - 1; i >= 0; i--) {
 			delete fDomains->FullListItemAt(i);
 		}
+		if (fDomains->Parent() == nullptr)
+			delete fDomains;
 	}
+
+	if (fHeaderView != nullptr && fHeaderView->Parent() == nullptr)
+		delete fHeaderView;
+	if (fCookies != nullptr && fCookies->Parent() == nullptr)
+		delete fCookies;
 
 	for (auto it = fCookieMap.GetIterator(); it.HasNext();) {
 		delete it.Next().second;

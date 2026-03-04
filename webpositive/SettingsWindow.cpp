@@ -188,6 +188,60 @@ SettingsWindow::~SettingsWindow()
 	RemoveHandler(fFixedFontView);
 	delete fFixedFontView;
 	delete fOpenFilePanel;
+
+	if (fStartPageControl != nullptr && fStartPageControl->Parent() == nullptr)
+		delete fStartPageControl;
+	if (fSearchPageControl != nullptr && fSearchPageControl->Parent() == nullptr)
+		delete fSearchPageControl;
+	if (fDownloadFolderControl != nullptr && fDownloadFolderControl->Parent() == nullptr)
+		delete fDownloadFolderControl;
+	if (fSearchPageMenu != nullptr && fSearchPageMenu->Parent() == nullptr)
+		delete fSearchPageMenu;
+	if (fNewWindowBehaviorMenu != nullptr && fNewWindowBehaviorMenu->Parent() == nullptr)
+		delete fNewWindowBehaviorMenu;
+	if (fNewTabBehaviorMenu != nullptr && fNewTabBehaviorMenu->Parent() == nullptr)
+		delete fNewTabBehaviorMenu;
+	if (fStartUpBehaviorMenu != nullptr && fStartUpBehaviorMenu->Parent() == nullptr)
+		delete fStartUpBehaviorMenu;
+	if (fDaysInHistory != nullptr && fDaysInHistory->Parent() == nullptr)
+		delete fDaysInHistory;
+	if (fShowTabsIfOnlyOnePage != nullptr && fShowTabsIfOnlyOnePage->Parent() == nullptr)
+		delete fShowTabsIfOnlyOnePage;
+	if (fAutoHideInterfaceInFullscreenMode != nullptr
+		&& fAutoHideInterfaceInFullscreenMode->Parent() == nullptr) {
+		delete fAutoHideInterfaceInFullscreenMode;
+	}
+	if (fAutoHidePointer != nullptr && fAutoHidePointer->Parent() == nullptr)
+		delete fAutoHidePointer;
+	if (fShowHomeButton != nullptr && fShowHomeButton->Parent() == nullptr)
+		delete fShowHomeButton;
+
+	if (fUseProxyCheckBox != nullptr && fUseProxyCheckBox->Parent() == nullptr)
+		delete fUseProxyCheckBox;
+	if (fProxyAddressControl != nullptr && fProxyAddressControl->Parent() == nullptr)
+		delete fProxyAddressControl;
+	if (fProxyPortControl != nullptr && fProxyPortControl->Parent() == nullptr)
+		delete fProxyPortControl;
+	if (fUseProxyAuthCheckBox != nullptr && fUseProxyAuthCheckBox->Parent() == nullptr)
+		delete fUseProxyAuthCheckBox;
+	if (fProxyUsernameControl != nullptr && fProxyUsernameControl->Parent() == nullptr)
+		delete fProxyUsernameControl;
+	if (fProxyPasswordControl != nullptr && fProxyPasswordControl->Parent() == nullptr)
+		delete fProxyPasswordControl;
+
+	if (fApplyButton != nullptr && fApplyButton->Parent() == nullptr)
+		delete fApplyButton;
+	if (fCancelButton != nullptr && fCancelButton->Parent() == nullptr)
+		delete fCancelButton;
+	if (fRevertButton != nullptr && fRevertButton->Parent() == nullptr)
+		delete fRevertButton;
+	if (fChooseButton != nullptr && fChooseButton->Parent() == nullptr)
+		delete fChooseButton;
+
+	if (fStandardSizesSpinner != nullptr && fStandardSizesSpinner->Parent() == nullptr)
+		delete fStandardSizesSpinner;
+	if (fFixedSizesSpinner != nullptr && fFixedSizesSpinner->Parent() == nullptr)
+		delete fFixedSizesSpinner;
 }
 
 
@@ -449,6 +503,8 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 		B_TRANSLATE("Search page:"), searchPageMenu);
 	if (fSearchPageMenu != nullptr)
 		fSearchPageMenu->SetToolTip(B_TRANSLATE("%s - Search term"));
+	else
+		delete searchPageMenu;
 
 	BPopUpMenu* startUpBehaviorMenu = new(std::nothrow) BPopUpMenu("Start up");
 	if (startUpBehaviorMenu != nullptr) {
@@ -457,6 +513,8 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	}
 	fStartUpBehaviorMenu = new(std::nothrow) BMenuField("start up behavior",
 		B_TRANSLATE("Start up:"), startUpBehaviorMenu);
+	if (fStartUpBehaviorMenu == nullptr)
+		delete startUpBehaviorMenu;
 
 
 	BPopUpMenu* newWindowBehaviorMenu = new(std::nothrow) BPopUpMenu("New windows");
@@ -467,6 +525,8 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	}
 	fNewWindowBehaviorMenu = new(std::nothrow) BMenuField("new window behavior",
 		B_TRANSLATE("New windows:"), newWindowBehaviorMenu);
+	if (fNewWindowBehaviorMenu == nullptr)
+		delete newWindowBehaviorMenu;
 
 	BPopUpMenu* newTabBehaviorMenu = new(std::nothrow) BPopUpMenu("New tabs");
 	if (newTabBehaviorMenu != nullptr) {
@@ -477,6 +537,8 @@ SettingsWindow::_CreateGeneralPage(float spacing)
 	}
 	fNewTabBehaviorMenu = new(std::nothrow) BMenuField("new tab behavior",
 		B_TRANSLATE("New tabs:"), newTabBehaviorMenu);
+	if (fNewTabBehaviorMenu == nullptr)
+		delete newTabBehaviorMenu;
 
 	BMessage* historyDaysMsg = new(std::nothrow) BMessage(MSG_HISTORY_MENU_DAYS_CHANGED);
 	fDaysInHistory = new(std::nothrow) BSpinner("days in history",
